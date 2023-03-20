@@ -324,9 +324,6 @@
 "fs.realpath@^1.0.0":
   "version" "1.0.0"
 
-"fsevents@~2.3.2":
-  "version" "2.3.2"
-
 "get-caller-file@^2.0.5":
   "version" "2.0.5"
 
@@ -429,6 +426,11 @@
   dependencies:
     "argparse" "^1.0.7"
     "esprima" "^4.0.0"
+
+"llama-node-linux-x64-gnu@0.0.0":
+  "integrity" "sha512-YKAXdnPLEgmY3tiE29TYsRKVQfXUxh4ARPFtScjOZqOffhUdNdlrh/rHutlHXyJeVtbtD+tqEne8KUJqG0VmFA=="
+  "resolved" "https://registry.npmjs.org/llama-node-linux-x64-gnu/-/llama-node-linux-x64-gnu-0.0.0.tgz"
+  "version" "0.0.0"
 
 "load-json-file@^7.0.0":
   "version" "7.0.1"

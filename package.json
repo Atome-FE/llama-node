@@ -35,6 +35,10 @@
     "universal": "napi universal",
     "version": "napi version"
   },
+  "repository": {
+    "url": "https://github.com/hlhr202/llama-node"
+  },
+  "homepage": "https://github.com/hlhr202/llama-node",
   "packageManager": "yarn@3.5.0",
   "optionalDependencies": {
     "llama-node-win32-x64-msvc": "0.0.0",
