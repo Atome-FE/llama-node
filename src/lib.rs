@@ -4,7 +4,7 @@
 extern crate napi_derive;
 
 mod llama;
-use llama::{InferenceData, InferenceParams, LLamaChannel, LoadParams};
+use llama::{InferenceCallback, LLamaArguments, LLamaChannel, LLamaConfig};
 
 use napi::{
   bindgen_prelude::*,
@@ -15,7 +15,7 @@ use napi::{
 };
 use std::{
   sync::{
-    mpsc::{channel, Receiver},
+    mpsc::{channel, Receiver, Sender, TryRecvError},
     Arc, Mutex,
   },
   thread,
@@ -23,57 +23,91 @@ use std::{
 
 #[napi]
 pub struct LLama {
-  rx: Arc<Mutex<Receiver<InferenceData>>>,
+  inference_receiver: Arc<Mutex<Receiver<InferenceCallback>>>,
+  inference_sender: Sender<InferenceCallback>,
   llama_channel: LLamaChannel,
 }
 
 #[napi]
 impl LLama {
   #[napi]
-  pub fn new() -> Self {
-    let (tx, rx) = channel::<InferenceData>();
+  pub fn create(config: LLamaConfig) -> Self {
+    let (tx, rx) = channel::<InferenceCallback>();
 
     let llama_channel = LLamaChannel::new(tx.clone());
 
+    llama_channel.load_model(config);
+
     LLama {
-      rx: Arc::new(Mutex::new(rx)),
+      inference_receiver: Arc::new(Mutex::new(rx)),
       llama_channel,
+      inference_sender: tx.clone(),
     }
   }
 
   #[napi]
-  pub fn load_model(&mut self, params: LoadParams) -> Result<()> {
-    self.llama_channel.load_model(params);
-    Ok(())
-  }
-
-  #[napi]
-  pub fn inference(&mut self, params: InferenceParams) -> Result<()> {
+  pub fn inference(&mut self, params: LLamaArguments) -> Result<()> {
     self.llama_channel.inference(params);
     Ok(())
   }
 
-  #[napi(ts_args_type = "callback: (err: null | Error, result: { token: string; completed: number }) => void")]
+  #[napi]
+  pub fn terminate(&self) {
+    self
+      .inference_sender
+      .send(InferenceCallback::Terminate)
+      .unwrap();
+    self.llama_channel.terminate();
+  }
+
+  #[napi(
+    ts_args_type = "callback: (result: { type: 'ERROR', message: string } | { type: 'DATA', data: { token: string; completed: number } }) => void"
+  )]
   pub fn on_generated(&self, callback: JsFunction) -> Result<()> {
-    let tsfn: ThreadsafeFunction<InferenceData, ErrorStrategy::CalleeHandled> = callback
-      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceData>| {
-        // ctx.env.create_string_from_std(ctx.value).map(|v| vec![v])
+    let tsfn: ThreadsafeFunction<InferenceCallback, ErrorStrategy::Fatal> = callback
+      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceCallback>| {
         let mut obj = ctx.env.create_object().unwrap();
-        let token = ctx.env.create_string(ctx.value.token.as_str()).unwrap();
-        let completed = ctx
-          .env
-          .create_int32(if ctx.value.completed { 1 } else { 0 }).unwrap();
-        obj.set_named_property("token", token).unwrap();
-        obj.set_named_property("completed", completed).unwrap();
-        Ok(vec![obj])
+
+        return match ctx.value {
+          InferenceCallback::InferenceData(it) => {
+            let mut data = ctx.env.create_object().unwrap();
+            let token = ctx.env.create_string(it.token.as_str()).unwrap();
+            let completed = ctx
+              .env
+              .create_int32(if it.completed { 1 } else { 0 })
+              .unwrap();
+            data.set_named_property("token", token).unwrap();
+            data.set_named_property("completed", completed).unwrap();
+            obj
+              .set_named_property("type", ctx.env.create_string("DATA").unwrap())
+              .unwrap();
+            obj.set_named_property("data", data).unwrap();
+            Ok(vec![obj])
+          }
+          InferenceCallback::InferenceError(error) => {
+            let error = ctx.env.create_string(error.as_str()).unwrap();
+            obj
+              .set_named_property("type", ctx.env.create_string("ERROR").unwrap())
+              .unwrap();
+            obj.set_named_property("message", error).unwrap();
+            Ok(vec![obj])
+          }
+          _ => {
+            unreachable!("Termination is not reachable")
+          }
+        };
       })?;
-    let rx = self.rx.clone();
+    let inference_receiver = self.inference_receiver.clone();
 
     thread::spawn(move || loop {
-      let rx = rx.lock().unwrap();
-      match rx.try_recv() {
-        Ok(str) => {
-          tsfn.call(Ok(str), ThreadsafeFunctionCallMode::NonBlocking);
+      let inference_receiver = inference_receiver.lock().unwrap();
+      match inference_receiver.try_recv() {
+        Err(TryRecvError::Disconnected) | Ok(InferenceCallback::Terminate) => {
+          tsfn.abort().unwrap();
+          break;
+        }
+        Ok(callback) => {
+          tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
         }
         Err(_) => {
           std::thread::yield_now();

@@ -1,21 +1,27 @@
 import { LLama } from "../index.js";
 import path from "path";
 
-const obj = LLama.new();
-
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-obj.loadModel({ path: model });
+const llama = LLama.create({ path: model, numCtxTokens: 4096 });
 
-const prompt = "Hello from nodejs!";
+const prompt = "test";
 
-obj.onGenerated((err, data) => {
-    if (!err) {
-        process.stdout.write(data.token);
-        if (data.completed) {
-            console.log(data);
+llama.onGenerated((response) => {
+    switch (response.type) {
+        case "DATA": {
+            process.stdout.write(response.data.token);
+            if (response.data.completed) {
+                llama.terminate();
+            }
+            break;
+        }
+        case "ERROR": {
+            console.log(response);
+            llama.terminate();
+            break;
         }
     }
 });
 
-obj.inference({ prompt });
+llama.inference({ prompt, numPredict: BigInt(12) });

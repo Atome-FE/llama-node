@@ -1,7 +1,7 @@
 use std::{
   convert::Infallible,
   sync::{
-    mpsc::{channel, Receiver, Sender},
+    mpsc::{channel, Receiver, Sender, TryRecvError},
     Arc, Mutex,
   },
   thread,
@@ -13,21 +13,28 @@ use rand::SeedableRng;
 
 #[napi(object)]
 #[derive(Clone)]
-pub struct InferenceData {
+pub struct InferenceToken {
   pub token: String,
   pub completed: bool,
 }
 
+#[derive(Clone)]
+pub enum InferenceCallback {
+  InferenceData(InferenceToken),
+  InferenceError(String),
+  Terminate,
+}
+
 #[napi(object)]
 #[derive(Clone)]
-pub struct LoadParams {
+pub struct LLamaConfig {
   pub path: String,
   pub num_ctx_tokens: Option<i32>,
 }
 
 #[napi(object)]
 #[derive(Clone)]
-pub struct InferenceParams {
+pub struct LLamaArguments {
   pub n_threads: Option<i32>,
   pub n_batch: Option<BigInt>,
   pub top_k: Option<BigInt>,
@@ -42,18 +49,19 @@ pub struct InferenceParams {
 
 #[derive(Clone)]
 enum LLamaCommand {
-  LoadModel(LoadParams),
-  Inference(InferenceParams),
+  LoadModel(LLamaConfig),
+  Inference(LLamaArguments),
+  Terminate,
 }
 
 pub struct LLamaChannel {
-  main_thread_sender: Sender<InferenceData>,
+  main_thread_sender: Sender<InferenceCallback>,
   llama_sender: Sender<LLamaCommand>,
   llama_receiver: Arc<Mutex<Receiver<LLamaCommand>>>,
 }
 
 impl LLamaChannel {
-  pub fn new(main_thread_sender: Sender<InferenceData>) -> Self {
+  pub fn new(main_thread_sender: Sender<InferenceCallback>) -> Self {
     let (llama_sender, llama_receiver) = channel::<LLamaCommand>();
 
     let channel = LLamaChannel {
@@ -67,18 +75,22 @@ impl LLamaChannel {
     channel
   }
 
-  pub fn load_model(&self, params: LoadParams) {
+  pub fn load_model(&self, params: LLamaConfig) {
     self
       .llama_sender
       .send(LLamaCommand::LoadModel(params))
       .unwrap();
   }
 
-  pub fn inference(&self, params: InferenceParams) {
+  pub fn inference(&self, params: LLamaArguments) {
     self
       .llama_sender
       .send(LLamaCommand::Inference(params))
       .unwrap();
+  }
+
+  pub fn terminate(&self) {
+    self.llama_sender.send(LLamaCommand::Terminate).unwrap();
   }
 
   pub fn spawn(&self) {
@@ -86,14 +98,14 @@ impl LLamaChannel {
     let tx = self.main_thread_sender.clone();
 
     thread::spawn(move || {
-      struct LLama {
+      struct LLamaInternal {
         model: Option<Model>,
         vocab: Option<Vocabulary>,
-        sender: Sender<InferenceData>,
+        sender: Sender<InferenceCallback>,
       }
 
-      impl LLama {
-        pub fn load_model(&mut self, params: LoadParams) {
+      impl LLamaInternal {
+        pub fn load_model(&mut self, params: LLamaConfig) {
           env_logger::builder()
             .filter_level(log::LevelFilter::Info)
             .parse_default_env()
@@ -105,7 +117,7 @@ impl LLamaChannel {
           // let repeat_last_n = 64;
           // let num_predict = Some(128);
 
-          let (m, v) = llama_rs::Model::load(params.path, num_ctx_tokens, |progress| {
+          let (model, vocab) = llama_rs::Model::load(params.path, num_ctx_tokens, |progress| {
             use llama_rs::LoadProgress;
             match progress {
               LoadProgress::HyperparametersLoaded(hparams) => {
@@ -158,13 +170,13 @@ impl LLamaChannel {
           })
           .expect("Could not load model");
 
-          self.model = Some(m);
-          self.vocab = Some(v);
+          self.model = Some(model);
+          self.vocab = Some(vocab);
 
           log::info!("Model fully loaded!");
         }
 
-        pub fn inference(&mut self, params: InferenceParams) {
+        pub fn inference(&mut self, params: LLamaArguments) {
           let num_predict = params
             .num_predict
             .unwrap_or(BigInt::from(512 as u64))
@@ -200,6 +212,8 @@ impl LLamaChannel {
             rand::rngs::StdRng::from_entropy()
           };
 
+          let ended = Arc::new(Mutex::new(false));
+
           let res = session.inference_with_prompt::<Infallible>(
             &model,
             &vocab,
@@ -211,14 +225,18 @@ impl LLamaChannel {
               self
                 .sender
                 .send(match t {
-                  OutputToken::Token(token) => InferenceData {
+                  OutputToken::Token(token) => InferenceCallback::InferenceData(InferenceToken {
                     token: token.to_string(),
                     completed: false,
-                  },
-                  OutputToken::EndOfText => InferenceData {
-                    token: "\n\n<end>\n".to_string(),
-                    completed: true,
-                  },
+                  }),
+                  OutputToken::EndOfText => {
+                    let mut ended = ended.try_lock().unwrap();
+                    *ended = true;
+                    InferenceCallback::InferenceData(InferenceToken {
+                      token: "\n\n<end>\n".to_string(),
+                      completed: true,
+                    })
+                  }
                 })
                 .unwrap();
 
@@ -226,31 +244,51 @@ impl LLamaChannel {
             },
           );
 
+          let ended = ended.try_lock().unwrap();
+          if *ended == false {
+            self
+              .sender
+              .send(InferenceCallback::InferenceError(
+                "Inference terminated".to_string(),
+              ))
+              .unwrap()
+          }
+
           match res {
             Ok(_) => (),
             Err(llama_rs::InferenceError::ContextFull) => {
+              self
+                .sender
+                .send(InferenceCallback::InferenceError(
+                  "Context window full, stopping inference.".to_string(),
+                ))
+                .unwrap();
               log::warn!("Context window full, stopping inference.")
             }
             Err(llama_rs::InferenceError::UserCallback(_)) => unreachable!("cannot fail"),
           }
-
-          println!();
         }
       }
 
-      let mut llama = LLama {
+      let mut llama = LLamaInternal {
         model: None,
         vocab: None,
         sender: tx,
       };
 
       let rv = rv.lock().unwrap();
+
       loop {
-        let command = rv.recv();
+        let command = rv.try_recv();
         match command {
           Ok(LLamaCommand::Inference(params)) => llama.inference(params),
           Ok(LLamaCommand::LoadModel(params)) => llama.load_model(params),
-          Err(_) => {}
+          Err(TryRecvError::Disconnected) | Ok(LLamaCommand::Terminate) => {
+            break;
+          }
+          Err(_) => {
+            thread::yield_now();
+          }
         }
       }
     });
