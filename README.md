@@ -17,7 +17,7 @@ Currently supported platforms:
 - linux-x64-gnu
 
 
-I did not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both gglm llama and gglm alpaca.
+I do not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both gglm llama and gglm alpaca.
 
 Download one of the llama ggml models from the following links:
 - [alpaca 7B int4](https://huggingface.co/hlhr202/alpaca-7B-ggml-int4/blob/main/ggml-alpaca-7b-q4.bin)
