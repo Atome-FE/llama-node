@@ -3,25 +3,26 @@ import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = LLama.create({ path: model });
+const run = () => {
+    LLama.enableLogger();
 
-const prompt = "test";
+    const llama = LLama.create({ path: model });
 
-llama.onGenerated((response) => {
-    switch (response.type) {
-        case "DATA": {
-            process.stdout.write(response.data.token);
-            if (response.data.completed) {
-                llama.terminate();
+    let prompt = "test";
+
+    llama.inference({ prompt }, (response) => {
+        switch (response.type) {
+            case "DATA": {
+                process.stdout.write(response.data.token);
+                break;
             }
-            break;
+            case "END":
+            case "ERROR": {
+                console.log(response);
+                break;
+            }
         }
-        case "ERROR": {
-            console.log(response);
-            llama.terminate();
-            break;
-        }
-    }
-});
+    });
+};
 
-llama.inference({ prompt });
+run();

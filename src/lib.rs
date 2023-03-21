@@ -4,7 +4,12 @@
 extern crate napi_derive;
 
 mod llama;
-use llama::{InferenceCallback, LLamaArguments, LLamaChannel, LLamaConfig};
+use std::{
+  sync::{mpsc::channel, Arc},
+  thread,
+};
+
+use llama::{InferenceResult, LLamaArguments, LLamaChannel, LLamaConfig, LLamaResult};
 
 use napi::{
   bindgen_prelude::*,
@@ -13,63 +18,68 @@ use napi::{
   },
   JsFunction,
 };
-use std::{
-  sync::{
-    mpsc::{channel, Receiver, Sender, TryRecvError},
-    Arc, Mutex,
-  },
-  thread,
-};
 
 #[napi]
+#[derive(Clone)]
 pub struct LLama {
-  inference_receiver: Arc<Mutex<Receiver<InferenceCallback>>>,
-  inference_sender: Sender<InferenceCallback>,
-  llama_channel: LLamaChannel,
+  llama_channel: Arc<LLamaChannel>,
 }
 
 #[napi]
 impl LLama {
   #[napi]
-  pub fn create(config: LLamaConfig) -> Self {
-    let (tx, rx) = channel::<InferenceCallback>();
+  pub fn enable_logger() {
+    env_logger::builder()
+      .filter_level(log::LevelFilter::Info)
+      .parse_default_env()
+      .init();
+  }
 
-    let llama_channel = LLamaChannel::new(tx.clone());
+  #[napi]
+  pub fn create(config: LLamaConfig) -> Result<LLama> {
+    let (load_result_sender, load_result_receiver) = channel::<LLamaResult>();
 
-    llama_channel.load_model(config);
+    let llama_channel = LLamaChannel::new();
 
-    LLama {
-      inference_receiver: Arc::new(Mutex::new(rx)),
-      llama_channel,
-      inference_sender: tx.clone(),
+    llama_channel.load_model(config, load_result_sender);
+
+    'waiting: loop {
+      let recv = load_result_receiver.recv();
+      match recv {
+        Ok(r) => {
+          if r.error {
+            return Err(Error::new(
+              Status::InvalidArg,
+              r.message.unwrap_or("Unknown Error".to_string()),
+            ));
+          } else {
+            break 'waiting;
+          }
+        }
+        Err(_) => {
+          thread::yield_now();
+        }
+      }
     }
+
+    Ok(LLama { llama_channel })
   }
 
-  #[napi]
-  pub fn inference(&mut self, params: LLamaArguments) -> Result<()> {
-    self.llama_channel.inference(params);
-    Ok(())
-  }
+  #[napi(ts_args_type = "params: LLamaArguments,
+    callback: (result: 
+      { type: 'ERROR', message: string } |
+      { type: 'DATA', data: { token: string; completed: number } } |
+      { type: 'END' }
+    ) => void")]
+  pub fn inference(&self, params: LLamaArguments, callback: JsFunction) -> Result<()> {
+    let (inference_sender, inference_receiver) = channel::<InferenceResult>();
 
-  #[napi]
-  pub fn terminate(&self) {
-    self
-      .inference_sender
-      .send(InferenceCallback::Terminate)
-      .unwrap();
-    self.llama_channel.terminate();
-  }
-
-  #[napi(
-    ts_args_type = "callback: (result: { type: 'ERROR', message: string } | { type: 'DATA', data: { token: string; completed: number } }) => void"
-  )]
-  pub fn on_generated(&self, callback: JsFunction) -> Result<()> {
-    let tsfn: ThreadsafeFunction<InferenceCallback, ErrorStrategy::Fatal> = callback
-      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceCallback>| {
+    let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
+      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
         let mut obj = ctx.env.create_object().unwrap();
 
         return match ctx.value {
-          InferenceCallback::InferenceData(it) => {
+          InferenceResult::InferenceData(it) => {
             let mut data = ctx.env.create_object().unwrap();
             let token = ctx.env.create_string(it.token.as_str()).unwrap();
             let completed = ctx
@@ -84,35 +94,49 @@ impl LLama {
             obj.set_named_property("data", data).unwrap();
             Ok(vec![obj])
           }
-          InferenceCallback::InferenceError(error) => {
-            let error = ctx.env.create_string(error.as_str()).unwrap();
-            obj
-              .set_named_property("type", ctx.env.create_string("ERROR").unwrap())
-              .unwrap();
-            obj.set_named_property("message", error).unwrap();
-            Ok(vec![obj])
-          }
-          _ => {
-            unreachable!("Termination is not reachable")
+          InferenceResult::InferenceEnd(err) => {
+            if let Some(error) = err {
+              let error = ctx.env.create_string(error.as_str()).unwrap();
+              obj
+                .set_named_property("type", ctx.env.create_string("ERROR").unwrap())
+                .unwrap();
+              obj.set_named_property("message", error).unwrap();
+              Ok(vec![obj])
+            } else {
+              obj
+                .set_named_property("type", ctx.env.create_string("END").unwrap())
+                .unwrap();
+              Ok(vec![obj])
+            }
           }
         };
       })?;
-    let inference_receiver = self.inference_receiver.clone();
 
-    thread::spawn(move || loop {
-      let inference_receiver = inference_receiver.lock().unwrap();
-      match inference_receiver.try_recv() {
-        Err(TryRecvError::Disconnected) | Ok(InferenceCallback::Terminate) => {
-          tsfn.abort().unwrap();
-          break;
-        }
-        Ok(callback) => {
-          tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
-        }
-        Err(_) => {
-          std::thread::yield_now();
+    let llama_channel = self.llama_channel.clone();
+
+    let tsfn = tsfn.clone();
+
+    llama_channel.inference(params, inference_sender);
+
+    thread::spawn(move || {
+      'waiting: loop {
+        let recv = inference_receiver.recv();
+        match recv {
+          Ok(callback) => match callback {
+            InferenceResult::InferenceEnd(_) => {
+              tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
+              break 'waiting;
+            }
+            _ => {
+              tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
+            }
+          },
+          Err(_) => {
+            thread::yield_now();
+          }
         }
       }
+      tsfn.abort().unwrap();
     });
 
     Ok(())

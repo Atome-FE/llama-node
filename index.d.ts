@@ -7,6 +7,10 @@ export interface InferenceToken {
   token: string
   completed: boolean
 }
+export interface LLamaResult {
+  error: boolean
+  message?: string
+}
 export interface LLamaConfig {
   path: string
   numCtxTokens?: number
@@ -24,8 +28,12 @@ export interface LLamaArguments {
   prompt: string
 }
 export class LLama {
+  static enableLogger(): void
   static create(config: LLamaConfig): LLama
-  inference(params: LLamaArguments): void
-  terminate(): void
-  onGenerated(callback: (result: { type: 'ERROR', message: string } | { type: 'DATA', data: { token: string; completed: number } }) => void): void
+  inference(params: LLamaArguments,
+  callback: (result:
+  { type: 'ERROR', message: string } |
+  { type: 'DATA', data: { token: string; completed: number } } |
+  { type: 'END' }
+  ) => void): void
 }
