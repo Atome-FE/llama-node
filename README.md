@@ -2,7 +2,7 @@
 
 WIP, not production ready, the API for nodejs may change in the future, use it with caution.
 
-Support llama 7B model with both gglm llama and gglm alpaca, backed by llama-rs and napi-rs
+Support llama 7B model with both gglm llama and gglm alpaca, backed by [llama-rs](https://github.com/setzer22/llama-rs/tree/main/llama-rs) and [napi-rs](https://github.com/napi-rs/napi-rs)
 
 currently supported platforms: darwin-x64, darwin-arm64, linux-x64-gnu
 
@@ -18,8 +18,6 @@ npm install llama-node
 The current version supports one inferencing session on one LLama instance in the same time,
 
 If you want to have multiple inferencing sessions, you have to create multiple LLama instances.
-
-I will provide an async based API in the next big version
 
 ```typescript
 import path from "path";
