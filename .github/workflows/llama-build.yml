@@ -41,7 +41,7 @@ jobs:
           version: 0.10.0
       - run: cargo install cargo-xwin
       - run: npm install
-      - run: npm run build
+      - run: npm run --workspace=packages/core build
       # - uses: actions/upload-artifact@v3
       #   with:
       #     name: bindings-${{ matrix.targets }}

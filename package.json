@@ -1,45 +1,28 @@
 {
-  "name": "@llama-node/core",
+  "name": "llama-node",
   "version": "0.0.1",
+  "description": "",
   "main": "index.js",
-  "types": "index.d.ts",
-  "napi": {
-    "name": "@llama-node/core",
-    "triples": {
-      "additional": [
-        "aarch64-apple-darwin",
-        "aarch64-linux-android",
-        "aarch64-unknown-linux-gnu"
-      ]
-    }
-  },
-  "license": "MIT",
-  "devDependencies": {
-    "@napi-rs/cli": "^2.14.8",
-    "@types/node": "^18.15.3",
-    "ava": "^5.1.1",
-    "tsx": "^3.12.6",
-    "typescript": "^5.0.2"
-  },
-  "ava": {
-    "timeout": "3m"
-  },
-  "engines": {
-    "node": ">= 10"
-  },
   "scripts": {
-    "cross-compile": "tsx scripts/cross-compile.ts",
-    "artifacts": "napi artifacts",
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform",
-
-    "test": "ava",
-    "start": "node __test__/index.spec.mjs",
-    "universal": "napi universal",
-    "version": "napi version"
+    "test": "tsx packages/client/__test__/test.ts"
   },
   "repository": {
-    "url": "https://github.com/hlhr202/llama-node"
+    "type": "git",
+    "test": "tsx",
+    "url": "git+https://github.com/hlhr202/llama-node.git"
   },
-  "homepage": "https://github.com/hlhr202/llama-node"
+  "workspaces": [
+    "packages/core",
+    "packages/client"
+  ],
+  "author": "hlhr202@163.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hlhr202/llama-node/issues"
+  },
+  "homepage": "https://github.com/hlhr202/llama-node#readme",
+  "devDependencies": {
+    "tsx": "^3.12.6",
+    "typescript": "^5.0.2"
+  }
 }

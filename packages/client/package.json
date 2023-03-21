@@ -1,0 +1,25 @@
+{
+  "name": "@llama-node/client",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "hlhr202@163.com",
+  "license": "MIT",
+  "dependencies": {
+    "@llama-node/core": "0.0.1"
+  },
+  "peerDependencies": {
+    "@llama-node/core": "0.0.1"
+  },
+  "devDependencies": {
+    "tsup": "^6.7.0",
+    "typescript": "^5.0.2",
+    "@types/node": "^18.15.5"
+  }
+}
