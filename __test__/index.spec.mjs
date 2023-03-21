@@ -3,7 +3,7 @@ import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = LLama.create({ path: model, numCtxTokens: 4096 });
+const llama = LLama.create({ path: model });
 
 const prompt = "test";
 
@@ -24,4 +24,4 @@ llama.onGenerated((response) => {
     }
 });
 
-llama.inference({ prompt, numPredict: BigInt(12) });
+llama.inference({ prompt });
