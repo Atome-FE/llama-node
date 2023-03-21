@@ -72,9 +72,8 @@ struct LLamaInternal {
 
 impl LLamaInternal {
   pub fn load_model(&mut self, params: LLamaConfig, sender: Sender<LLamaResult>) {
-    
-
     let num_ctx_tokens = params.num_ctx_tokens.unwrap_or(512);
+    log::info!("num_ctx_tokens: {}", num_ctx_tokens);
     // let restore_prompt: Option<String> = None;
     // let cache_prompt: Option<String> = None;
     // let repeat_last_n = 64;
@@ -176,7 +175,21 @@ impl LLamaInternal {
       temp: params.temp.unwrap_or(0.8) as f32,
     };
 
-    let seed: Option<u64> = Some(params.seed.unwrap_or(BigInt::from(0 as u64)).get_u64().1);
+    log::info!("repeat_last_n: {}", repeat_last_n);
+    log::info!("n_threads: {}", inference_params.n_threads);
+    log::info!("n_batch: {}", inference_params.n_batch);
+    log::info!("top_k: {}", inference_params.top_k);
+    log::info!("top_p: {}", inference_params.top_p);
+    log::info!("repeat_penalty: {}", inference_params.repeat_penalty);
+    log::info!("temp: {}", inference_params.temp);
+
+    let seed = if let Some(seed) = params.seed {
+      Some(seed.get_u64().1)
+    } else {
+      None
+    };
+
+    log::info!("seed: {:?}", seed);
 
     let mut rng = if let Some(seed) = seed {
       rand::rngs::StdRng::seed_from_u64(seed)
