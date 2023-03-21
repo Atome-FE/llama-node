@@ -1,6 +1,6 @@
 {
   "name": "llama-node",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -26,15 +26,14 @@
   "homepage": "https://github.com/hlhr202/llama-node#readme",
   "devDependencies": {
     "@types/node": "^18.15.5",
-    "llama-node": "0.0.1",
     "tsup": "^6.7.0",
     "tsx": "^3.12.6",
     "typescript": "^5.0.2"
   },
   "dependencies": {
-    "@llama-node/core": "0.0.1"
+    "@llama-node/core": "0.0.2"
   },
   "peerDependencies": {
-    "@llama-node/core": "0.0.1"
+    "@llama-node/core": "0.0.2"
   }
 }
