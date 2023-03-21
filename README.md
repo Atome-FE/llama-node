@@ -2,7 +2,7 @@
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml)
 ![NPM](https://img.shields.io/npm/l/llama-node)
-![npm](https://img.shields.io/npm/v/llama-node)
+[<img alt="npm" src="https://img.shields.io/npm/v/llama-node">](https://www.npmjs.com/package/llama-node)
 ![npm type definitions](https://img.shields.io/npm/types/llama-node)
 
 WIP, the API for nodejs may change in the future, use it with caution.
