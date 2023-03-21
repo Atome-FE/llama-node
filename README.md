@@ -7,29 +7,30 @@
 
 WIP, the API for nodejs may change in the future, use it with caution.
 
-Support llama 7B model with both gglm llama and gglm alpaca, backed by [llama-rs](https://github.com/setzer22/llama-rs/tree/main/llama-rs) and [napi-rs](https://github.com/napi-rs/napi-rs)
+# Introduction
 
-currently supported platforms: darwin-x64, darwin-arm64, linux-x64-gnu
+This is a nodejs client library for llama LLM built on top of [llama-rs](https://github.com/setzer22/llama-rs/tree/main/llama-rs). It uses [napi-rs](https://github.com/napi-rs/napi-rs) as nodejs and native communications.
+
+Currently supported platforms:
+- darwin-x64
+- darwin-arm64
+- linux-x64-gnu
+
+
+I did not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both gglm llama and gglm alpaca.
 
 Download one of the llama ggml models from the following links:
 - [alpaca 7B int4](https://huggingface.co/hlhr202/alpaca-7B-ggml-int4/blob/main/ggml-alpaca-7b-q4.bin)
 - [llama 7B int4](https://huggingface.co/hlhr202/llama-7B-ggml-int4/blob/main/ggml-model-q4_0.bin)
 
+---
 
 ## Install
 ```bash
 npm install llama-node
 ```
 
-## Self built
-
-Make sure you have installed rust
-
-```bash
-cd packages/core
-npm run build
-```
-
+---
 
 ## Usage
 
@@ -63,6 +64,19 @@ client.createTextCompletion(
     }
 );
 ```
+
+---
+
+## Self built
+
+Make sure you have installed rust
+
+```bash
+cd packages/core
+npm run build
+```
+
+---
 
 ## Future plan
 - [ ] prompt extensions
