@@ -10,7 +10,7 @@ For testing, download model from [here](https://huggingface.co/hlhr202/alpaca-7B
 
 ## Install
 ```bash
-npm install @llama-node/core
+npm install llama-node
 ```
 
 ## Usage
@@ -22,32 +22,28 @@ If you want to have multiple inferencing sessions, you have to create multiple L
 I will provide an async based API in the next big version
 
 ```typescript
-import { LLama } from "@llama-node/core";
 import path from "path";
+import { LLamaClient } from "llama-node";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const run = () => {
-    LLama.enableLogger();
+const client = new LLamaClient({ path: model, numCtxTokens: 4096 }, true);
 
-    const llama = LLama.create({ path: model });
+const prompt = `// Show an example of counter component in react.js. it has increment and decrement buttons where they change the state by 1.
+export const Counter => {`;
 
-    let prompt = "test";
-
-    llama.inference({ prompt }, (response) => {
-        switch (response.type) {
-            case "DATA": {
-                process.stdout.write(response.data.token);
-                break;
-            }
-            case "END":
-            case "ERROR": {
-                console.log(response);
-                break;
-            }
-        }
-    });
-};
-
-run();
+client.createTextCompletion(
+    {
+        prompt,
+        numPredict: BigInt(2048),
+        temp: 0.2,
+        topP: 0.8,
+        topK: BigInt(40),
+        repeatPenalty: 1,
+        repeatLastN: BigInt(512),
+    },
+    (res) => {
+        process.stdout.write(res.token);
+    }
+);
 ```
