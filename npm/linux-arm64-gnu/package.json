@@ -1,5 +1,5 @@
 {
-  "name": "llama-node-linux-arm64-gnu",
+  "name": "@llama-node/core-linux-arm64-gnu",
   "version": "0.0.0",
   "os": [
     "linux"
@@ -7,13 +7,17 @@
   "cpu": [
     "arm64"
   ],
-  "main": "llama-node.linux-arm64-gnu.node",
+  "main": "@llama-node/core.linux-arm64-gnu.node",
   "files": [
-    "llama-node.linux-arm64-gnu.node"
+    "@llama-node/core.linux-arm64-gnu.node"
   ],
+  "homepage": "https://github.com/hlhr202/llama-node",
   "license": "MIT",
   "engines": {
     "node": ">= 10"
+  },
+  "repository": {
+    "url": "https://github.com/hlhr202/llama-node"
   },
   "libc": [
     "glibc"

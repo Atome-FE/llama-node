@@ -1,10 +1,10 @@
 {
-  "name": "llama-node",
+  "name": "@llama-node/core",
   "version": "0.0.0",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "llama-node",
+    "name": "@llama-node/core",
     "triples": {
       "additional": [
         "aarch64-apple-darwin",
@@ -17,7 +17,9 @@
   "devDependencies": {
     "@napi-rs/cli": "^2.14.8",
     "@types/node": "^18.15.3",
-    "ava": "^5.1.1"
+    "ava": "^5.1.1",
+    "tsx": "^3.12.6",
+    "typescript": "^5.0.2"
   },
   "ava": {
     "timeout": "3m"
@@ -26,10 +28,11 @@
     "node": ">= 10"
   },
   "scripts": {
+    "cross-compile": "tsx scripts/cross-compile.ts",
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-
+    "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
     "start": "node __test__/index.spec.mjs",
     "universal": "napi universal",
@@ -39,13 +42,12 @@
     "url": "https://github.com/hlhr202/llama-node"
   },
   "homepage": "https://github.com/hlhr202/llama-node",
-  "packageManager": "yarn@3.5.0",
   "optionalDependencies": {
-    "llama-node-win32-x64-msvc": "0.0.0",
-    "llama-node-darwin-x64": "0.0.0",
-    "llama-node-linux-x64-gnu": "0.0.0",
-    "llama-node-darwin-arm64": "0.0.0",
-    "llama-node-android-arm64": "0.0.0",
-    "llama-node-linux-arm64-gnu": "0.0.0"
+    "@llama-node/core-android-arm64": "0.0.0",
+    "@llama-node/core-darwin-arm64": "0.0.0",
+    "@llama-node/core-darwin-x64": "0.0.0",
+    "@llama-node/core-linux-arm64-gnu": "0.0.0",
+    "@llama-node/core-linux-x64-gnu": "0.0.0",
+    "@llama-node/core-win32-x64-msvc": "0.0.0"
   }
 }

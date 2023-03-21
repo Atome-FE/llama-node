@@ -1,5 +1,5 @@
 {
-  "name": "llama-node-android-arm64",
+  "name": "@llama-node/core-android-arm64",
   "version": "0.0.0",
   "os": [
     "android"
@@ -7,12 +7,16 @@
   "cpu": [
     "arm64"
   ],
-  "main": "llama-node.android-arm64.node",
+  "main": "@llama-node/core.android-arm64.node",
   "files": [
-    "llama-node.android-arm64.node"
+    "@llama-node/core.android-arm64.node"
   ],
+  "homepage": "https://github.com/hlhr202/llama-node",
   "license": "MIT",
   "engines": {
     "node": ">= 10"
+  },
+  "repository": {
+    "url": "https://github.com/hlhr202/llama-node"
   }
 }
