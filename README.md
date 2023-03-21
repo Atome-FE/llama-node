@@ -20,7 +20,7 @@ Due to limited threading strategy, the current version does not support multiple
 I will provide an async based API in the next big version
 
 ```typescript
-import { LLama } from "../index.js";
+import { LLama } from "@llama-node/core";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
