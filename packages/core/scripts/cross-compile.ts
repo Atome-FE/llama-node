@@ -8,9 +8,9 @@ const platforms = {
 
 const compile = () => {
     Object.entries(platforms).forEach(([platform, target]) => {
-        exec(
-            `napi build --platform --target ${target} --release --zig`
-        ).stdout?.pipe(process.stdout);
+        exec(`napi build --platform --target ${target} --release`).stdout?.pipe(
+            process.stdout
+        );
     });
 };
 

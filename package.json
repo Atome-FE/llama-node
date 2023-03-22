@@ -1,12 +1,14 @@
 {
   "name": "llama-node",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "type": "module",
   "scripts": {
     "build": "tsup",
+    "test:core": "npm t --workspaces=packages/core",
+    "build:core": "npm run build --workspaces=packages/core",
     "test": "tsx __test__/test.ts"
   },
   "repository": {
@@ -26,9 +28,11 @@
   "homepage": "https://github.com/hlhr202/llama-node#readme",
   "devDependencies": {
     "@types/node": "^18.15.5",
+    "rimraf": "^4.4.0",
     "tsup": "^6.7.0",
     "tsx": "^3.12.6",
-    "typescript": "^5.0.2"
+    "typescript": "^5.0.2",
+    "vitest": "^0.29.7"
   },
   "dependencies": {
     "@llama-node/core": "0.0.2"

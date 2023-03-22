@@ -34,7 +34,9 @@ impl LLamaInternal {
     // let repeat_last_n = 64;
     // let num_predict = Some(128);
 
-    let (model, vocab) = llama_rs::Model::load(params.path, num_ctx_tokens, |progress| {
+    let sender = sender.clone();
+
+    if let Ok((model, vocab)) = llama_rs::Model::load(params.path, num_ctx_tokens, |progress| {
       use llama_rs::LoadProgress;
       match progress {
         LoadProgress::HyperparametersLoaded(hparams) => {
@@ -84,22 +86,26 @@ impl LLamaInternal {
           );
         }
       }
-    })
-    .expect("Could not load model");
+    }) {
+      self.model = Some(model);
+      self.vocab = Some(vocab);
 
-    self.model = Some(model);
-    self.vocab = Some(vocab);
+      log::info!("Model fully loaded!");
 
-    log::info!("Model fully loaded!");
-
-    let sender = sender.clone();
-
-    sender
-      .send(LoadModelResult {
-        error: false,
-        message: None,
-      })
-      .unwrap();
+      sender
+        .send(LoadModelResult {
+          error: false,
+          message: None,
+        })
+        .unwrap();
+    } else {
+      sender
+        .send(LoadModelResult {
+          error: true,
+          message: Some("Could not load model".to_string()),
+        })
+        .unwrap();
+    }
   }
 
   pub fn inference(&mut self, params: LLamaArguments, sender: Sender<InferenceResult>) {
@@ -186,17 +192,14 @@ impl LLamaInternal {
     );
 
     let ended = ended.try_lock().unwrap();
-    let sender1 = sender.clone();
 
     if *ended == false {
-      sender1
+      sender
         .send(InferenceResult::InferenceEnd(Some(
           "Inference terminated".to_string(),
         )))
         .unwrap();
     }
-
-    let sender = sender.clone();
 
     match res {
       Ok(_) => {

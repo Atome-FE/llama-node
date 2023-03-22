@@ -8,7 +8,7 @@ mod types;
 
 use std::{
   sync::{mpsc::channel, Arc},
-  thread,
+  thread, time,
 };
 
 use llama::LLamaChannel;
@@ -81,7 +81,7 @@ impl LLama {
       .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
         let mut obj = ctx.env.create_object().unwrap();
 
-        return match ctx.value {
+        return match ctx.value.clone() {
           InferenceResult::InferenceData(it) => {
             let mut data = ctx.env.create_object().unwrap();
             let token = ctx.env.create_string(it.token.as_str()).unwrap();
@@ -98,19 +98,19 @@ impl LLama {
             Ok(vec![obj])
           }
           InferenceResult::InferenceEnd(err) => {
+            println!("{:?}", ctx.value.clone());
             if let Some(error) = err {
               let error = ctx.env.create_string(error.as_str()).unwrap();
               obj
                 .set_named_property("type", ctx.env.create_string("ERROR").unwrap())
                 .unwrap();
               obj.set_named_property("message", error).unwrap();
-              Ok(vec![obj])
             } else {
               obj
                 .set_named_property("type", ctx.env.create_string("END").unwrap())
                 .unwrap();
-              Ok(vec![obj])
             }
+            Ok(vec![obj])
           }
         };
       })?;
@@ -127,7 +127,7 @@ impl LLama {
         match recv {
           Ok(callback) => match callback {
             InferenceResult::InferenceEnd(_) => {
-              tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
+              tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
               break 'waiting_inference;
             }
             InferenceResult::InferenceData(_) => {
@@ -139,6 +139,7 @@ impl LLama {
           }
         }
       }
+      thread::sleep(time::Duration::from_millis(300)); // wait for end signal
       tsfn.abort().unwrap();
     });
 

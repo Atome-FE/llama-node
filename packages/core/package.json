@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/core",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -17,7 +17,6 @@
   "devDependencies": {
     "@napi-rs/cli": "^2.14.8",
     "@types/node": "^18.15.3",
-    "ava": "^5.1.1",
     "tsx": "^3.12.6",
     "typescript": "^5.0.2"
   },
@@ -28,12 +27,12 @@
     "node": ">= 10"
   },
   "scripts": {
-    "cross-compile": "tsx scripts/cross-compile.ts",
+    "cross-compile": "rimraf @llama-node && tsx scripts/cross-compile.ts",
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
 
-    "test": "ava",
+    "test": "vitest",
     "start": "node __test__/index.spec.mjs",
     "universal": "napi universal",
     "version": "napi version"

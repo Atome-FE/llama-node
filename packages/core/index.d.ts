@@ -7,7 +7,7 @@ export interface InferenceToken {
   token: string
   completed: boolean
 }
-export interface LLamaResult {
+export interface LoadModelResult {
   error: boolean
   message?: string
 }
@@ -33,7 +33,7 @@ export class LLama {
   inference(params: LLamaArguments,
   callback: (result:
   { type: 'ERROR', message: string } |
-  { type: 'DATA', data: { token: string; completed: number } } |
+  { type: 'DATA', data: InferenceToken } |
   { type: 'END' }
   ) => void): void
 }
