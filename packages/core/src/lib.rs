@@ -4,12 +4,15 @@
 extern crate napi_derive;
 
 mod llama;
+mod types;
+
 use std::{
   sync::{mpsc::channel, Arc},
   thread,
 };
 
-use llama::{InferenceResult, LLamaArguments, LLamaChannel, LLamaConfig, LLamaResult};
+use llama::LLamaChannel;
+use types::{InferenceResult, LLamaArguments, LLamaConfig, LoadModelResult};
 
 use napi::{
   bindgen_prelude::*,
@@ -37,13 +40,14 @@ impl LLama {
 
   #[napi]
   pub fn create(config: LLamaConfig) -> Result<LLama> {
-    let (load_result_sender, load_result_receiver) = channel::<LLamaResult>();
+    let (load_result_sender, load_result_receiver) = channel::<LoadModelResult>();
 
     let llama_channel = LLamaChannel::new();
 
     llama_channel.load_model(config, load_result_sender);
 
-    'waiting: loop {
+    // currently this loop blocked main thread, will try improve in the future
+    'waiting_load: loop {
       let recv = load_result_receiver.recv();
       match recv {
         Ok(r) => {
@@ -52,11 +56,10 @@ impl LLama {
               Status::InvalidArg,
               r.message.unwrap_or("Unknown Error".to_string()),
             ));
-          } else {
-            break 'waiting;
           }
+          break 'waiting_load;
         }
-        Err(_) => {
+        _ => {
           thread::yield_now();
         }
       }
@@ -68,7 +71,7 @@ impl LLama {
   #[napi(ts_args_type = "params: LLamaArguments,
     callback: (result: 
       { type: 'ERROR', message: string } |
-      { type: 'DATA', data: { token: string; completed: number } } |
+      { type: 'DATA', data: InferenceToken } |
       { type: 'END' }
     ) => void")]
   pub fn inference(&self, params: LLamaArguments, callback: JsFunction) -> Result<()> {
@@ -119,19 +122,19 @@ impl LLama {
     llama_channel.inference(params, inference_sender);
 
     thread::spawn(move || {
-      'waiting: loop {
+      'waiting_inference: loop {
         let recv = inference_receiver.recv();
         match recv {
           Ok(callback) => match callback {
             InferenceResult::InferenceEnd(_) => {
               tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
-              break 'waiting;
+              break 'waiting_inference;
             }
-            _ => {
+            InferenceResult::InferenceData(_) => {
               tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
             }
           },
-          Err(_) => {
+          _ => {
             thread::yield_now();
           }
         }

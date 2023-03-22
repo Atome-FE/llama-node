@@ -166,7 +166,7 @@ dependencies = [
 [[package]]
 name = "ggml-raw"
 version = "0.1.0"
-source = "git+https://github.com/setzer22/llama-rs.git?branch=main#d8ca18d8e86c5285e7942e4f27abbfb7d3bbe0c0"
+source = "git+https://github.com/setzer22/llama-rs.git?branch=main#6403f0906d1c4f5f3edfd39a1dedc229f9e95993"
 dependencies = [
  "cc",
 ]
@@ -263,7 +263,7 @@ dependencies = [
 [[package]]
 name = "llama-rs"
 version = "0.1.0"
-source = "git+https://github.com/setzer22/llama-rs.git?branch=main#d8ca18d8e86c5285e7942e4f27abbfb7d3bbe0c0"
+source = "git+https://github.com/setzer22/llama-rs.git?branch=main#6403f0906d1c4f5f3edfd39a1dedc229f9e95993"
 dependencies = [
  "bincode",
  "bytemuck",

@@ -7,57 +7,12 @@ use std::{
   thread,
 };
 
+use crate::types::{
+  InferenceResult, InferenceToken, LLamaArguments, LLamaCommand, LLamaConfig, LoadModelResult,
+};
 use llama_rs::{InferenceParameters, Model, OutputToken, Vocabulary};
 use napi::bindgen_prelude::BigInt;
 use rand::SeedableRng;
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct InferenceToken {
-  pub token: String,
-  pub completed: bool,
-}
-
-#[derive(Clone, Debug)]
-pub enum InferenceResult {
-  InferenceData(InferenceToken),
-  InferenceEnd(Option<String>),
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct LLamaResult {
-  pub error: bool,
-  pub message: Option<String>,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct LLamaConfig {
-  pub path: String,
-  pub num_ctx_tokens: Option<i32>,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct LLamaArguments {
-  pub n_threads: Option<i32>,
-  pub n_batch: Option<BigInt>,
-  pub top_k: Option<BigInt>,
-  pub top_p: Option<f64>,
-  pub repeat_penalty: Option<f64>,
-  pub temp: Option<f64>,
-  pub seed: Option<BigInt>,
-  pub num_predict: Option<BigInt>,
-  pub repeat_last_n: Option<BigInt>,
-  pub prompt: String,
-}
-
-#[derive(Clone, Debug)]
-enum LLamaCommand {
-  LoadModel(LLamaConfig, Sender<LLamaResult>),
-  Inference(LLamaArguments, Sender<InferenceResult>),
-}
 
 #[derive(Clone)]
 pub struct LLamaChannel {
@@ -71,7 +26,7 @@ struct LLamaInternal {
 }
 
 impl LLamaInternal {
-  pub fn load_model(&mut self, params: LLamaConfig, sender: Sender<LLamaResult>) {
+  pub fn load_model(&mut self, params: LLamaConfig, sender: Sender<LoadModelResult>) {
     let num_ctx_tokens = params.num_ctx_tokens.unwrap_or(512);
     log::info!("num_ctx_tokens: {}", num_ctx_tokens);
     // let restore_prompt: Option<String> = None;
@@ -140,7 +95,7 @@ impl LLamaInternal {
     let sender = sender.clone();
 
     sender
-      .send(LLamaResult {
+      .send(LoadModelResult {
         error: false,
         message: None,
       })
@@ -274,7 +229,7 @@ impl LLamaChannel {
     Arc::new(channel)
   }
 
-  pub fn load_model(&self, params: LLamaConfig, sender: Sender<LLamaResult>) {
+  pub fn load_model(&self, params: LLamaConfig, sender: Sender<LoadModelResult>) {
     self
       .command_sender
       .send(LLamaCommand::LoadModel(params, sender))
@@ -288,10 +243,11 @@ impl LLamaChannel {
       .unwrap();
   }
 
+  // llama instance main loop
   pub fn spawn(&self) {
     let rv = self.command_receiver.clone();
 
-    tokio::spawn(async move {
+    thread::spawn(move || {
       let mut llama = LLamaInternal {
         model: None,
         vocab: None,
@@ -299,7 +255,7 @@ impl LLamaChannel {
 
       let rv = rv.lock().unwrap();
 
-      loop {
+      'llama_loop: loop {
         let command = rv.try_recv();
         match command {
           Ok(LLamaCommand::Inference(params, sender)) => {
@@ -309,9 +265,9 @@ impl LLamaChannel {
             llama.load_model(params, sender);
           }
           Err(TryRecvError::Disconnected) => {
-            break;
+            break 'llama_loop;
           }
-          Err(_) => {
+          _ => {
             thread::yield_now();
           }
         }
