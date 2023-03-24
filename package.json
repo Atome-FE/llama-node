@@ -1,12 +1,13 @@
 {
   "name": "llama-node",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "type": "module",
   "scripts": {
     "build": "tsup",
+    "start": "tsx example/inference.ts",
     "test:core": "npm t --workspaces=packages/core",
     "start:core": "npm start --workspaces=packages/core",
     "build:core": "npm run build --workspaces=packages/core",

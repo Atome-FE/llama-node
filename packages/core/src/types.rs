@@ -11,7 +11,8 @@ pub struct InferenceToken {
 #[derive(Clone, Debug)]
 pub enum InferenceResult {
   InferenceData(InferenceToken),
-  InferenceEnd(Option<String>),
+  InferenceError(String),
+  InferenceEnd,
 }
 
 #[napi(object)]
@@ -44,6 +45,7 @@ pub struct LLamaArguments {
   pub float16: Option<bool>,
   pub token_bias: Option<String>,
   pub ignore_eos: Option<bool>,
+  pub feed_prompt: Option<bool>,
 }
 
 #[derive(Clone, Debug)]

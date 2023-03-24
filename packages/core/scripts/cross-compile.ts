@@ -4,6 +4,7 @@ const platforms = {
     "darwin-arm64": "aarch64-apple-darwin",
     "darwin-x64": "x86_64-apple-darwin",
     "linux-x64-gnu": "x86_64-unknown-linux-gnu",
+    "win32-x64-msvc": "x86_64-pc-windows-msvc"
 };
 
 const compile = () => {

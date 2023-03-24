@@ -27,6 +27,16 @@ export class LLamaClient {
         this.llamaNode = LLamaNode.create(config);
     }
 
+    createPrompt = (
+        prompt: string
+    ) => `Below is an instruction that describes a task. Write a response that appropriately completes the request.
+    
+    ### Instruction:
+    
+    ${prompt}
+    
+    ### Response:`;
+
     createChatCompletion = (
         params: ChatParams,
         callback: CompletionCallback
@@ -41,7 +51,9 @@ Knowledge cutoff: 2021-09-01
 Current date: ${data}
 ${messages.map(({ role, content }) => `${role}: ${content}`).join("\n")}
 assistant: `;
-        const completionParams = Object.assign({}, rest, { prompt });
+        const completionParams = Object.assign({}, rest, {
+            prompt: this.createPrompt(prompt),
+        });
         return this.createTextCompletion(completionParams, callback);
     };
 
@@ -50,6 +62,7 @@ assistant: `;
         callback: CompletionCallback
     ) => {
         let completed = false;
+        const errors: string[] = [];
         return new Promise<boolean>((res, rej) => {
             this.llamaNode.inference(params, (response) => {
                 switch (response.type) {
@@ -60,16 +73,21 @@ assistant: `;
                         };
                         if (data.completed) {
                             completed = true;
+                        } else {
+                            callback(data);
                         }
-                        callback(data);
                         break;
                     }
                     case "END": {
-                        res(completed);
+                        if (errors.length) {
+                            rej(new Error(errors.join("\n")));
+                        } else {
+                            res(completed);
+                        }
                         break;
                     }
                     case "ERROR": {
-                        rej(response.message);
+                        errors.push(response.message);
                         break;
                     }
                 }

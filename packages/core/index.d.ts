@@ -29,6 +29,7 @@ export interface LLamaArguments {
   float16?: boolean
   tokenBias?: string
   ignoreEos?: boolean
+  feedPrompt?: boolean
 }
 export class LLama {
   static enableLogger(): void

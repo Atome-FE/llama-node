@@ -15,6 +15,7 @@ Currently supported platforms:
 - darwin-x64
 - darwin-arm64
 - linux-x64-gnu
+- win32-x64-msvc
 
 
 I do not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both gglm llama and gglm alpaca.
@@ -44,23 +45,38 @@ import { LLamaClient } from "llama-node";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const client = new LLamaClient({ path: model, numCtxTokens: 4096 }, true);
+const llama = new LLamaClient(
+    {
+        path: model,
+        numCtxTokens: 128,
+    },
+    true
+);
 
-const prompt = `// Show an example of counter component in react.js. it has increment and decrement buttons where they change the state by 1.
-export const Counter => {`;
+const template = `how are you`;
 
-client.createTextCompletion(
+const prompt = `Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+### Instruction:
+
+${template}
+
+### Response:`;
+
+llama.createTextCompletion(
     {
         prompt,
-        numPredict: BigInt(2048),
+        numPredict: BigInt(128),
         temp: 0.2,
-        topP: 0.8,
+        topP: 1,
         topK: BigInt(40),
         repeatPenalty: 1,
-        repeatLastN: BigInt(512),
+        repeatLastN: BigInt(64),
+        seed: BigInt(0),
+        feedPrompt: true,
     },
-    (res) => {
-        process.stdout.write(res.token);
+    (response) => {
+        process.stdout.write(response.token);
     }
 );
 ```

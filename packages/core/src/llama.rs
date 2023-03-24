@@ -11,8 +11,8 @@ use crate::types::{
   InferenceResult, InferenceToken, LLamaArguments, LLamaCommand, LLamaConfig, LoadModelResult,
 };
 use llama_rs::{
-  InferenceParameters, InferenceSessionParameters, Model, ModelKVMemoryType, OutputToken,
-  TokenBias, Vocabulary, EOD_TOKEN_ID,
+  InferenceError, InferenceParameters, InferenceSessionParameters, Model, ModelKVMemoryType,
+  OutputToken, TokenBias, Vocabulary, EOD_TOKEN_ID,
 };
 use napi::bindgen_prelude::BigInt;
 use rand::SeedableRng;
@@ -207,13 +207,31 @@ impl LLamaInternal {
       rand::rngs::StdRng::from_entropy()
     };
 
+    let feed_prompt = params.feed_prompt.unwrap_or(false);
+
+    if let Err(InferenceError::ContextFull) =
+      session.feed_prompt::<Infallible>(model, vocab, &inference_params, &params.prompt, |_| Ok(()))
+    {
+      sender
+        .send(InferenceResult::InferenceError(
+          "Context window full, stopping inference.".to_string(),
+        ))
+        .unwrap();
+    }
+
     let ended = Arc::new(Mutex::new(false));
+
+    let inference_input = if feed_prompt {
+      "".to_string()
+    } else {
+      params.prompt
+    };
 
     let res = session.inference_with_prompt::<Infallible>(
       &model,
       &vocab,
       &inference_params,
-      &params.prompt,
+      &inference_input,
       Some(num_predict),
       &mut rng,
       |t| {
@@ -244,33 +262,32 @@ impl LLamaInternal {
 
     if *ended == false {
       sender
-        .send(InferenceResult::InferenceEnd(Some(
+        .send(InferenceResult::InferenceError(
           "Inference terminated".to_string(),
-        )))
+        ))
         .unwrap();
     }
 
     match res {
-      Ok(_) => {
-        sender.send(InferenceResult::InferenceEnd(None)).unwrap();
-      }
+      Ok(_) => {}
       Err(llama_rs::InferenceError::ContextFull) => {
         sender
-          .send(InferenceResult::InferenceEnd(Some(
+          .send(InferenceResult::InferenceError(
             "Context window full, stopping inference.".to_string(),
-          )))
+          ))
           .unwrap();
         log::warn!("Context window full, stopping inference.")
       }
       Err(llama_rs::InferenceError::TokenizationFailed) => {
         sender
-          .send(InferenceResult::InferenceEnd(Some(
+          .send(InferenceResult::InferenceError(
             "Failed to tokenize initial prompt.".to_string(),
-          )))
+          ))
           .unwrap();
       }
       Err(llama_rs::InferenceError::UserCallback(_)) => unreachable!("cannot fail"),
     }
+    sender.send(InferenceResult::InferenceEnd).unwrap();
   }
 }
 
