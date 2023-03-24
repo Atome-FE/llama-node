@@ -1,6 +1,5 @@
 use std::sync::mpsc::Sender;
-
-use napi::bindgen_prelude::BigInt;
+use napi::bindgen_prelude::{BigInt};
 
 #[napi(object)]
 #[derive(Clone, Debug)]
@@ -42,6 +41,9 @@ pub struct LLamaArguments {
   pub num_predict: Option<BigInt>,
   pub repeat_last_n: Option<BigInt>,
   pub prompt: String,
+  pub float16: Option<bool>,
+  pub token_bias: Option<String>,
+  pub ignore_eos: Option<bool>,
 }
 
 #[derive(Clone, Debug)]

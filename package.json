@@ -1,6 +1,6 @@
 {
   "name": "llama-node",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -8,6 +8,7 @@
   "scripts": {
     "build": "tsup",
     "test:core": "npm t --workspaces=packages/core",
+    "start:core": "npm start --workspaces=packages/core",
     "build:core": "npm run build --workspaces=packages/core",
     "test": "tsx __test__/test.ts"
   },

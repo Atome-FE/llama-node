@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/core",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -33,7 +33,7 @@
     "build:debug": "napi build --platform",
 
     "test": "vitest",
-    "start": "node __test__/index.spec.mjs",
+    "start": "tsx example/inference.ts",
     "universal": "napi universal",
     "version": "napi version"
   },

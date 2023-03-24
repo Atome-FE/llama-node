@@ -10,7 +10,10 @@ use std::{
 use crate::types::{
   InferenceResult, InferenceToken, LLamaArguments, LLamaCommand, LLamaConfig, LoadModelResult,
 };
-use llama_rs::{InferenceParameters, Model, OutputToken, Vocabulary};
+use llama_rs::{
+  InferenceParameters, InferenceSessionParameters, Model, ModelKVMemoryType, OutputToken,
+  TokenBias, Vocabulary, EOD_TOKEN_ID,
+};
 use napi::bindgen_prelude::BigInt;
 use rand::SeedableRng;
 
@@ -23,6 +26,10 @@ pub struct LLamaChannel {
 struct LLamaInternal {
   model: Option<Model>,
   vocab: Option<Vocabulary>,
+}
+
+fn parse_bias(s: &str) -> Result<TokenBias, String> {
+  s.parse()
 }
 
 impl LLamaInternal {
@@ -121,7 +128,48 @@ impl LLamaInternal {
       .unwrap_or(BigInt::from(512 as u64))
       .get_u64()
       .1 as usize;
-    let mut session = model.start_session(repeat_last_n);
+    let float16 = params.float16.unwrap_or(false);
+
+    let inference_session_params = {
+      let mem_typ = if float16 {
+        ModelKVMemoryType::Float16
+      } else {
+        ModelKVMemoryType::Float32
+      };
+      InferenceSessionParameters {
+        memory_k_type: mem_typ,
+        memory_v_type: mem_typ,
+        last_n_size: repeat_last_n,
+      }
+    };
+
+    let ignore_eos = params.ignore_eos.unwrap_or(false);
+
+    let default_token_bias = if ignore_eos {
+      TokenBias::new(vec![(EOD_TOKEN_ID, -1.0)])
+    } else {
+      TokenBias::default()
+    };
+
+    let token_bias = if let Some(token_bias) = params.token_bias {
+      if let Ok(token_bias) = parse_bias(&token_bias.to_string()) {
+        token_bias
+      } else {
+        default_token_bias
+      }
+    } else {
+      default_token_bias
+    };
+
+    // let token_bias = params.token_bias.clone().unwrap_or_else(|| {
+    //   if ignore_eos {
+    //     TokenBias::new(vec![(EOD_TOKEN_ID, -1.0)])
+    //   } else {
+    //     TokenBias::default()
+    //   }
+    // });
+
+    let mut session = model.start_session(inference_session_params);
 
     let n_threads = params.n_threads.unwrap_or(4);
     let n_batch = params.n_batch.unwrap_or(BigInt::from(8 as u64)).get_u64().1 as usize;
@@ -134,6 +182,7 @@ impl LLamaInternal {
       top_p: params.top_p.unwrap_or(0.95) as f32,
       repeat_penalty: params.repeat_penalty.unwrap_or(1.30) as f32,
       temp: params.temp.unwrap_or(0.8) as f32,
+      bias_tokens: token_bias,
     };
 
     log::info!("repeat_last_n: {}", repeat_last_n);
@@ -212,6 +261,13 @@ impl LLamaInternal {
           )))
           .unwrap();
         log::warn!("Context window full, stopping inference.")
+      }
+      Err(llama_rs::InferenceError::TokenizationFailed) => {
+        sender
+          .send(InferenceResult::InferenceEnd(Some(
+            "Failed to tokenize initial prompt.".to_string(),
+          )))
+          .unwrap();
       }
       Err(llama_rs::InferenceError::UserCallback(_)) => unreachable!("cannot fail"),
     }

@@ -11,7 +11,15 @@ test(
             numCtxTokens: 128,
         });
 
-        const prompt = `test`;
+        const template = `how are you`;
+
+        const prompt = `Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+### Instruction:
+
+${template}
+
+### Response:`;
 
         const promise = () =>
             new Promise<boolean>((res) => {
@@ -19,7 +27,7 @@ test(
                     {
                         prompt,
                         numPredict: BigInt(128),
-                        temp: 0.8,
+                        temp: 0.2,
                         topP: 1,
                         topK: BigInt(40),
                         repeatPenalty: 1,

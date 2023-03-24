@@ -26,6 +26,9 @@ export interface LLamaArguments {
   numPredict?: bigint
   repeatLastN?: bigint
   prompt: string
+  float16?: boolean
+  tokenBias?: string
+  ignoreEos?: boolean
 }
 export class LLama {
   static enableLogger(): void
