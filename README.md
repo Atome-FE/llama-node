@@ -9,7 +9,7 @@ This project is in an ealy stage, the API for nodejs may change in the future, u
 
 # Introduction
 
-This is a nodejs client library for llama LLM built on top of [llama-rs](https://github.com/setzer22/llama-rs). It uses [napi-rs](https://github.com/napi-rs/napi-rs) as nodejs and native communications.
+This is a nodejs client library for llama LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs). It uses [napi-rs](https://github.com/napi-rs/napi-rs) as nodejs and native communications.
 
 Currently supported platforms:
 - darwin-x64
