@@ -5,7 +5,7 @@
 [<img alt="npm" src="https://img.shields.io/npm/v/llama-node">](https://www.npmjs.com/package/llama-node)
 ![npm type definitions](https://img.shields.io/npm/types/llama-node)
 
-This project is in an ealy stage, the API for nodejs may change in the future, use it with caution.
+This project is in an early stage, the API for nodejs may change in the future, use it with caution.
 
 # Introduction
 
