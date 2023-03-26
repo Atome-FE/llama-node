@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# this script aims to convert ggml old model to new version, from https://gist.github.com/eiz/828bddec6162a023114ce19146cb2b82
 import argparse
 import glob
 import os
