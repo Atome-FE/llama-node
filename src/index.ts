@@ -69,7 +69,7 @@ ${messages
     .join("\n")}
 ### Response:\n`;
         const completionParams = Object.assign({}, rest, {
-            prompt: this.createAlpacaPrompt(prompt),
+            prompt,
         });
         return this.createTextCompletion(completionParams, callback);
     };
