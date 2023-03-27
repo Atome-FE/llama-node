@@ -172,7 +172,7 @@ npm run build
 ---
 
 ## Future plan
+- [ ] expose tokenizer count
 - [ ] prompt extensions
 - [ ] more platforms and cross compile
-- [ ] better github CI
 - [ ] tweak embedding API, make end token configurable
