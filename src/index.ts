@@ -27,7 +27,12 @@ export class LLamaClient {
         this.llamaNode = LLamaNode.create(config);
     }
 
-    createPrompt = (
+    /**
+     * Create a prompt from alpaca template, can do instruct on alpaca model
+     * @param prompt string
+     * @returns string
+     */
+    createAlpacaPrompt = (
         prompt: string
     ) => `Below is an instruction that describes a task. Write a response that appropriately completes the request.
     
@@ -37,6 +42,13 @@ export class LLamaClient {
     
     ### Response:`;
 
+    /**
+     * wanting to create chat completion similar to openai's chatgpt
+     * not functioning actually, will change in the future
+     * @param params ChatParams
+     * @param callback CompletionCallback
+     * @returns Promise<boolean>
+     */
     createChatCompletion = (
         params: ChatParams,
         callback: CompletionCallback
@@ -52,11 +64,16 @@ Current date: ${data}
 ${messages.map(({ role, content }) => `${role}: ${content}`).join("\n")}
 assistant: `;
         const completionParams = Object.assign({}, rest, {
-            prompt: this.createPrompt(prompt),
+            prompt: this.createAlpacaPrompt(prompt),
         });
         return this.createTextCompletion(completionParams, callback);
     };
 
+    /**
+     * Get sentence embedding, currently end token is in rust program and set to "<end>"
+     * @param params LLamaArguments
+     * @returns Promise<number[]>
+     */
     getEmbedding = (params: LLamaArguments) => {
         return new Promise<number[]>((res, rej) => {
             this.llamaNode.getWordEmbeddings(params, (response) => {
@@ -72,6 +89,12 @@ assistant: `;
         });
     };
 
+    /**
+     * Create Text Completion
+     * @param params LLamaArguments
+     * @param callback CompletionCallback
+     * @returns Promise<boolean>
+     */
     createTextCompletion = (
         params: LLamaArguments,
         callback: CompletionCallback
