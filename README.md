@@ -82,6 +82,46 @@ llama.createTextCompletion(
 );
 ```
 
+### Chatting
+
+Working on alpaca, this just make a context of alpaca instructions. Make sure your last message is end with user role.
+
+```typescript
+import { LLamaClient } from "llama-node";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
+
+const llama = new LLamaClient(
+    {
+        path: model,
+        numCtxTokens: 128,
+    },
+    true
+);
+
+const content = "how are you?";
+
+llama.createChatCompletion(
+    {
+        messages: [{ role: "user", content }],
+        numPredict: BigInt(128),
+        temp: 0.2,
+        topP: 1,
+        topK: BigInt(40),
+        repeatPenalty: 1,
+        repeatLastN: BigInt(64),
+        seed: BigInt(0),
+    },
+    (response) => {
+        if (!response.completed) {
+            process.stdout.write(response.token);
+        }
+    }
+);
+
+```
+
 ### Embedding
 
 Preview version, embedding end token may change in the future. Do not use it in production!
