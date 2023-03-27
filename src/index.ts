@@ -64,12 +64,13 @@ ${messages
         ({ role, content }) =>
             `${
                 role === "user" ? "### Instruction:\n" : "### Response:\n"
-            }: ${content}\n`
+            }${content}\n`
     )
     .join("\n")}
 ### Response:\n`;
         const completionParams = Object.assign({}, rest, {
             prompt,
+            feedPrompt,
         });
         return this.createTextCompletion(completionParams, callback);
     };
