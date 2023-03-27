@@ -33,7 +33,7 @@
     "build:debug": "napi build --platform",
 
     "test": "vitest",
-    "start": "tsx example/inference.ts",
+    "start": "tsx example/embedding.ts",
     "universal": "napi universal",
     "version": "napi version"
   },
