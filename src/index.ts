@@ -5,7 +5,7 @@ import {
 } from "@llama-node/core";
 
 export interface ChatMessage {
-    role: "system" | "assistant" | "user";
+    role: "assistant" | "user";
     content: string;
 }
 
@@ -44,7 +44,7 @@ export class LLamaClient {
 
     /**
      * wanting to create chat completion similar to openai's chatgpt
-     * not functioning actually, will change in the future
+     * not sure it is functioning, may change in the future
      * @param params ChatParams
      * @param callback CompletionCallback
      * @returns Promise<boolean>
@@ -53,16 +53,21 @@ export class LLamaClient {
         params: ChatParams,
         callback: CompletionCallback
     ) => {
-        console.warn(
-            "The create chat completion function is just a simulation of dialog, it does not provide chatting interaction"
-        );
-        const data = new Date().toISOString();
-        const { messages, ...rest } = params;
-        const prompt = `You are AI assistant, please complete a dialog, where user interacts with AI assistant. AI assistant is helpful, kind, obedient, honest, and knows its own limits. AI assistant can do programming tasks and return codes.
-Knowledge cutoff: 2021-09-01
-Current date: ${data}
-${messages.map(({ role, content }) => `${role}: ${content}`).join("\n")}
-assistant: `;
+        const { messages, feedPrompt = true, ...rest } = params;
+        if (messages[messages.length - 1]?.role === "assistant") {
+            console.warn("ChatMessage must end with user instruction");
+        }
+        const prompt = `Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+${messages
+    .map(
+        ({ role, content }) =>
+            `${
+                role === "user" ? "### Instruction:\n" : "### Response:\n"
+            }: ${content}\n`
+    )
+    .join("\n")}
+### Response:\n`;
         const completionParams = Object.assign({}, rest, {
             prompt: this.createAlpacaPrompt(prompt),
         });
