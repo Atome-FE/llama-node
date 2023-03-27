@@ -88,9 +88,8 @@ assistant: `;
                         };
                         if (data.completed) {
                             completed = true;
-                        } else {
-                            callback(data);
                         }
+                        callback(data);
                         break;
                     }
                     case "END": {
