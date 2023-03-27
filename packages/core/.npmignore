@@ -12,3 +12,4 @@ __test__
 renovate.json
 *.bin
 tmp/
+src/

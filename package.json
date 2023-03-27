@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "tsup",
+    "type-check": "tsc --noEmit",
     "start": "tsx example/embedding.ts",
     "test:core": "npm t --workspaces=packages/core",
     "start:core": "npm start --workspaces=packages/core",

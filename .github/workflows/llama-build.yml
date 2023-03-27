@@ -34,7 +34,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
       - name: Install ziglang
         uses: goto-bus-stop/setup-zig@v1
         with:
@@ -42,6 +42,7 @@ jobs:
       - run: cargo install cargo-xwin
       - run: npm install
       - run: npm run --workspace=packages/core build
+      - run: npm run type-check
       # - uses: actions/upload-artifact@v3
       #   with:
       #     name: bindings-${{ matrix.targets }}

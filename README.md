@@ -1,15 +1,15 @@
 # llama-node
 
+This project is in an early stage, the API for nodejs may change in the future, use it with caution.
+
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml)
 ![NPM](https://img.shields.io/npm/l/llama-node)
 [<img alt="npm" src="https://img.shields.io/npm/v/llama-node">](https://www.npmjs.com/package/llama-node)
 ![npm type definitions](https://img.shields.io/npm/types/llama-node)
 
-This project is in an early stage, the API for nodejs may change in the future, use it with caution.
-
 # Introduction
 
-This is a nodejs client library for llama LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs). It uses [napi-rs](https://github.com/napi-rs/napi-rs) as nodejs and native communications.
+This is a nodejs client library for llama LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
 
 Currently supported platforms:
 - darwin-x64
@@ -21,8 +21,8 @@ Currently supported platforms:
 I do not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both gglm llama and gglm alpaca.
 
 Download one of the llama ggml models from the following links:
-- [llama 7B int4](https://huggingface.co/hlhr202/llama-7B-ggml-int4/blob/main/ggml-model-q4_0.bin)
-
+- [llama 7B int4 (old model for llama.cpp)](https://huggingface.co/hlhr202/llama-7B-ggml-int4/blob/main/ggml-model-q4_0.bin)
+- [alpaca 7B int4](https://huggingface.co/hlhr202/alpaca-7B-ggml-int4/blob/main/ggml-alpaca-7b-q4.bin)
 ---
 
 ## Install
@@ -135,4 +135,4 @@ npm run build
 - [ ] prompt extensions
 - [ ] more platforms and cross compile
 - [ ] better github CI
-- [ ] embeddeing API (need supports from llama-rs community)
+- [ ] tweak embedding API, make end token configurable
