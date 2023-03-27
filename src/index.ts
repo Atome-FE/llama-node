@@ -57,6 +57,21 @@ assistant: `;
         return this.createTextCompletion(completionParams, callback);
     };
 
+    getEmbedding = (params: LLamaArguments) => {
+        return new Promise<number[]>((res, rej) => {
+            this.llamaNode.getWordEmbeddings(params, (response) => {
+                switch (response.type) {
+                    case "DATA":
+                        res(response.data ?? []);
+                        break;
+                    case "ERROR":
+                        rej(response.message);
+                        break;
+                }
+            });
+        });
+    };
+
     createTextCompletion = (
         params: LLamaArguments,
         callback: CompletionCallback

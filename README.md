@@ -38,6 +38,8 @@ The current version supports only one inference session on one LLama instance at
 
 If you wish to have multiple inference sessions concurrently, you need to create multiple LLama instances
 
+### Inference
+
 ```typescript
 import path from "path";
 import { LLamaClient } from "llama-node";
@@ -78,6 +80,42 @@ llama.createTextCompletion(
         process.stdout.write(response.token);
     }
 );
+```
+
+### Embedding
+
+Preview version, embedding end token may change in the future. Do not use it in production!
+
+```typescript
+import { LLamaClient } from "llama-node";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
+
+const llama = new LLamaClient(
+    {
+        path: model,
+        numCtxTokens: 128,
+    },
+    true
+);
+
+const prompt = `how are you`;
+
+llama
+    .getEmbedding({
+        prompt,
+        numPredict: BigInt(128),
+        temp: 0.2,
+        topP: 1,
+        topK: BigInt(40),
+        repeatPenalty: 1,
+        repeatLastN: BigInt(64),
+        seed: BigInt(0),
+        feedPrompt: true,
+    })
+    .then(console.log);
+
 ```
 
 ---
