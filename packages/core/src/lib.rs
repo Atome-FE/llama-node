@@ -12,7 +12,7 @@ use std::{
 };
 
 use llama::LLamaChannel;
-use types::{InferenceResult, LLamaArguments, LLamaConfig, LoadModelResult};
+use types::{EmbeddingResult, InferenceResult, LLamaArguments, LLamaConfig, LoadModelResult};
 
 use napi::{
   bindgen_prelude::*,
@@ -66,6 +66,76 @@ impl LLama {
     }
 
     Ok(LLama { llama_channel })
+  }
+
+  #[napi(ts_args_type = "params: LLamaArguments,
+    callback: (result:
+      { type: 'ERROR', message: string } |
+      { type: 'DATA', data?: number[] }
+    ) => void")]
+  pub fn get_word_embeddings(&self, params: LLamaArguments, callback: JsFunction) -> Result<()> {
+    let (embedding_sender, embedding_receiver) = channel::<EmbeddingResult>();
+
+    let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> = callback
+      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<EmbeddingResult>| {
+        let mut obj = ctx.env.create_object().unwrap();
+        match ctx.value.clone() {
+          EmbeddingResult::EmbeddingData(data) => {
+            if let Some(array) = data {
+              let mut js_array = ctx.env.create_array_with_length(array.len()).unwrap();
+              for (i, d) in array.iter().enumerate() {
+                let item = ctx.env.create_double(*d as f64).unwrap();
+                js_array.set_element(i.try_into().unwrap(), item).unwrap();
+              }
+              obj.set_named_property("data", js_array).unwrap();
+            } else {
+              let js_array = ctx.env.create_array_with_length(0).unwrap();
+              obj.set_named_property("data", js_array).unwrap();
+            }
+            obj
+              .set_named_property("type", ctx.env.create_string("DATA").unwrap())
+              .unwrap();
+          }
+          EmbeddingResult::EmbeddingError(err) => {
+            let error = ctx.env.create_string(err.as_str()).unwrap();
+            obj
+              .set_named_property("type", ctx.env.create_string("ERROR").unwrap())
+              .unwrap();
+            obj.set_named_property("message", error).unwrap();
+          }
+        }
+        Ok(vec![obj])
+      })?;
+
+    let llama_channel = self.llama_channel.clone();
+
+    let tsfn = tsfn.clone();
+
+    llama_channel.get_word_embedding(params, embedding_sender);
+
+    thread::spawn(move || {
+      'waiting_embedding: loop {
+        let recv = embedding_receiver.recv();
+        match recv {
+          Ok(callback) => match callback {
+            EmbeddingResult::EmbeddingData(_) => {
+              tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
+              break 'waiting_embedding;
+            }
+            _ => {
+              tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
+            }
+          },
+          _ => {
+            thread::yield_now();
+          }
+        }
+      }
+      thread::sleep(time::Duration::from_millis(300)); // wait for end signal
+      tsfn.abort().unwrap();
+    });
+
+    Ok(())
   }
 
   #[napi(ts_args_type = "params: LLamaArguments,

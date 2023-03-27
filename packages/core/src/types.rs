@@ -15,6 +15,12 @@ pub enum InferenceResult {
   InferenceEnd,
 }
 
+#[derive(Clone, Debug)]
+pub enum EmbeddingResult {
+  EmbeddingError(String),
+  EmbeddingData(Option<Vec<f32>>)
+}
+
 #[napi(object)]
 #[derive(Clone, Debug)]
 pub struct LoadModelResult {
@@ -52,4 +58,5 @@ pub struct LLamaArguments {
 pub enum LLamaCommand {
   LoadModel(LLamaConfig, Sender<LoadModelResult>),
   Inference(LLamaArguments, Sender<InferenceResult>),
+  Embedding(LLamaArguments, Sender<EmbeddingResult>),
 }

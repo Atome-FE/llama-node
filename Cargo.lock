@@ -166,7 +166,7 @@ dependencies = [
 [[package]]
 name = "ggml-raw"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#bf7bdbcfff3114dcbdafb6eb7eed58f04f19b1c3"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#a067431773ba0194d6bc352faf40a770c1eac81c"
 dependencies = [
  "cc",
 ]
@@ -263,7 +263,7 @@ dependencies = [
 [[package]]
 name = "llama-rs"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#bf7bdbcfff3114dcbdafb6eb7eed58f04f19b1c3"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#a067431773ba0194d6bc352faf40a770c1eac81c"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -271,6 +271,7 @@ dependencies = [
  "partial_sort",
  "rand",
  "serde",
+ "serde_bytes",
  "thiserror",
 ]
 
@@ -555,6 +556,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771d4d9c4163ee138805e12c710dd365e4f44be8be0503cb1bb9eb989425d9c9"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde_bytes"
+version = "0.11.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "416bda436f9aab92e02c8e10d49a15ddd339cea90b6e340fe51ed97abb548294"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

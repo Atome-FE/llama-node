@@ -34,6 +34,11 @@ export interface LLamaArguments {
 export class LLama {
   static enableLogger(): void
   static create(config: LLamaConfig): LLama
+  getWordEmbeddings(params: LLamaArguments,
+  callback: (result:
+  { type: 'ERROR', message: string } |
+  { type: 'DATA', data?: number[] }
+  ) => void): void
   inference(params: LLamaArguments,
   callback: (result:
   { type: 'ERROR', message: string } |
