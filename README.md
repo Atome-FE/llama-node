@@ -21,7 +21,7 @@ Currently supported platforms:
 - win32-x64-msvc
 
 
-I do not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both gglm llama and gglm alpaca.
+I do not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both ggml llama and ggml alpaca.
 
 Download one of the llama ggml models from the following links:
 - [llama 7B int4 (old model for llama.cpp)](https://huggingface.co/hlhr202/llama-7B-ggml-int4/blob/main/ggml-model-q4_0.bin)
