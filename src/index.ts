@@ -96,6 +96,19 @@ ${messages
     };
 
     /**
+     * Get tokenization from string
+     * @param params string
+     * @returns Promise<number[]>
+     */
+    tokenize = (params: string) => {
+        return new Promise<number[]>((res) => {
+            this.llamaNode.tokenize(params, (response) => {
+                res(response.data);
+            });
+        });
+    };
+
+    /**
      * Create Text Completion
      * @param params LLamaArguments
      * @param callback CompletionCallback

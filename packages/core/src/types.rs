@@ -30,6 +30,12 @@ pub struct LoadModelResult {
 
 #[napi(object)]
 #[derive(Clone, Debug)]
+pub struct TokenizeResult {
+  pub data: Vec<i32>
+}
+
+#[napi(object)]
+#[derive(Clone, Debug)]
 pub struct LLamaConfig {
   pub path: String,
   pub num_ctx_tokens: Option<i32>,
@@ -59,4 +65,5 @@ pub enum LLamaCommand {
   LoadModel(LLamaConfig, Sender<LoadModelResult>),
   Inference(LLamaArguments, Sender<InferenceResult>),
   Embedding(LLamaArguments, Sender<EmbeddingResult>),
+  Tokenize(String, Sender<TokenizeResult>),
 }

@@ -11,6 +11,9 @@ export interface LoadModelResult {
   error: boolean
   message?: string
 }
+export interface TokenizeResult {
+  data: Array<number>
+}
 export interface LLamaConfig {
   path: string
   numCtxTokens?: number
@@ -34,6 +37,10 @@ export interface LLamaArguments {
 export class LLama {
   static enableLogger(): void
   static create(config: LLamaConfig): LLama
+  tokenize(params: string,
+  callback: (result:
+  { type: 'DATA', data: number[] }
+  ) => void): void
   getWordEmbeddings(params: LLamaArguments,
   callback: (result:
   { type: 'ERROR', message: string } |

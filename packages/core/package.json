@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/core",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -33,7 +33,7 @@
     "build:debug": "napi build --platform",
 
     "test": "vitest",
-    "start": "tsx example/embedding.ts",
+    "start": "tsx example/tokenize.ts",
     "universal": "napi universal",
     "version": "napi version"
   },

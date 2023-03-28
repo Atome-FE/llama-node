@@ -9,7 +9,7 @@ use std::{
 
 use crate::types::{
   EmbeddingResult, InferenceResult, InferenceToken, LLamaArguments, LLamaCommand, LLamaConfig,
-  LoadModelResult,
+  LoadModelResult, TokenizeResult,
 };
 use llama_rs::{
   EvaluateOutputRequest, InferenceError, InferenceParameters, InferenceSession,
@@ -115,6 +115,13 @@ impl LLamaInternal {
         })
         .unwrap();
     }
+  }
+
+  pub fn tokenize(&mut self, text: String, sender: Sender<TokenizeResult>) {
+    let model = self.model.as_ref().unwrap();
+    let vocab = self.vocab.as_ref().unwrap();
+    let tokens = model.tokenize(vocab, &text, false).unwrap();
+    sender.send(TokenizeResult { data: tokens }).unwrap();
   }
 
   fn get_inference_params(&self, params: LLamaArguments) -> InferenceParameters {
@@ -374,6 +381,13 @@ impl LLamaChannel {
       .unwrap()
   }
 
+  pub fn tokenize(&self, text: String, sender: Sender<TokenizeResult>) {
+    self
+      .command_sender
+      .send(LLamaCommand::Tokenize(text, sender))
+      .unwrap();
+  }
+
   // llama instance main loop
   pub fn spawn(&self) {
     let rv = self.command_receiver.clone();
@@ -397,6 +411,9 @@ impl LLamaChannel {
           }
           Ok(LLamaCommand::Embedding(params, sender)) => {
             llama.get_word_embedding(params, sender);
+          }
+          Ok(LLamaCommand::Tokenize(text, sender)) => {
+            llama.tokenize(text, sender);
           }
           Err(TryRecvError::Disconnected) => {
             break 'llama_loop;

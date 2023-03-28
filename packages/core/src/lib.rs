@@ -12,7 +12,9 @@ use std::{
 };
 
 use llama::LLamaChannel;
-use types::{EmbeddingResult, InferenceResult, LLamaArguments, LLamaConfig, LoadModelResult};
+use types::{
+  EmbeddingResult, InferenceResult, LLamaArguments, LLamaConfig, LoadModelResult, TokenizeResult,
+};
 
 use napi::{
   bindgen_prelude::*,
@@ -66,6 +68,55 @@ impl LLama {
     }
 
     Ok(LLama { llama_channel })
+  }
+
+  #[napi(ts_args_type = "params: string,
+    callback: (result:
+      { type: 'DATA', data: number[] }
+    ) => void")]
+  pub fn tokenize(&self, params: String, callback: JsFunction) -> Result<()> {
+    let (tokenize_sender, tokenize_receiver) = channel::<TokenizeResult>();
+
+    let tsfn: ThreadsafeFunction<TokenizeResult, ErrorStrategy::Fatal> = callback
+      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<TokenizeResult>| {
+        let mut obj = ctx.env.create_object().unwrap();
+        let array = ctx.value.data;
+        let mut js_array = ctx.env.create_array_with_length(array.len()).unwrap();
+        for (i, d) in array.iter().enumerate() {
+          let item = ctx.env.create_int32(*d).unwrap();
+          js_array.set_element(i.try_into().unwrap(), item).unwrap();
+        }
+        obj
+          .set_named_property("type", ctx.env.create_string("DATA"))
+          .unwrap();
+        obj.set_named_property("data", js_array).unwrap();
+        Ok(vec![obj])
+      })?;
+
+    let llama_channel = self.llama_channel.clone();
+
+    let tsfn = tsfn.clone();
+
+    llama_channel.tokenize(params, tokenize_sender);
+
+    thread::spawn(move || {
+      'waiting_embedding: loop {
+        let recv = tokenize_receiver.recv();
+        match recv {
+          Ok(callback) => {
+            tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
+            break 'waiting_embedding;
+          }
+          _ => {
+            thread::yield_now();
+          }
+        }
+      }
+      thread::sleep(time::Duration::from_millis(300)); // wait for end signal
+      tsfn.abort().unwrap();
+    });
+
+    Ok(())
   }
 
   #[napi(ts_args_type = "params: LLamaArguments,

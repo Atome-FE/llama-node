@@ -1,6 +1,6 @@
 {
   "name": "llama-node",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsup",
     "type-check": "tsc --noEmit",
-    "start": "tsx example/chat.ts",
+    "start": "tsx example/tokenize.ts",
     "test:core": "npm t --workspaces=packages/core",
     "start:core": "npm start --workspaces=packages/core",
     "build:core": "npm run build --workspaces=packages/core",
@@ -38,9 +38,9 @@
     "vitest": "^0.29.7"
   },
   "dependencies": {
-    "@llama-node/core": "0.0.10"
+    "@llama-node/core": "0.0.11"
   },
   "peerDependencies": {
-    "@llama-node/core": "0.0.10"
+    "@llama-node/core": "0.0.11"
   }
 }

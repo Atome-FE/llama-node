@@ -125,6 +125,29 @@ llama.createChatCompletion(
 
 ```
 
+### Tokenize
+
+Get tokenization result from LLaMA
+
+```typescript
+import { LLamaClient } from "llama-node";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
+
+const llama = new LLamaClient(
+    {
+        path: model,
+        numCtxTokens: 128,
+    },
+    true
+);
+
+const content = "how are you?";
+
+llama.tokenize(content).then(console.log);
+```
+
 ### Embedding
 
 Preview version, embedding end token may change in the future. Do not use it in production!
@@ -175,7 +198,6 @@ npm run build
 ---
 
 ## Future plan
-- [ ] expose tokenizer count
 - [ ] prompt extensions
 - [ ] more platforms and cross compile
 - [ ] tweak embedding API, make end token configurable
