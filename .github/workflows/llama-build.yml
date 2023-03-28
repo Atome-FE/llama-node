@@ -1,4 +1,4 @@
-name: Pure Rust project build on Linux
+name: LLama for nodejs
 on:
   push:
     branches:
@@ -21,9 +21,10 @@ jobs:
       matrix:
         targets:
           [
-            'x86_64-apple-darwin',
             'aarch64-apple-darwin',
+            'x86_64-apple-darwin',
             'x86_64-unknown-linux-gnu',
+            'x86_64-pc-windows-msvc'
             # 'aarch64-unknown-linux-gnu',
           ]
     runs-on: ubuntu-latest
@@ -46,11 +47,11 @@ jobs:
       - run: npm install
       - run: npm run --workspace=packages/core build
       - run: npm run type-check
-      # - uses: actions/upload-artifact@v3
-      #   with:
-      #     name: bindings-${{ matrix.targets }}
-      #     path: 01-pure-rust/*.node
-      #     if-no-files-found: error
+      - uses: actions/upload-artifact@v3
+        with:
+          name: bindings-${{ matrix.targets }}
+          path: packages/core/@llama-node/*.node
+          if-no-files-found: error
   # test-host:
   #   strategy:
   #     fail-fast: false
