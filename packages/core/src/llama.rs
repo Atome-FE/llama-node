@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::types::{
-  EmbeddingResult, InferenceResult, InferenceToken, LLamaArguments, LLamaCommand, LLamaConfig,
+  EmbeddingResult, InferenceResult, InferenceToken, LLamaInferenceArguments, LLamaCommand, LLamaConfig,
   LoadModelResult, TokenizeResult,
 };
 use llama_rs::{
@@ -124,7 +124,7 @@ impl LLamaInternal {
     sender.send(TokenizeResult { data: tokens }).unwrap();
   }
 
-  fn get_inference_params(&self, params: LLamaArguments) -> InferenceParameters {
+  fn get_inference_params(&self, params: LLamaInferenceArguments) -> InferenceParameters {
     let ignore_eos = params.ignore_eos.unwrap_or(false);
 
     let default_token_bias = if ignore_eos {
@@ -179,7 +179,7 @@ impl LLamaInternal {
     inference_params
   }
 
-  fn start_new_session(&self, params: LLamaArguments) -> InferenceSession {
+  fn start_new_session(&self, params: LLamaInferenceArguments) -> InferenceSession {
     let model = self.model.as_ref().unwrap();
     let repeat_last_n = params
       .repeat_last_n
@@ -205,12 +205,12 @@ impl LLamaInternal {
     session
   }
 
-  pub fn get_word_embedding(&self, params: LLamaArguments, sender: Sender<EmbeddingResult>) {
+  pub fn get_word_embedding(&self, params: LLamaInferenceArguments, sender: Sender<EmbeddingResult>) {
     let mut session = self.start_new_session(params.clone());
     let inference_params = self.get_inference_params(params.clone());
     let model = self.model.as_ref().unwrap();
     let vocab = self.vocab.as_ref().unwrap();
-    let prompt_for_feed = format!("{} <end", params.prompt.clone().as_str());
+    let prompt_for_feed = params.prompt.clone();
 
     if let Err(InferenceError::ContextFull) =
       session.feed_prompt::<Infallible>(model, vocab, &inference_params, &prompt_for_feed, |_| {
@@ -223,12 +223,14 @@ impl LLamaInternal {
         ))
         .unwrap();
     }
-    let end_token = model.tokenize(vocab, ">", false).unwrap();
+
+    let end_token = vec![EOD_TOKEN_ID];
 
     let mut output_request = EvaluateOutputRequest {
       all_logits: None,
       embeddings: Some(Vec::new()),
     };
+
     model.evaluate(
       &mut session,
       &inference_params,
@@ -241,7 +243,7 @@ impl LLamaInternal {
       .unwrap();
   }
 
-  pub fn inference(&mut self, params: LLamaArguments, sender: Sender<InferenceResult>) {
+  pub fn inference(&mut self, params: LLamaInferenceArguments, sender: Sender<InferenceResult>) {
     let num_predict = params
       .num_predict
       .clone()
@@ -367,14 +369,14 @@ impl LLamaChannel {
       .unwrap();
   }
 
-  pub fn inference(&self, params: LLamaArguments, sender: Sender<InferenceResult>) {
+  pub fn inference(&self, params: LLamaInferenceArguments, sender: Sender<InferenceResult>) {
     self
       .command_sender
       .send(LLamaCommand::Inference(params, sender))
       .unwrap();
   }
 
-  pub fn get_word_embedding(&self, params: LLamaArguments, sender: Sender<EmbeddingResult>) {
+  pub fn get_word_embedding(&self, params: LLamaInferenceArguments, sender: Sender<EmbeddingResult>) {
     self
       .command_sender
       .send(LLamaCommand::Embedding(params, sender))

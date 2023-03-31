@@ -43,7 +43,7 @@ pub struct LLamaConfig {
 
 #[napi(object)]
 #[derive(Clone, Debug)]
-pub struct LLamaArguments {
+pub struct LLamaInferenceArguments {
   pub n_threads: Option<i32>,
   pub n_batch: Option<BigInt>,
   pub top_k: Option<BigInt>,
@@ -63,7 +63,7 @@ pub struct LLamaArguments {
 #[derive(Clone, Debug)]
 pub enum LLamaCommand {
   LoadModel(LLamaConfig, Sender<LoadModelResult>),
-  Inference(LLamaArguments, Sender<InferenceResult>),
-  Embedding(LLamaArguments, Sender<EmbeddingResult>),
+  Inference(LLamaInferenceArguments, Sender<InferenceResult>),
+  Embedding(LLamaInferenceArguments, Sender<EmbeddingResult>),
   Tokenize(String, Sender<TokenizeResult>),
 }
