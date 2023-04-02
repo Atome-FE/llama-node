@@ -11,12 +11,12 @@ export const Counter => {`;
 client.createTextCompletion(
     {
         prompt,
-        numPredict: BigInt(2048),
+        numPredict: 2048,
         temp: 0.2,
         topP: 0.8,
-        topK: BigInt(40),
+        topK: 40,
         repeatPenalty: 1,
-        repeatLastN: BigInt(512),
+        repeatLastN: 512,
     },
     (res) => {
         process.stdout.write(res.token);

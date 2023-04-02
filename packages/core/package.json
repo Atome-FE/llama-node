@@ -16,6 +16,7 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^2.14.8",
+    "@tensorflow/tfjs-node": "^4.2.0",
     "@types/node": "^18.15.3",
     "tsx": "^3.12.6",
     "typescript": "^5.0.2"
@@ -31,9 +32,12 @@
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-
     "test": "vitest",
     "start": "tsx example/embedding.ts",
+    "embedding": "tsx example/embedding.ts",
+    "inference": "tsx example/inference.ts",
+    "tokenize": "tsx example/tokenize.ts",
+    "semantic-compare": "python example/semantic-compare/compare.py",
     "universal": "napi universal",
     "version": "napi version"
   },

@@ -20,14 +20,14 @@ export interface LLamaConfig {
 }
 export interface LLamaInferenceArguments {
   nThreads?: number
-  nBatch?: bigint
-  topK?: bigint
+  nBatch?: number
+  topK?: number
   topP?: number
   repeatPenalty?: number
   temp?: number
-  seed?: bigint
-  numPredict?: bigint
-  repeatLastN?: bigint
+  seed?: number
+  numPredict?: number
+  repeatLastN?: number
   prompt: string
   float16?: boolean
   tokenBias?: string

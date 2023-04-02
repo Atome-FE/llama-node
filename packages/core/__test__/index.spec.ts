@@ -26,13 +26,13 @@ ${template}
                 llama.inference(
                     {
                         prompt,
-                        numPredict: BigInt(128),
+                        numPredict: 128,
                         temp: 0.2,
                         topP: 1,
-                        topK: BigInt(40),
+                        topK: 40,
                         repeatPenalty: 1,
-                        repeatLastN: BigInt(64),
-                        seed: BigInt(0),
+                        repeatLastN: 64,
+                        seed: 0,
                     },
                     (response) => {
                         switch (response.type) {
