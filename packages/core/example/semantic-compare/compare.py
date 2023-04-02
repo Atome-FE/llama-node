@@ -21,5 +21,5 @@ def compute_similarity(v1, v2):
     return torch.cosine_similarity(v1, v2, dim=0)
 
 
-print(compute_similarity(dog1, dog2))
-print(compute_similarity(dog1, cat1))
+print(compute_similarity(dog1, dog2)) # 0.8430
+print(compute_similarity(dog1, cat1)) # 0.9792
