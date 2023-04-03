@@ -49,7 +49,7 @@ The following steps will allow you to compile the binary with best quality on yo
 
 - Under packages/core folder, run
     ```shell
-    npm build
+    npm run build
     ```
 
 - You can use the dist under root folder
