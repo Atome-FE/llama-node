@@ -31,7 +31,7 @@ I do not have hardware for testing 13B or larger models, but I have tested it su
 
 ## Performance related
 
-Due to complexity of cross compilation, it is hardly for pre-build a binary that fits your platform needs with best performance.
+Due to complexity of cross compilation, it is hard for pre-build a binary that fits your platform needs with best performance.
 
 Currently I would strongly suggest you do a manual compilation. Otherwise you have to wait for a better pre-compiled native binding. I am trying to investigate the way to produce a matrix of multi-platform supports.
 
