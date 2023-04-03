@@ -23,9 +23,18 @@ Currently supported platforms:
 
 I do not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both ggml llama and ggml alpaca.
 
-Download one of the llama ggml models from the following links:
+<!-- Download one of the llama ggml models from the following links:
 - [llama 7B int4 (old model for llama.cpp)](https://huggingface.co/hlhr202/llama-7B-ggml-int4/blob/main/ggml-model-q4_0.bin)
-- [alpaca 7B int4](https://huggingface.co/hlhr202/alpaca-7B-ggml-int4/blob/main/ggml-alpaca-7b-q4.bin)
+- [alpaca 7B int4](https://huggingface.co/hlhr202/alpaca-7B-ggml-int4/blob/main/ggml-alpaca-7b-q4.bin) -->
+
+---
+
+## Performance related
+
+Due to complexity of cross compilation, it is hardly for pre-build a binary that fits your platform needs with best performance.
+
+Currently I would strongly suggest you do a manual compilation. Otherwise you have to wait for a better pre-compiled native binding. I am trying to investigate the way to produce a matrix of multi-platform supports.
+
 ---
 
 ## Install
@@ -199,5 +208,5 @@ npm run build
 
 ## Future plan
 - [ ] prompt extensions
-- [ ] more platforms and cross compile
+- [ ] more platforms and cross compile (performance related)
 - [ ] tweak embedding API, make end token configurable
