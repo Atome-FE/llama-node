@@ -35,6 +35,25 @@ Due to complexity of cross compilation, it is hard for pre-build a binary that f
 
 Currently I would strongly suggest you do a manual compilation. Otherwise you have to wait for a better pre-compiled native binding. I am trying to investigate the way to produce a matrix of multi-platform supports.
 
+### Manual compilation
+
+The following steps will allow you to compile the binary with best quality on your platform
+
+- Pre-request: install rust
+
+- Under root folder, run
+
+    ```shell
+    npm install && npm run build
+    ```
+
+- Under packages/core folder, run
+    ```shell
+    npm build
+    ```
+
+- You can use the dist under root folder
+
 ---
 
 ## Install
@@ -191,17 +210,6 @@ llama
     })
     .then(console.log);
 
-```
-
----
-
-## Self built
-
-Make sure you have installed rust
-
-```bash
-cd packages/core
-npm run build
 ```
 
 ---
