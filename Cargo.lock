@@ -164,9 +164,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "ggml-raw"
+name = "ggml"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#a067431773ba0194d6bc352faf40a770c1eac81c"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#57440bffb0d946acf73b37e85498c77fc9dfe715"
+dependencies = [
+ "ggml-sys",
+]
+
+[[package]]
+name = "ggml-sys"
+version = "0.1.0"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#57440bffb0d946acf73b37e85498c77fc9dfe715"
 dependencies = [
  "cc",
 ]
@@ -263,11 +271,11 @@ dependencies = [
 [[package]]
 name = "llama-rs"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#a067431773ba0194d6bc352faf40a770c1eac81c"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#57440bffb0d946acf73b37e85498c77fc9dfe715"
 dependencies = [
  "bincode",
  "bytemuck",
- "ggml-raw",
+ "ggml",
  "partial_sort",
  "rand",
  "serde",

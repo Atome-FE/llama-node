@@ -18,16 +18,16 @@ export interface LLamaConfig {
   path: string
   numCtxTokens?: number
 }
-export interface LLamaArguments {
+export interface LLamaInferenceArguments {
   nThreads?: number
-  nBatch?: bigint
-  topK?: bigint
+  nBatch?: number
+  topK?: number
   topP?: number
   repeatPenalty?: number
   temp?: number
-  seed?: bigint
-  numPredict?: bigint
-  repeatLastN?: bigint
+  seed?: number
+  numPredict?: number
+  repeatLastN?: number
   prompt: string
   float16?: boolean
   tokenBias?: string
@@ -41,12 +41,12 @@ export class LLama {
   callback: (result:
   { type: 'DATA', data: number[] }
   ) => void): void
-  getWordEmbeddings(params: LLamaArguments,
+  getWordEmbeddings(params: LLamaInferenceArguments,
   callback: (result:
   { type: 'ERROR', message: string } |
   { type: 'DATA', data?: number[] }
   ) => void): void
-  inference(params: LLamaArguments,
+  inference(params: LLamaInferenceArguments,
   callback: (result:
   { type: 'ERROR', message: string } |
   { type: 'DATA', data: InferenceToken } |

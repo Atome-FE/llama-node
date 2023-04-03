@@ -8,15 +8,13 @@ use std::{
 };
 
 use crate::types::{
-  EmbeddingResult, InferenceResult, InferenceToken, LLamaArguments, LLamaCommand, LLamaConfig,
-  LoadModelResult, TokenizeResult,
+  EmbeddingResult, InferenceResult, InferenceToken, LLamaCommand, LLamaConfig,
+  LLamaInferenceArguments, LoadModelResult, TokenizeResult,
 };
 use llama_rs::{
   EvaluateOutputRequest, InferenceError, InferenceParameters, InferenceSession,
-  InferenceSessionParameters, Model, ModelKVMemoryType, OutputToken, TokenBias, Vocabulary,
-  EOD_TOKEN_ID,
+  InferenceSessionParameters, Model, ModelKVMemoryType, TokenBias, Vocabulary, EOT_TOKEN_ID,
 };
-use napi::bindgen_prelude::BigInt;
 use rand::SeedableRng;
 
 #[derive(Clone)]
@@ -45,57 +43,54 @@ impl LLamaInternal {
 
     let sender = sender.clone();
 
-    if let Ok((model, vocab)) = llama_rs::Model::load(params.path, num_ctx_tokens, |progress| {
-      use llama_rs::LoadProgress;
-      match progress {
-        LoadProgress::HyperparametersLoaded(hparams) => {
-          log::debug!("Loaded HyperParams {hparams:#?}")
-        }
-        LoadProgress::BadToken { index } => {
-          log::info!("Warning: Bad token in vocab at index {index}")
-        }
-        LoadProgress::ContextSize { bytes } => log::info!(
-          "ggml ctx size = {:.2} MB\n",
-          bytes as f64 / (1024.0 * 1024.0)
-        ),
-        LoadProgress::MemorySize { bytes, n_mem } => log::info!(
-          "Memory size: {} MB {}",
-          bytes as f32 / 1024.0 / 1024.0,
-          n_mem
-        ),
-        LoadProgress::PartLoading {
-          file,
-          current_part,
-          total_parts,
-        } => log::info!(
-          "Loading model part {}/{} from '{}'\n",
-          current_part,
-          total_parts,
-          file.to_string_lossy(),
-        ),
-        LoadProgress::PartTensorLoaded {
-          current_tensor,
-          tensor_count,
-          ..
-        } => {
-          if current_tensor % 8 == 0 {
-            log::info!("Loaded tensor {current_tensor}/{tensor_count}");
+    if let Ok((model, vocab)) =
+      llama_rs::Model::load(params.path, num_ctx_tokens as usize, |progress| {
+        use llama_rs::LoadProgress;
+        match progress {
+          LoadProgress::HyperparametersLoaded(hparams) => {
+            log::debug!("Loaded HyperParams {hparams:#?}")
+          }
+          LoadProgress::BadToken { index } => {
+            log::info!("Warning: Bad token in vocab at index {index}")
+          }
+          LoadProgress::ContextSize { bytes } => log::info!(
+            "ggml ctx size = {:.2} MB\n",
+            bytes as f64 / (1024.0 * 1024.0)
+          ),
+          LoadProgress::PartLoading {
+            file,
+            current_part,
+            total_parts,
+          } => log::info!(
+            "Loading model part {}/{} from '{}'\n",
+            current_part,
+            total_parts,
+            file.to_string_lossy(),
+          ),
+          LoadProgress::PartTensorLoaded {
+            current_tensor,
+            tensor_count,
+            ..
+          } => {
+            if current_tensor % 8 == 0 {
+              log::info!("Loaded tensor {current_tensor}/{tensor_count}");
+            }
+          }
+          LoadProgress::PartLoaded {
+            file,
+            byte_size,
+            tensor_count,
+          } => {
+            log::info!("Loading of '{}' complete", file.to_string_lossy());
+            log::info!(
+              "Model size = {:.2} MB / num tensors = {}",
+              byte_size as f64 / 1024.0 / 1024.0,
+              tensor_count
+            );
           }
         }
-        LoadProgress::PartLoaded {
-          file,
-          byte_size,
-          tensor_count,
-        } => {
-          log::info!("Loading of '{}' complete", file.to_string_lossy());
-          log::info!(
-            "Model size = {:.2} MB / num tensors = {}",
-            byte_size as f64 / 1024.0 / 1024.0,
-            tensor_count
-          );
-        }
-      }
-    }) {
+      })
+    {
       self.model = Some(model);
       self.vocab = Some(vocab);
 
@@ -117,18 +112,27 @@ impl LLamaInternal {
     }
   }
 
-  pub fn tokenize(&mut self, text: String, sender: Sender<TokenizeResult>) {
-    let model = self.model.as_ref().unwrap();
+  pub fn tokenize(&self, text: String, sender: Option<Sender<TokenizeResult>>) -> Vec<i32> {
     let vocab = self.vocab.as_ref().unwrap();
-    let tokens = model.tokenize(vocab, &text, false).unwrap();
-    sender.send(TokenizeResult { data: tokens }).unwrap();
+    let tokens = vocab
+      .tokenize(&text, false)
+      .unwrap()
+      .iter()
+      .map(|(_, tid)| tid.clone())
+      .collect::<Vec<_>>();
+    if let Some(sender) = sender {
+      sender
+        .send(TokenizeResult { data: tokens.clone() })
+        .unwrap();
+    }
+    tokens
   }
 
-  fn get_inference_params(&self, params: LLamaArguments) -> InferenceParameters {
+  fn get_inference_params(&self, params: LLamaInferenceArguments) -> InferenceParameters {
     let ignore_eos = params.ignore_eos.unwrap_or(false);
 
     let default_token_bias = if ignore_eos {
-      TokenBias::new(vec![(EOD_TOKEN_ID, -1.0)])
+      TokenBias::new(vec![(EOT_TOKEN_ID, -1.0)])
     } else {
       TokenBias::default()
     };
@@ -151,9 +155,10 @@ impl LLamaInternal {
     //   }
     // });
 
-    let n_threads = params.n_threads.unwrap_or(4);
-    let n_batch = params.n_batch.unwrap_or(BigInt::from(8 as u64)).get_u64().1 as usize;
-    let top_k = params.top_k.unwrap_or(BigInt::from(30 as u64)).get_u64().1 as usize;
+    let n_threads = params.n_threads.unwrap_or(4) as usize;
+    let n_batch = params.n_batch.unwrap_or(8) as usize;
+    let top_k = params.top_k.unwrap_or(30) as usize;
+    let temperature = params.temp.unwrap_or(0.8) as f32;
 
     let inference_params = InferenceParameters {
       n_threads,
@@ -161,7 +166,7 @@ impl LLamaInternal {
       top_k,
       top_p: params.top_p.unwrap_or(0.95) as f32,
       repeat_penalty: params.repeat_penalty.unwrap_or(1.30) as f32,
-      temp: params.temp.unwrap_or(0.8) as f32,
+      temperature,
       bias_tokens: token_bias,
       play_back_previous_tokens: false,
       ..Default::default()
@@ -173,19 +178,15 @@ impl LLamaInternal {
     log::info!("top_k: {}", inference_params.top_k);
     log::info!("top_p: {}", inference_params.top_p);
     log::info!("repeat_penalty: {}", inference_params.repeat_penalty);
-    log::info!("temp: {}", inference_params.temp);
+    log::info!("temp: {}", inference_params.temperature);
     // log::info!("seed: {:?}", seed);
 
     inference_params
   }
 
-  fn start_new_session(&self, params: LLamaArguments) -> InferenceSession {
+  fn start_new_session(&self, params: LLamaInferenceArguments) -> InferenceSession {
     let model = self.model.as_ref().unwrap();
-    let repeat_last_n = params
-      .repeat_last_n
-      .unwrap_or(BigInt::from(512 as u64))
-      .get_u64()
-      .1 as usize;
+    let repeat_last_n = params.repeat_last_n.unwrap_or(512) as usize;
     let float16 = params.float16.unwrap_or(false);
 
     let inference_session_params = {
@@ -205,15 +206,19 @@ impl LLamaInternal {
     session
   }
 
-  pub fn get_word_embedding(&self, params: LLamaArguments, sender: Sender<EmbeddingResult>) {
+  pub fn get_word_embedding(
+    &self,
+    params: LLamaInferenceArguments,
+    sender: Sender<EmbeddingResult>,
+  ) {
     let mut session = self.start_new_session(params.clone());
     let inference_params = self.get_inference_params(params.clone());
     let model = self.model.as_ref().unwrap();
     let vocab = self.vocab.as_ref().unwrap();
-    let prompt_for_feed = format!("{} <end", params.prompt.clone().as_str());
+    let prompt_for_feed = format!(" {}", params.prompt);
 
     if let Err(InferenceError::ContextFull) =
-      session.feed_prompt::<Infallible>(model, vocab, &inference_params, &prompt_for_feed, |_| {
+      session.feed_prompt::<Infallible>(model, vocab, &inference_params, prompt_for_feed.as_str(), |_| {
         Ok(())
       })
     {
@@ -223,12 +228,14 @@ impl LLamaInternal {
         ))
         .unwrap();
     }
-    let end_token = model.tokenize(vocab, ">", false).unwrap();
+
+    let end_token = self.tokenize("\n".to_string(), None);
 
     let mut output_request = EvaluateOutputRequest {
       all_logits: None,
       embeddings: Some(Vec::new()),
     };
+
     model.evaluate(
       &mut session,
       &inference_params,
@@ -241,20 +248,15 @@ impl LLamaInternal {
       .unwrap();
   }
 
-  pub fn inference(&mut self, params: LLamaArguments, sender: Sender<InferenceResult>) {
-    let num_predict = params
-      .num_predict
-      .clone()
-      .unwrap_or(BigInt::from(512 as u64))
-      .get_u64()
-      .1 as usize;
+  pub fn inference(&mut self, params: LLamaInferenceArguments, sender: Sender<InferenceResult>) {
+    let num_predict = params.num_predict.clone().unwrap_or(512) as usize;
     let model = self.model.as_ref().unwrap();
     let vocab = self.vocab.as_ref().unwrap();
 
     let prompt = params.prompt.clone();
     let feed_prompt = params.feed_prompt.unwrap_or(false);
     let seed = if let Some(seed) = params.seed.clone() {
-      Some(seed.get_u64().1)
+      Some(seed as u64)
     } else {
       None
     };
@@ -278,8 +280,6 @@ impl LLamaInternal {
         .unwrap();
     }
 
-    let ended = Arc::new(Mutex::new(false));
-
     let inference_input = if feed_prompt { "".to_string() } else { prompt };
 
     let res = session.inference_with_prompt::<Infallible>(
@@ -291,21 +291,10 @@ impl LLamaInternal {
       &mut rng,
       |t| {
         let sender = sender.clone();
-        let ended = ended.clone();
-        let to_send = match t {
-          OutputToken::Token(token) => InferenceResult::InferenceData(InferenceToken {
-            token: token.to_string(),
-            completed: false,
-          }),
-          OutputToken::EndOfText => {
-            let mut ended = ended.try_lock().unwrap();
-            *ended = true;
-            InferenceResult::InferenceData(InferenceToken {
-              token: "\n\n<end>\n".to_string(),
-              completed: true,
-            })
-          }
-        };
+        let to_send = InferenceResult::InferenceData(InferenceToken {
+          token: t.to_string(),
+          completed: false,
+        });
 
         sender.send(to_send).unwrap();
 
@@ -313,18 +302,18 @@ impl LLamaInternal {
       },
     );
 
-    let ended = ended.try_lock().unwrap();
-
-    if *ended == false {
-      sender
-        .send(InferenceResult::InferenceError(
-          "Inference terminated".to_string(),
-        ))
-        .unwrap();
-    }
-
     match res {
-      Ok(_) => {}
+      Ok(_) => {
+        let to_send = InferenceResult::InferenceData(InferenceToken {
+          token: "\n\n<end>\n".to_string(),
+          completed: true,
+        });
+        sender.send(to_send).unwrap();
+      }
+      Err(llama_rs::InferenceError::EndOfText) => {
+        let to_send = InferenceResult::InferenceError("End of text.".to_string());
+        sender.send(to_send).unwrap();
+      }
       Err(llama_rs::InferenceError::ContextFull) => {
         sender
           .send(InferenceResult::InferenceError(
@@ -367,14 +356,18 @@ impl LLamaChannel {
       .unwrap();
   }
 
-  pub fn inference(&self, params: LLamaArguments, sender: Sender<InferenceResult>) {
+  pub fn inference(&self, params: LLamaInferenceArguments, sender: Sender<InferenceResult>) {
     self
       .command_sender
       .send(LLamaCommand::Inference(params, sender))
       .unwrap();
   }
 
-  pub fn get_word_embedding(&self, params: LLamaArguments, sender: Sender<EmbeddingResult>) {
+  pub fn get_word_embedding(
+    &self,
+    params: LLamaInferenceArguments,
+    sender: Sender<EmbeddingResult>,
+  ) {
     self
       .command_sender
       .send(LLamaCommand::Embedding(params, sender))
@@ -413,7 +406,7 @@ impl LLamaChannel {
             llama.get_word_embedding(params, sender);
           }
           Ok(LLamaCommand::Tokenize(text, sender)) => {
-            llama.tokenize(text, sender);
+            llama.tokenize(text, Some(sender));
           }
           Err(TryRecvError::Disconnected) => {
             break 'llama_loop;

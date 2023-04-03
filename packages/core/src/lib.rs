@@ -13,7 +13,7 @@ use std::{
 
 use llama::LLamaChannel;
 use types::{
-  EmbeddingResult, InferenceResult, LLamaArguments, LLamaConfig, LoadModelResult, TokenizeResult,
+  EmbeddingResult, InferenceResult, LLamaInferenceArguments, LLamaConfig, LoadModelResult, TokenizeResult,
 };
 
 use napi::{
@@ -119,12 +119,12 @@ impl LLama {
     Ok(())
   }
 
-  #[napi(ts_args_type = "params: LLamaArguments,
+  #[napi(ts_args_type = "params: LLamaInferenceArguments,
     callback: (result:
       { type: 'ERROR', message: string } |
       { type: 'DATA', data?: number[] }
     ) => void")]
-  pub fn get_word_embeddings(&self, params: LLamaArguments, callback: JsFunction) -> Result<()> {
+  pub fn get_word_embeddings(&self, params: LLamaInferenceArguments, callback: JsFunction) -> Result<()> {
     let (embedding_sender, embedding_receiver) = channel::<EmbeddingResult>();
 
     let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> = callback
@@ -189,13 +189,13 @@ impl LLama {
     Ok(())
   }
 
-  #[napi(ts_args_type = "params: LLamaArguments,
+  #[napi(ts_args_type = "params: LLamaInferenceArguments,
     callback: (result: 
       { type: 'ERROR', message: string } |
       { type: 'DATA', data: InferenceToken } |
       { type: 'END' }
     ) => void")]
-  pub fn inference(&self, params: LLamaArguments, callback: JsFunction) -> Result<()> {
+  pub fn inference(&self, params: LLamaInferenceArguments, callback: JsFunction) -> Result<()> {
     let (inference_sender, inference_receiver) = channel::<InferenceResult>();
 
     let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback

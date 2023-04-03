@@ -70,13 +70,13 @@ ${template}
 llama.createTextCompletion(
     {
         prompt,
-        numPredict: BigInt(128),
+        numPredict: 128,
         temp: 0.2,
         topP: 1,
-        topK: BigInt(40),
+        topK: 40,
         repeatPenalty: 1,
-        repeatLastN: BigInt(64),
-        seed: BigInt(0),
+        repeatLastN: 64,
+        seed: 0,
         feedPrompt: true,
     },
     (response) => {
@@ -108,13 +108,13 @@ const content = "how are you?";
 llama.createChatCompletion(
     {
         messages: [{ role: "user", content }],
-        numPredict: BigInt(128),
+        numPredict: 128,
         temp: 0.2,
         topP: 1,
-        topK: BigInt(40),
+        topK: 40,
         repeatPenalty: 1,
-        repeatLastN: BigInt(64),
-        seed: BigInt(0),
+        repeatLastN: 64,
+        seed: 0,
     },
     (response) => {
         if (!response.completed) {
@@ -171,13 +171,13 @@ const prompt = `how are you`;
 llama
     .getEmbedding({
         prompt,
-        numPredict: BigInt(128),
+        numPredict: 128,
         temp: 0.2,
         topP: 1,
-        topK: BigInt(40),
+        topK: 40,
         repeatPenalty: 1,
-        repeatLastN: BigInt(64),
-        seed: BigInt(0),
+        repeatLastN: 64,
+        seed: 0,
         feedPrompt: true,
     })
     .then(console.log);

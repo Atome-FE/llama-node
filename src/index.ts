@@ -1,7 +1,7 @@
 import {
     LLama as LLamaNode,
     LLamaConfig,
-    LLamaArguments,
+    LLamaInferenceArguments,
 } from "@llama-node/core";
 
 export interface ChatMessage {
@@ -9,7 +9,7 @@ export interface ChatMessage {
     content: string;
 }
 
-export type ChatParams = Omit<LLamaArguments, "prompt"> & {
+export type ChatParams = Omit<LLamaInferenceArguments, "prompt"> & {
     messages: ChatMessage[];
 };
 
@@ -77,10 +77,10 @@ ${messages
 
     /**
      * Get sentence embedding, currently end token is in rust program and set to "<end>"
-     * @param params LLamaArguments
+     * @param params LLamaInferenceArguments
      * @returns Promise<number[]>
      */
-    getEmbedding = (params: LLamaArguments) => {
+    getEmbedding = (params: LLamaInferenceArguments) => {
         return new Promise<number[]>((res, rej) => {
             this.llamaNode.getWordEmbeddings(params, (response) => {
                 switch (response.type) {
@@ -110,12 +110,12 @@ ${messages
 
     /**
      * Create Text Completion
-     * @param params LLamaArguments
+     * @param params LLamaInferenceArguments
      * @param callback CompletionCallback
      * @returns Promise<boolean>
      */
     createTextCompletion = (
-        params: LLamaArguments,
+        params: LLamaInferenceArguments,
         callback: CompletionCallback
     ) => {
         let completed = false;
