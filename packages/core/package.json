@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/core",
-  "version": "0.0.11",
+  "version": "0.0.13",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -37,7 +37,7 @@
     "embedding": "tsx example/embedding.ts",
     "inference": "tsx example/inference.ts",
     "tokenize": "tsx example/tokenize.ts",
-    "semantic-compare": "python example/semantic-compare/compare.py",
+    "semantic-compare": "tsx example/semantic-compare/compare.ts",
     "universal": "napi universal",
     "version": "napi version"
   },
