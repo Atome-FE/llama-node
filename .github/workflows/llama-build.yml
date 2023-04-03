@@ -46,7 +46,7 @@ jobs:
           version: 0.10.0
       - run: cargo install cargo-xwin
       - run: npm install
-      - run: npm run --workspace=packages/core build -- --zig --target ${{ matrix.targets }}
+      - run: npm run --workspace=packages/core build -- --target ${{ matrix.targets }}
       - run: npm run type-check
       - uses: actions/upload-artifact@v3
         with:
