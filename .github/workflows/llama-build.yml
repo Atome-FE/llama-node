@@ -20,6 +20,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [
+          'ubuntu-latest',
+          'macos-latest',
+          'windows-latest'
+        ]
         targets:
           [
             'aarch64-apple-darwin',
@@ -28,14 +33,14 @@ jobs:
             'x86_64-pc-windows-msvc'
             # 'aarch64-unknown-linux-gnu',
           ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-          target: ${{ matrix.targets }}
+          # target: ${{ matrix.targets }}
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v3
         with:
@@ -46,11 +51,11 @@ jobs:
           version: 0.10.0
       - run: cargo install cargo-xwin
       - run: npm install
-      - run: npm run --workspace=packages/core build -- --target ${{ matrix.targets }}
+      - run: npm run --workspace=packages/core build
       - run: npm run type-check
       - uses: actions/upload-artifact@v3
         with:
-          name: bindings-${{ matrix.targets }}
+          name: bindings-${{ matrix.os }}
           path: packages/core/@llama-node/*.node
           if-no-files-found: error
   # test-host:
