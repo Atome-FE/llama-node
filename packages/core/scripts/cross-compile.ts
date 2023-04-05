@@ -27,7 +27,7 @@ const compile = () => {
     const targets = getTargets();
     targets.forEach((target) => {
         const buildProcess = exec(
-            `napi build --platform --target ${target} --release`
+            `napi build --platform --target ${target} --release --zig`
         );
         buildProcess.stdout?.pipe(process.stdout);
         buildProcess.stderr?.pipe(process.stderr);
