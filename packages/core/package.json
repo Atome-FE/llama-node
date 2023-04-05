@@ -29,7 +29,7 @@
   },
   "scripts": {
     "cross-compile": "rimraf @llama-node && tsx scripts/cross-compile.ts",
-    "artifacts": "napi artifacts",
+    "artifacts": "tsx scripts/artifacts.ts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
     "test": "vitest",

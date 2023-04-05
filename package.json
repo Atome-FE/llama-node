@@ -34,6 +34,8 @@
   "homepage": "https://github.com/hlhr202/llama-node#readme",
   "devDependencies": {
     "@types/node": "^18.15.5",
+    "axios": "^1.3.4",
+    "glob": "^9.3.4",
     "rimraf": "^4.4.0",
     "tsup": "^6.7.0",
     "tsx": "^3.12.6",
