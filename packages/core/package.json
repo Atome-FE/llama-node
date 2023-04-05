@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/core",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -28,6 +28,7 @@
     "node": ">= 10"
   },
   "scripts": {
+    "prepublish": "npm run artifacts",
     "cross-compile": "rimraf @llama-node && tsx scripts/cross-compile.ts",
     "artifacts": "tsx scripts/artifacts.ts",
     "build": "napi build --platform --release",
@@ -39,7 +40,8 @@
     "tokenize": "tsx example/tokenize.ts",
     "semantic-compare": "tsx example/semantic-compare/compare.ts",
     "universal": "napi universal",
-    "version": "napi version"
+    "version": "napi version",
+    "postinstall": "tsx scripts/build.ts"
   },
   "repository": {
     "url": "https://github.com/hlhr202/llama-node"

@@ -1,6 +1,6 @@
 {
   "name": "llama-node",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -43,9 +43,9 @@
     "vitest": "^0.29.7"
   },
   "dependencies": {
-    "@llama-node/core": "0.0.13"
+    "@llama-node/core": "0.0.15"
   },
   "peerDependencies": {
-    "@llama-node/core": "0.0.13"
+    "@llama-node/core": "0.0.15"
   }
 }

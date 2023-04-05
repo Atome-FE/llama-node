@@ -31,11 +31,25 @@ I do not have hardware for testing 13B or larger models, but I have tested it su
 
 ## Performance related
 
-Due to complexity of cross compilation, it is hard for pre-build a binary that fits your platform needs with best performance.
+We provide prebuild binaries for linux-x64, win32-x64, apple-x64, apple-silicon. For other platforms, before you install the npm package, please install rust environment for self built.
 
-Currently I would strongly suggest you do a manual compilation. Otherwise you have to wait for a better pre-compiled native binding. I am trying to investigate the way to produce a matrix of multi-platform supports.
+Due to complexity of cross compilation, it is hard for pre-building a binary that fits all platform needs with best performance.
 
-### Manual compilation
+If you face low performance issue, I would strongly suggest you do a manual compilation. Otherwise you have to wait for a better pre-compiled native binding. I am trying to investigate the way to produce a matrix of multi-platform supports.
+
+### Manual compilation (from node_modules)
+
+The following steps will allow you to compile the binary with best quality on your platform
+
+- Pre-request: install rust
+
+- Under node_modules/@llama-node/core folder
+
+    ```shell
+    npm run build
+    ```
+
+### Manual compilation (from source)
 
 The following steps will allow you to compile the binary with best quality on your platform
 
