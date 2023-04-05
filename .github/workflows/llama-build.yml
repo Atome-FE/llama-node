@@ -25,14 +25,14 @@ jobs:
           'macos-latest',
           'windows-latest'
         ]
-        targets:
-          [
-            'aarch64-apple-darwin',
-            'x86_64-apple-darwin',
-            'x86_64-unknown-linux-gnu',
-            'x86_64-pc-windows-msvc'
-            # 'aarch64-unknown-linux-gnu',
-          ]
+        # targets:
+        #   [
+        #     'aarch64-apple-darwin',
+        #     'x86_64-apple-darwin',
+        #     'x86_64-unknown-linux-gnu',
+        #     'x86_64-pc-windows-msvc'
+        #     # 'aarch64-unknown-linux-gnu',
+        #   ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
