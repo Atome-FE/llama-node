@@ -49,7 +49,7 @@ jobs:
         uses: goto-bus-stop/setup-zig@v1
         with:
           version: 0.10.0
-      - run: cargo install cargo-xwin
+      # - run: cargo install cargo-xwin
       - run: npm install
       - run: npm run --workspace=packages/core build
       - run: npm run type-check
