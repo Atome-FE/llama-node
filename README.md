@@ -10,6 +10,23 @@ This project is in an early stage, the API for nodejs may change in the future, 
 [<img alt="npm" src="https://img.shields.io/npm/v/llama-node">](https://www.npmjs.com/package/llama-node)
 ![npm type definitions](https://img.shields.io/npm/types/llama-node)
 
+---
+
+- [llama-node](#llama-node)
+- [Introduction](#introduction)
+  - [Performance related](#performance-related)
+    - [Manual compilation (from node\_modules)](#manual-compilation-from-node_modules)
+    - [Manual compilation (from source)](#manual-compilation-from-source)
+  - [Install](#install)
+  - [Usage](#usage)
+    - [Inference](#inference)
+    - [Chatting](#chatting)
+    - [Tokenize](#tokenize)
+    - [Embedding](#embedding)
+  - [Future plan](#future-plan)
+
+---
+
 # Introduction
 
 This is a nodejs client library for llama LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
