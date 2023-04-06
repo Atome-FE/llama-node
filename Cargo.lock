@@ -166,7 +166,7 @@ dependencies = [
 [[package]]
 name = "ggml"
 version = "0.1.0"
-source = "git+https://github.com/hlhr202/llama-rs.git?branch=feature/cross-compile#86d61717b81a40ed00623d95d25ba655d4bfcce1"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#7cc4c066cb1b169f631ae6f90aede56043dc2353"
 dependencies = [
  "ggml-sys",
 ]
@@ -174,7 +174,7 @@ dependencies = [
 [[package]]
 name = "ggml-sys"
 version = "0.1.0"
-source = "git+https://github.com/hlhr202/llama-rs.git?branch=feature/cross-compile#86d61717b81a40ed00623d95d25ba655d4bfcce1"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#7cc4c066cb1b169f631ae6f90aede56043dc2353"
 dependencies = [
  "cc",
 ]
@@ -271,7 +271,7 @@ dependencies = [
 [[package]]
 name = "llama-rs"
 version = "0.1.0"
-source = "git+https://github.com/hlhr202/llama-rs.git?branch=feature/cross-compile#86d61717b81a40ed00623d95d25ba655d4bfcce1"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#7cc4c066cb1b169f631ae6f90aede56043dc2353"
 dependencies = [
  "bincode",
  "bytemuck",

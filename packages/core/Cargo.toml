@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
 napi = { version = "2.11.1", default-features = false, features = ["napi6", "tokio_rt"] }
 napi-derive = "2.11.0"
-llama-rs = { git = "https://github.com/hlhr202/llama-rs.git", branch = "feature/cross-compile" }
+llama-rs = { git = "https://github.com/rustformers/llama-rs.git", branch = "main" }
 clap = { version = "4.1.8", features = ["derive"] }
 env_logger = "0.10.0"
 log = "0.4"
