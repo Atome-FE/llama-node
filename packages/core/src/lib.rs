@@ -1,4 +1,5 @@
 #![deny(clippy::all)]
+#![allow(clippy::enum_variant_names)]
 
 #[macro_use]
 extern crate napi_derive;
@@ -95,8 +96,6 @@ impl LLama {
 
     let llama_channel = self.llama_channel.clone();
 
-    let tsfn = tsfn.clone();
-
     llama_channel.tokenize(params, tokenize_sender);
 
     thread::spawn(move || {
@@ -159,8 +158,6 @@ impl LLama {
       })?;
 
     let llama_channel = self.llama_channel.clone();
-
-    let tsfn = tsfn.clone();
 
     llama_channel.get_word_embedding(params, embedding_sender);
 
@@ -233,8 +230,6 @@ impl LLama {
       })?;
 
     let llama_channel = self.llama_channel.clone();
-
-    let tsfn = tsfn.clone();
 
     llama_channel.inference(params, inference_sender);
 

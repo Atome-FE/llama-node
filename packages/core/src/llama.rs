@@ -41,8 +41,6 @@ impl LLamaInternal {
     // let repeat_last_n = 64;
     // let num_predict = Some(128);
 
-    let sender = sender.clone();
-
     if let Ok((model, vocab)) =
       llama_rs::Model::load(params.path, num_ctx_tokens as usize, |progress| {
         use llama_rs::LoadProgress;
@@ -118,7 +116,7 @@ impl LLamaInternal {
       .tokenize(&text, false)
       .unwrap()
       .iter()
-      .map(|(_, tid)| tid.clone())
+      .map(|(_, tid)| *tid)
       .collect::<Vec<_>>();
     if let Some(sender) = sender {
       sender
@@ -138,7 +136,7 @@ impl LLamaInternal {
     };
 
     let token_bias = if let Some(token_bias) = params.token_bias {
-      if let Ok(token_bias) = parse_bias(&token_bias.to_string()) {
+      if let Ok(token_bias) = parse_bias(&token_bias) {
         token_bias
       } else {
         default_token_bias
@@ -202,8 +200,7 @@ impl LLamaInternal {
       }
     };
 
-    let session = model.start_session(inference_session_params);
-    session
+    model.start_session(inference_session_params)
   }
 
   pub fn get_word_embedding(
@@ -249,20 +246,16 @@ impl LLamaInternal {
   }
 
   pub fn inference(&mut self, params: LLamaInferenceArguments, sender: Sender<InferenceResult>) {
-    let num_predict = params.num_predict.clone().unwrap_or(512) as usize;
+    let num_predict = params.num_predict.unwrap_or(512) as usize;
     let model = self.model.as_ref().unwrap();
     let vocab = self.vocab.as_ref().unwrap();
 
     let prompt = params.prompt.clone();
     let feed_prompt = params.feed_prompt.unwrap_or(false);
-    let seed = if let Some(seed) = params.seed.clone() {
-      Some(seed as u64)
-    } else {
-      None
-    };
+    let seed = params.seed.map(|seed| seed as u64);
 
     let mut session = self.start_new_session(params.clone());
-    let inference_params = self.get_inference_params(params.clone());
+    let inference_params = self.get_inference_params(params);
 
     let mut rng = if let Some(seed) = seed {
       rand::rngs::StdRng::seed_from_u64(seed)
@@ -283,8 +276,8 @@ impl LLamaInternal {
     let inference_input = if feed_prompt { "".to_string() } else { prompt };
 
     let res = session.inference_with_prompt::<Infallible>(
-      &model,
-      &vocab,
+      model,
+      vocab,
       &inference_params,
       &inference_input,
       Some(num_predict),
