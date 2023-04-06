@@ -33,7 +33,7 @@ fn parse_bias(s: &str) -> Result<TokenBias, String> {
 }
 
 impl LLamaInternal {
-  pub fn load_model(&mut self, params: LLamaConfig, sender: Sender<LoadModelResult>) {
+  pub fn load_model(&mut self, params: &LLamaConfig, sender: &Sender<LoadModelResult>) {
     let num_ctx_tokens = params.num_ctx_tokens.unwrap_or(512);
     log::info!("num_ctx_tokens: {}", num_ctx_tokens);
     // let restore_prompt: Option<String> = None;
@@ -42,7 +42,7 @@ impl LLamaInternal {
     // let num_predict = Some(128);
 
     if let Ok((model, vocab)) =
-      llama_rs::Model::load(params.path, num_ctx_tokens as usize, |progress| {
+      llama_rs::Model::load(params.path.clone(), num_ctx_tokens as usize, |progress| {
         use llama_rs::LoadProgress;
         match progress {
           LoadProgress::HyperparametersLoaded(hparams) => {
@@ -110,10 +110,10 @@ impl LLamaInternal {
     }
   }
 
-  pub fn tokenize(&self, text: String, sender: Option<Sender<TokenizeResult>>) -> Vec<i32> {
+  pub fn tokenize(&self, text: &str, sender: &Option<Sender<TokenizeResult>>) -> Vec<i32> {
     let vocab = self.vocab.as_ref().unwrap();
     let tokens = vocab
-      .tokenize(&text, false)
+      .tokenize(text, false)
       .unwrap()
       .iter()
       .map(|(_, tid)| *tid)
@@ -126,7 +126,7 @@ impl LLamaInternal {
     tokens
   }
 
-  fn get_inference_params(&self, params: LLamaInferenceArguments) -> InferenceParameters {
+  fn get_inference_params(&self, params: &LLamaInferenceArguments) -> InferenceParameters {
     let ignore_eos = params.ignore_eos.unwrap_or(false);
 
     let default_token_bias = if ignore_eos {
@@ -135,8 +135,8 @@ impl LLamaInternal {
       TokenBias::default()
     };
 
-    let token_bias = if let Some(token_bias) = params.token_bias {
-      if let Ok(token_bias) = parse_bias(&token_bias) {
+    let token_bias = if let Some(token_bias) = &params.token_bias {
+      if let Ok(token_bias) = parse_bias(token_bias) {
         token_bias
       } else {
         default_token_bias
@@ -182,7 +182,7 @@ impl LLamaInternal {
     inference_params
   }
 
-  fn start_new_session(&self, params: LLamaInferenceArguments) -> InferenceSession {
+  fn start_new_session(&self, params: &LLamaInferenceArguments) -> InferenceSession {
     let model = self.model.as_ref().unwrap();
     let repeat_last_n = params.repeat_last_n.unwrap_or(512) as usize;
     let float16 = params.float16.unwrap_or(false);
@@ -205,11 +205,11 @@ impl LLamaInternal {
 
   pub fn get_word_embedding(
     &self,
-    params: LLamaInferenceArguments,
-    sender: Sender<EmbeddingResult>,
+    params: &LLamaInferenceArguments,
+    sender: &Sender<EmbeddingResult>,
   ) {
-    let mut session = self.start_new_session(params.clone());
-    let inference_params = self.get_inference_params(params.clone());
+    let mut session = self.start_new_session(params);
+    let inference_params = self.get_inference_params(params);
     let model = self.model.as_ref().unwrap();
     let vocab = self.vocab.as_ref().unwrap();
     let prompt_for_feed = format!(" {}", params.prompt);
@@ -226,7 +226,7 @@ impl LLamaInternal {
         .unwrap();
     }
 
-    let end_token = self.tokenize("\n".to_string(), None);
+    let end_token = self.tokenize("\n", &None);
 
     let mut output_request = EvaluateOutputRequest {
       all_logits: None,
@@ -245,16 +245,16 @@ impl LLamaInternal {
       .unwrap();
   }
 
-  pub fn inference(&mut self, params: LLamaInferenceArguments, sender: Sender<InferenceResult>) {
+  pub fn inference(&mut self, params: &LLamaInferenceArguments, sender: &Sender<InferenceResult>) {
     let num_predict = params.num_predict.unwrap_or(512) as usize;
     let model = self.model.as_ref().unwrap();
     let vocab = self.vocab.as_ref().unwrap();
 
-    let prompt = params.prompt.clone();
+    let prompt = &params.prompt;
     let feed_prompt = params.feed_prompt.unwrap_or(false);
     let seed = params.seed.map(|seed| seed as u64);
 
-    let mut session = self.start_new_session(params.clone());
+    let mut session = self.start_new_session(params);
     let inference_params = self.get_inference_params(params);
 
     let mut rng = if let Some(seed) = seed {
@@ -264,7 +264,7 @@ impl LLamaInternal {
     };
 
     if let Err(InferenceError::ContextFull) =
-      session.feed_prompt::<Infallible>(model, vocab, &inference_params, &prompt, |_| Ok(()))
+      session.feed_prompt::<Infallible>(model, vocab, &inference_params, prompt, |_| Ok(()))
     {
       sender
         .send(InferenceResult::InferenceError(
@@ -273,17 +273,16 @@ impl LLamaInternal {
         .unwrap();
     }
 
-    let inference_input = if feed_prompt { "".to_string() } else { prompt };
+    let inference_input = if feed_prompt { "" } else { prompt };
 
     let res = session.inference_with_prompt::<Infallible>(
       model,
       vocab,
       &inference_params,
-      &inference_input,
+      inference_input,
       Some(num_predict),
       &mut rng,
       |t| {
-        let sender = sender.clone();
         let to_send = InferenceResult::InferenceData(InferenceToken {
           token: t.to_string(),
           completed: false,
@@ -367,10 +366,10 @@ impl LLamaChannel {
       .unwrap()
   }
 
-  pub fn tokenize(&self, text: String, sender: Sender<TokenizeResult>) {
+  pub fn tokenize(&self, text: &str, sender: Sender<TokenizeResult>) {
     self
       .command_sender
-      .send(LLamaCommand::Tokenize(text, sender))
+      .send(LLamaCommand::Tokenize(text.to_string(), sender))
       .unwrap();
   }
 
@@ -390,16 +389,16 @@ impl LLamaChannel {
         let command = rv.try_recv();
         match command {
           Ok(LLamaCommand::Inference(params, sender)) => {
-            llama.inference(params, sender);
+            llama.inference(&params, &sender);
           }
           Ok(LLamaCommand::LoadModel(params, sender)) => {
-            llama.load_model(params, sender);
+            llama.load_model(&params, &sender);
           }
           Ok(LLamaCommand::Embedding(params, sender)) => {
-            llama.get_word_embedding(params, sender);
+            llama.get_word_embedding(&params, &sender);
           }
           Ok(LLamaCommand::Tokenize(text, sender)) => {
-            llama.tokenize(text, Some(sender));
+            llama.tokenize(&text, &Some(sender));
           }
           Err(TryRecvError::Disconnected) => {
             break 'llama_loop;

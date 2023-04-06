@@ -14,7 +14,8 @@ use std::{
 
 use llama::LLamaChannel;
 use types::{
-  EmbeddingResult, InferenceResult, LLamaInferenceArguments, LLamaConfig, LoadModelResult, TokenizeResult,
+  EmbeddingResult, InferenceResult, LLamaConfig, LLamaInferenceArguments, LoadModelResult,
+  TokenizeResult,
 };
 
 use napi::{
@@ -96,7 +97,7 @@ impl LLama {
 
     let llama_channel = self.llama_channel.clone();
 
-    llama_channel.tokenize(params, tokenize_sender);
+    llama_channel.tokenize(&params, tokenize_sender);
 
     thread::spawn(move || {
       'waiting_embedding: loop {
@@ -123,7 +124,11 @@ impl LLama {
       { type: 'ERROR', message: string } |
       { type: 'DATA', data?: number[] }
     ) => void")]
-  pub fn get_word_embeddings(&self, params: LLamaInferenceArguments, callback: JsFunction) -> Result<()> {
+  pub fn get_word_embeddings(
+    &self,
+    params: LLamaInferenceArguments,
+    callback: JsFunction,
+  ) -> Result<()> {
     let (embedding_sender, embedding_receiver) = channel::<EmbeddingResult>();
 
     let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> = callback
