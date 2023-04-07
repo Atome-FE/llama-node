@@ -6,7 +6,7 @@ async function getLatestGithubAction(repoOwner: string, repoName: string) {
     try {
         // Get the latest workflow runs for the specified repository
         const res = await axios.get(
-            `https://api.github.com/repos/${repoOwner}/${repoName}/actions/runs`
+            `https://api.github.com/repos/${repoOwner}/${repoName}/actions/runs?branch=main`
         );
 
         const lastId: string = res.data.workflow_runs[0].id;
