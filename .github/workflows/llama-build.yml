@@ -51,6 +51,7 @@ jobs:
       # - run: cargo install cargo-xwin
       - run: npm install
       - run: cargo clippy --all-targets --all-features
+        working-directory: ./packages/core
       - run: npm run --workspace=packages/core cross-compile
       - run: npm run type-check
       - uses: actions/upload-artifact@v3
