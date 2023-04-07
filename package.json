@@ -24,7 +24,7 @@
   },
   "workspaces": [
     "packages/core",
-    "packages/client"
+    "packages/cli"
   ],
   "author": "hlhr202@163.com",
   "license": "MIT",
@@ -40,12 +40,16 @@
     "tsup": "^6.7.0",
     "tsx": "^3.12.6",
     "typescript": "^5.0.2",
-    "vitest": "^0.29.7"
+    "vitest": "^0.29.7",
+    "@napi-rs/cli": "^2.15.2",
+    "@tensorflow/tfjs-node": "^4.2.0"
   },
   "dependencies": {
-    "@llama-node/core": "0.0.17"
+    "@llama-node/core": "0.0.17",
+    "@llama-node/cli": "0.0.17"
   },
   "peerDependencies": {
-    "@llama-node/core": "0.0.17"
+    "@llama-node/core": "0.0.17",
+    "@llama-node/cli": "0.0.17"
   }
 }

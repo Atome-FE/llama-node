@@ -1,0 +1,23 @@
+{
+  "name": "@llama-node/cli",
+  "version": "0.0.17",
+  "description": "",
+  "main": "index.js",
+  "type": "commonjs",
+  "bin": {
+    "llama": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@llama-node/core": "0.0.17",
+    "yargs": "^17.7.1"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/yargs": "^17.0.24"
+  }
+}

@@ -15,11 +15,6 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "^2.14.8",
-    "@tensorflow/tfjs-node": "^4.2.0",
-    "@types/node": "^18.15.3",
-    "tsx": "^3.12.6",
-    "typescript": "^5.0.2"
   },
   "ava": {
     "timeout": "3m"

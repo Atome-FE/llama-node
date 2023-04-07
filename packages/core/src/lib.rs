@@ -9,10 +9,11 @@ mod types;
 
 use std::{
   sync::{mpsc::channel, Arc},
-  thread, time,
+  thread, time, path::Path,
 };
 
 use llama::LLamaChannel;
+use llama_rs::convert::convert_pth_to_ggml;
 use types::{
   EmbeddingResult, InferenceResult, LLamaConfig, LLamaInferenceArguments, LoadModelResult,
   TokenizeResult,
@@ -27,6 +28,45 @@ use napi::{
 };
 
 #[napi]
+pub enum ElementType {
+  /// Quantized 4-bit (type 0).
+  Q4_0,
+  /// Quantized 4-bit (type 1); used by GPTQ.
+  Q4_1,
+  /// Float 16-bit.
+  F16,
+  /// Float 32-bit.
+  F32,
+}
+
+impl From<ElementType> for llama_rs::ElementType {
+  fn from(element_type: ElementType) -> Self {
+    match element_type {
+      ElementType::Q4_0 => llama_rs::ElementType::Q4_0,
+      ElementType::Q4_1 => llama_rs::ElementType::Q4_1,
+      ElementType::F16 => llama_rs::ElementType::F16,
+      ElementType::F32 => llama_rs::ElementType::F32,
+    }
+  }
+}
+
+#[napi(js_name = "convert")]
+pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
+  let handle = tokio::task::spawn_blocking(move || {
+    convert_pth_to_ggml(Path::new(path.as_str()), element_type.into());
+  })
+  .await;
+  match handle {
+    Ok(_) => Ok(()),
+    Err(_) => Err(napi::Error::new(
+      napi::Status::GenericFailure,
+      "Failed to convert model".to_string(),
+    )),
+  }
+}
+
+
+#[napi(js_name = "LLama")]
 #[derive(Clone)]
 pub struct LLama {
   llama_channel: Arc<LLamaChannel>,

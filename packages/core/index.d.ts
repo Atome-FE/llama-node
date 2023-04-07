@@ -34,6 +34,17 @@ export interface LLamaInferenceArguments {
   ignoreEos?: boolean
   feedPrompt?: boolean
 }
+export const enum ElementType {
+  /** Quantized 4-bit (type 0). */
+  Q4_0 = 0,
+  /** Quantized 4-bit (type 1); used by GPTQ. */
+  Q4_1 = 1,
+  /** Float 16-bit. */
+  F16 = 2,
+  /** Float 32-bit. */
+  F32 = 3
+}
+export function convert(path: string, elementType: ElementType): Promise<void>
 export class LLama {
   static enableLogger(): void
   static create(config: LLamaConfig): LLama
