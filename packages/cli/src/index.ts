@@ -9,7 +9,7 @@ const convertType = ["q4_0", "q4_1", "f16", "f32"] as const;
 type ConvertType = typeof convertType[number];
 
 class ConvertCommand implements yargs.CommandModule {
-    command = "convert --dir <dir> --type <type>";
+    command = "convert";
     describe = "Convert llama pth to ggml";
     builder(args: yargs.Argv) {
         return args

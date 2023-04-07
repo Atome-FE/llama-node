@@ -8,8 +8,9 @@ mod llama;
 mod types;
 
 use std::{
+  path::Path,
   sync::{mpsc::channel, Arc},
-  thread, time, path::Path,
+  thread, time,
 };
 
 use llama::LLamaChannel;
@@ -53,7 +54,9 @@ impl From<ElementType> for llama_rs::ElementType {
 #[napi(js_name = "convert")]
 pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
   let handle = tokio::task::spawn_blocking(move || {
-    convert_pth_to_ggml(Path::new(path.as_str()), element_type.into());
+    let path = Path::new(path.as_str());
+    println!("path: {:?}", path);
+    convert_pth_to_ggml(path, element_type.into());
   })
   .await;
   match handle {
@@ -64,7 +67,6 @@ pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
     )),
   }
 }
-
 
 #[napi(js_name = "LLama")]
 #[derive(Clone)]
