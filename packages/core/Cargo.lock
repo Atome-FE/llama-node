@@ -391,7 +391,7 @@ dependencies = [
 [[package]]
 name = "ggml"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#44ddfe8e2b7e0a3675dcbcf84263e07433d3de4d"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#89a1e709c7f7c62bdc602536c5804e31191d714c"
 dependencies = [
  "ggml-sys",
 ]
@@ -399,7 +399,7 @@ dependencies = [
 [[package]]
 name = "ggml-sys"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#44ddfe8e2b7e0a3675dcbcf84263e07433d3de4d"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#89a1e709c7f7c62bdc602536c5804e31191d714c"
 dependencies = [
  "cc",
 ]
@@ -528,7 +528,7 @@ dependencies = [
 [[package]]
 name = "llama-rs"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#44ddfe8e2b7e0a3675dcbcf84263e07433d3de4d"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#89a1e709c7f7c62bdc602536c5804e31191d714c"
 dependencies = [
  "bincode",
  "bytemuck",

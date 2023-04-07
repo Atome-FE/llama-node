@@ -167,7 +167,6 @@ impl LLamaInternal {
       temperature,
       bias_tokens: token_bias,
       play_back_previous_tokens: false,
-      ..Default::default()
     };
 
     // log::info!("repeat_last_n: {}", repeat_last_n);
