@@ -1,6 +1,6 @@
-import { execSync } from "child_process";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+const { execSync } = require("child_process");
+const { readFileSync, existsSync } = require("fs");
+const { join } = require("path");
 
 const { platform, arch } = process;
 
@@ -19,8 +19,7 @@ function isMusl() {
             return true;
         }
     } else {
-        const { glibcVersionRuntime } = (process.report.getReport() as any)
-            .header;
+        const { glibcVersionRuntime } = process.report.getReport().header;
         return !glibcVersionRuntime;
     }
 }
@@ -97,11 +96,17 @@ switch (platform) {
             case "x64":
                 if (isMusl()) {
                     localFileExisted = existsSync(
-                        join(__dirname, "../@llama-node/core.linux-x64-musl.node")
+                        join(
+                            __dirname,
+                            "../@llama-node/core.linux-x64-musl.node"
+                        )
                     );
                 } else {
                     localFileExisted = existsSync(
-                        join(__dirname, "../@llama-node/core.linux-x64-gnu.node")
+                        join(
+                            __dirname,
+                            "../@llama-node/core.linux-x64-gnu.node"
+                        )
                     );
                 }
                 break;
@@ -115,13 +120,19 @@ switch (platform) {
                     );
                 } else {
                     localFileExisted = existsSync(
-                        join(__dirname, "../@llama-node/core.linux-arm64-gnu.node")
+                        join(
+                            __dirname,
+                            "../@llama-node/core.linux-arm64-gnu.node"
+                        )
                     );
                 }
                 break;
             case "arm":
                 localFileExisted = existsSync(
-                    join(__dirname, "../@llama-node/core.linux-arm-gnueabihf.node")
+                    join(
+                        __dirname,
+                        "../@llama-node/core.linux-arm-gnueabihf.node"
+                    )
                 );
                 break;
             default:
@@ -136,5 +147,5 @@ if (!localFileExisted) {
     console.log("Building native module...");
     execSync("npm run build");
 } else {
-    console.log("Skipping build, local file already exists.")
+    console.log("Skipping build, local file already exists.");
 }

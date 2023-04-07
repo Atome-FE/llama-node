@@ -41,7 +41,7 @@
     "semantic-compare": "tsx example/semantic-compare/compare.ts",
     "universal": "napi universal",
     "version": "napi version",
-    "postinstall": "tsx scripts/build.ts"
+    "postinstall": "node scripts/postinstall.js"
   },
   "repository": {
     "url": "https://github.com/hlhr202/llama-node"
