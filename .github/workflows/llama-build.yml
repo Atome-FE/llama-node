@@ -44,6 +44,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
       # - name: Install ziglang
       #   uses: goto-bus-stop/setup-zig@v1
       #   with:
