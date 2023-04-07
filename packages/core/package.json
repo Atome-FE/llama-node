@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/core",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -14,8 +14,7 @@
     }
   },
   "license": "MIT",
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "ava": {
     "timeout": "3m"
   },
