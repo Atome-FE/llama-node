@@ -11,6 +11,7 @@ This project is in an early stage, the API for nodejs may change in the future, 
 ![NPM](https://img.shields.io/npm/l/llama-node)
 [<img alt="npm" src="https://img.shields.io/npm/v/llama-node">](https://www.npmjs.com/package/llama-node)
 ![npm type definitions](https://img.shields.io/npm/types/llama-node)
+[<img alt="twitter" src="https://img.shields.io/twitter/url?url=https%3A%2F%2Ftwitter.com%2Fhlhr202">](https://twitter.com/hlhr202)
 
 ---
 
