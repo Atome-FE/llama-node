@@ -16,6 +16,7 @@
 - [llama-node](#llama-node)
   - [介绍](#介绍)
   - [模型获取](#模型获取)
+    - [模型版本](#模型版本)
   - [安装](#安装)
   - [使用](#使用)
     - [推理](#推理)
@@ -50,7 +51,17 @@
 
 ## 模型获取
 
-由于meta发布模型仅用于研究机构测试，本项目不提供模型下载。如果你获取到了 **.pth** 原始模型，请阅读[Getting the weights](https://github.com/rustformers/llama-rs#getting-the-weights)这份文档并使用llama-rs提供的convert工具进行转化
+llama-node底层调用llama-rs，它使用的模型格式源自llama.cpp。由于meta发布模型仅用于研究机构测试，本项目不提供模型下载。如果你获取到了 **.pth** 原始模型，请阅读[Getting the weights](https://github.com/rustformers/llama-rs#getting-the-weights)这份文档并使用llama-rs提供的convert工具进行转化
+
+### 模型版本
+
+目前llama.cpp社区有3个版本：
+
+- GGML：旧版格式，最早的GGML张量文件格式。
+- GGMF：也是旧版格式，比GGML新，比GGJT旧。
+- GGJT：可进行mmap映射的格式。
+
+llama-rs后端现在只支持GGML / GGMF模型，llama-node也是如此。对于GGJT（mmap）模型的支持，请等待该PR[standalone loader](https://github.com/rustformers/llama-rs/pull/125)合入llama-rs。
 
 ---
 

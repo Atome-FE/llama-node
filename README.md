@@ -17,7 +17,8 @@ This project is in an early stage, the API for nodejs may change in the future, 
 
 - [llama-node](#llama-node)
   - [Introduction](#introduction)
-  - [Getting the weight](#getting-the-weight)
+  - [Getting the weights](#getting-the-weights)
+    - [Model versioning](#model-versioning)
   - [Usage](#usage)
     - [Inference](#inference)
     - [Chatting](#chatting)
@@ -50,9 +51,19 @@ I do not have hardware for testing 13B or larger models, but I have tested it su
 
 ---
 
-## Getting the weight
+## Getting the weights
 
-Due to the fact that the meta-release model is only used for research purposes, this project does not provide model downloads. If you have obtained the original **.pth** model, please read the document [Getting the weights](https://github.com/rustformers/llama-rs#getting-the-weights) and use the convert tool provided by llama-rs for conversion.
+The llama-node uses llama-rs under the hook and uses the model format derived from llama.cpp. Due to the fact that the meta-release model is only used for research purposes, this project does not provide model downloads. If you have obtained the original **.pth** model, please read the document [Getting the weights](https://github.com/rustformers/llama-rs#getting-the-weights) and use the convert tool provided by llama-rs for conversion.
+
+### Model versioning
+
+There are now 3 versions from llama.cpp community:
+
+- GGML: legacy format, oldest ggml tensor file format
+- GGMF: also legacy format, newer than GGML, older than GGJT
+- GGJT: mmap-able format
+
+The llama-rs backend now only supports GGML/GGMF models, so does the llama-node. For GGJT(mmap) models support, please wait for [standalone loader](https://github.com/rustformers/llama-rs/pull/125) to be merged.
 
 ---
 
