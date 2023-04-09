@@ -275,3 +275,4 @@ npm install llama-node
 - [ ] more platforms and cross compile (performance related)
 - [ ] tweak embedding API, make end token configurable
 - [ ] cli and interactive
+- [ ] support more open source models as llama-rs planned https://github.com/rustformers/llama-rs/pull/85 https://github.com/rustformers/llama-rs/issues/75
