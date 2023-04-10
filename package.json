@@ -1,10 +1,11 @@
 {
   "name": "llama-node",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "type": "module",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsup",
     "prepublish": "npm run build",
@@ -48,11 +49,11 @@
     "vitest": "^0.29.8"
   },
   "dependencies": {
-    "@llama-node/cli": "0.0.18",
-    "@llama-node/core": "0.0.18"
+    "@llama-node/cli": "0.0.19",
+    "@llama-node/core": "0.0.19"
   },
   "peerDependencies": {
-    "@llama-node/cli": "0.0.18",
-    "@llama-node/core": "0.0.18"
+    "@llama-node/cli": "0.0.19",
+    "@llama-node/core": "0.0.19"
   }
 }
