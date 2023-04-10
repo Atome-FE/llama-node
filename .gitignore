@@ -3,3 +3,7 @@ node_modules/
 *.bin
 dist/
 miscellaneous/models/7B
+
+# Added by cargo
+
+/target
