@@ -10,7 +10,7 @@ export interface LlamaInvocation {
   topP: number
   temp: number
   repeatPenalty: number
-  stopSequence: string
+  stopSequence?: string
   prompt: string
 }
 export interface LlamaContextParams {
@@ -23,8 +23,7 @@ export interface LlamaContextParams {
   useMlock: boolean
   embedding: boolean
 }
-export class LLamaContext { }
 export class LLama {
-  static new(path: string, params?: LlamaContextParams | undefined | null): LLama
-  run(input: LlamaInvocation, callback: (...args: any[]) => any): void
+  static load(path: string, params: LlamaContextParams | undefined | null, enableLogger: boolean): LLama
+  inference(input: LlamaInvocation, callback: (...args: any[]) => any): void
 }

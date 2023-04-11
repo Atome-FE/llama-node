@@ -7,7 +7,7 @@ use llm_chain_llama_sys::{
     llama_token, llama_token_eos as inner_eos, llama_token_to_str, llama_tokenize,
 };
 
-use crate::llama::LLamaContext;
+use crate::context::LLamaContext;
 
 // Helper function to convert a Rust string to a C string.
 fn to_cstring(s: &str) -> CString {

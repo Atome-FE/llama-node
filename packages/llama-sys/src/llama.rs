@@ -1,149 +1,189 @@
-use std::{ffi::CStr, ptr::null_mut};
-
-use llm_chain_llama_sys::{
-    llama_context, llama_context_default_params, llama_context_params, llama_eval, llama_free,
-    llama_init_from_file, llama_sample_top_p_top_k, llama_token, llama_token_to_str, llama_print_system_info,
+use std::{
+    sync::{
+        mpsc::{channel, Receiver, Sender, TryRecvError},
+        Arc, Mutex,
+    },
+    thread,
 };
 
-#[napi(object)]
-pub struct LlamaInvocation {
-    pub n_threads: i32,
-    pub n_tok_predict: u32,
-    pub top_k: i32,
-    pub top_p: f64,
-    pub temp: f64,
-    pub repeat_penalty: f64,
-    pub stop_sequence: String,
-    pub prompt: String,
+use crate::{
+    context::{LLamaContext, LlamaContextParams, LlamaInvocation},
+    tokenizer::{embedding_to_output, llama_token_eos, tokenize},
+};
+
+#[derive(Clone)]
+pub struct LLamaChannel {
+    command_sender: Sender<LLamaCommand>,
+    command_receiver: Arc<Mutex<Receiver<LLamaCommand>>>,
 }
 
-
-// Represents the configuration parameters for a LLamaContext.
-#[napi(object)]
-#[derive(Debug, Clone)]
-pub struct LlamaContextParams {
-    pub n_ctx: i32,
-    pub n_parts: i32,
-    pub seed: i32,
-    pub f16_kv: bool,
-    pub logits_all: bool,
-    pub vocab_only: bool,
-    pub use_mlock: bool,
-    pub embedding: bool,
+pub struct LLamaInternal {
+    context: LLamaContext,
+    context_params: Option<LlamaContextParams>,
 }
 
-impl LlamaContextParams {
-    // Returns the default parameters or the user-specified parameters.
-    pub(crate) fn or_default(params: &Option<LlamaContextParams>) -> llama_context_params {
-        match params {
-            Some(params) => params.clone().into(),
-            None => unsafe { llama_context_default_params() },
-        }
-    }
+#[derive(Clone, Debug)]
+pub enum LLamaCommand {
+    Inference(LlamaInvocation, Sender<String>),
 }
 
-impl From<LlamaContextParams> for llama_context_params {
-    fn from(params: LlamaContextParams) -> Self {
-        llama_context_params {
-            n_ctx: params.n_ctx,
-            n_parts: params.n_parts,
-            seed: params.seed,
-            f16_kv: params.f16_kv,
-            logits_all: params.logits_all,
-            vocab_only: params.vocab_only,
-            use_mlock: params.use_mlock,
-            embedding: params.embedding,
-            progress_callback: None,
-            progress_callback_user_data: null_mut(),
-        }
-    }
-}
-
-// Represents the LLamaContext which wraps FFI calls to the llama.cpp library.
-#[napi]
-pub(crate) struct LLamaContext {
-    ctx: *mut llama_context,
-}
-
-impl LLamaContext {
-    // Creates a new LLamaContext from the specified file and configuration parameters.
-    pub fn from_file_and_params(path: &str, params: &Option<LlamaContextParams>) -> Self {
-        let params = LlamaContextParams::or_default(params);
-        let ctx = unsafe { llama_init_from_file(path.as_ptr() as *const i8, params) };
-        Self { ctx }
-    }
-
-    pub fn llama_print_system_info(&self) {
-        let sys_info_c_str = unsafe { llama_print_system_info() };
-        let sys_info = unsafe { CStr::from_ptr(sys_info_c_str) }
-            .to_str()
-            .unwrap()
-            .to_owned();
-        println!("{}", sys_info);
-    }
-
-    // Executes the LLama sampling process with the specified configuration.
-    pub fn llama_sample(
-        &self,
-        last_n_tokens_data: &[llama_token],
-        last_n_tokens_size: i32,
-        input: &LlamaInvocation,
-    ) -> i32 {
-        unsafe {
-            llama_sample_top_p_top_k(
-                self.ctx,
-                last_n_tokens_data.as_ptr(),
-                last_n_tokens_size,
-                input.top_k,
-                input.top_p as f32,
-                input.temp as f32,
-                input.repeat_penalty as f32,
+impl LLamaInternal {
+    pub fn inference(&self, input: &LlamaInvocation, sender: &Sender<String>) {
+        let context_params_c = LlamaContextParams::or_default(&self.context_params);
+        log::info!("inference: {:?}", input);
+        log::info!("context_params: {:?}", context_params_c);
+        let input_ctx = &self.context;
+        // Tokenize the stop sequence and input prompt.
+        let tokenized_stop_prompt = if let Some(stop_sequence) = &input.stop_sequence {
+            Some(
+                tokenize(
+                    input_ctx,
+                    &stop_sequence,
+                    context_params_c.n_ctx as usize,
+                    false,
+                )
+                .unwrap(),
             )
-        }
-    }
-
-    pub fn llama_token_to_str(&self, token: &i32) -> String {
-        let c_ptr = unsafe { llama_token_to_str(self.ctx, *token) };
-        let native_string = unsafe { CStr::from_ptr(c_ptr) }
-            .to_str()
-            .unwrap()
-            .to_owned();
-        native_string
-    }
-
-    // Evaluates the given tokens with the specified configuration.
-    pub fn llama_eval(
-        &self,
-        tokens: &[llama_token],
-        n_tokens: i32,
-        n_past: i32,
-        input: &LlamaInvocation,
-    ) -> Result<(), ()> {
-        let res =
-            unsafe { llama_eval(self.ctx, tokens.as_ptr(), n_tokens, n_past, input.n_threads) };
-        if res == 0 {
-            Ok(())
         } else {
-            Err(())
+            None
+        };
+
+        log::info!("tokenized_stop_prompt: {:?}", tokenized_stop_prompt);
+
+        let tokenized_input = tokenize(
+            input_ctx,
+            input.prompt.as_str(),
+            context_params_c.n_ctx as usize,
+            true,
+        )
+        .unwrap();
+
+        // Embd contains the prompt and the completion. The longer the prompt, the shorter the completion.
+        let mut embd = tokenized_input.clone();
+        embd.resize(context_params_c.n_ctx as usize, 0);
+
+        // Evaluate the prompt in full.
+        input_ctx
+            .llama_eval(
+                tokenized_input.as_slice(),
+                tokenized_input.len() as i32,
+                0,
+                input,
+            )
+            .unwrap();
+        let token_eos = llama_token_eos();
+
+        log::info!("hard coded token_eos: {}", token_eos);
+
+        // Generate remaining tokens.
+        let mut n_remaining = context_params_c.n_ctx - tokenized_input.len() as i32;
+        let mut n_used = tokenized_input.len() - 1;
+        let mut stop_sequence_i = 0;
+        while n_remaining > 0 {
+            let tok = input_ctx.llama_sample(embd.as_slice(), n_used as i32, input);
+            n_used += 1;
+            n_remaining -= 1;
+            embd[n_used] = tok;
+            if tok == token_eos {
+                break;
+            }
+            if input.n_tok_predict != 0
+                && n_used > (input.n_tok_predict as usize) + tokenized_input.len() - 1
+            {
+                break;
+            }
+
+            if let Some(tokenized_stop_prompt) = &tokenized_stop_prompt {
+                if tok == tokenized_stop_prompt[stop_sequence_i] {
+                    stop_sequence_i += 1;
+                    if stop_sequence_i >= tokenized_stop_prompt.len() {
+                        break;
+                    }
+                } else {
+                    stop_sequence_i = 0;
+                }
+            }
+
+            input_ctx
+                .llama_eval(&embd[n_used..], 1, n_used as i32, input)
+                .unwrap();
+
+            let output = input_ctx.llama_token_to_str(&embd[n_used]);
+
+            if stop_sequence_i == 0 {
+                sender.send(output).unwrap();
+            }
         }
+        embedding_to_output(
+            input_ctx,
+            &embd[tokenized_input.len()..n_used + 1 - stop_sequence_i],
+        );
     }
 }
 
-// Provides thread-safe behavior for LLamaContext.
-unsafe impl Send for LLamaContext {}
-unsafe impl Sync for LLamaContext {}
+impl LLamaChannel {
+    pub fn new(
+        path: String,
+        params: Option<LlamaContextParams>,
+        load_result_sender: Sender<bool>,
+        enable_logger: bool,
+    ) -> Arc<Self> {
+        let (command_sender, command_receiver) = channel::<LLamaCommand>();
 
-// Enables dereferencing LLamaContext to access the underlying *mut llama_context.
-impl std::ops::Deref for LLamaContext {
-    type Target = *mut llama_context;
-    fn deref(&self) -> &*mut llama_context {
-        &self.ctx
+        let channel = LLamaChannel {
+            command_receiver: Arc::new(Mutex::new(command_receiver)),
+            command_sender,
+        };
+
+        channel.spawn(path, params, load_result_sender, enable_logger);
+
+        Arc::new(channel)
     }
-}
 
-// Handles proper cleanup of the llama_context when the LLamaContext is dropped.
-impl Drop for LLamaContext {
-    fn drop(&mut self) {
-        unsafe { llama_free(self.ctx) };
+    pub fn inference(&self, params: LlamaInvocation, sender: Sender<String>) {
+        self.command_sender
+            .send(LLamaCommand::Inference(params, sender))
+            .unwrap();
+    }
+
+    // llama instance main loop
+    pub fn spawn(
+        &self,
+        path: String,
+        params: Option<LlamaContextParams>,
+        load_result_sender: Sender<bool>,
+        enable_logger: bool,
+    ) {
+        let rv = self.command_receiver.clone();
+
+        thread::spawn(move || {
+            let llama = LLamaInternal {
+                context: LLamaContext::from_file_and_params(&path, &params),
+                context_params: params,
+            };
+
+            if enable_logger {
+                llama.context.llama_print_system_info();
+            }
+
+            load_result_sender.send(true).unwrap();
+
+            let rv = rv.lock().unwrap();
+
+            'llama_loop: loop {
+                let command = rv.try_recv();
+                match command {
+                    Ok(LLamaCommand::Inference(params, sender)) => {
+                        llama.inference(&params, &sender);
+                    }
+                    Err(TryRecvError::Disconnected) => {
+                        break 'llama_loop;
+                    }
+                    _ => {
+                        thread::yield_now();
+                    }
+                }
+            }
+        });
     }
 }

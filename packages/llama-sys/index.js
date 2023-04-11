@@ -252,7 +252,6 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { LLamaContext, LLama } = nativeBinding
+const { LLama } = nativeBinding
 
-module.exports.LLamaContext = LLamaContext
 module.exports.LLama = LLama

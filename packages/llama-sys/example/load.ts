@@ -1,29 +1,30 @@
 import { LLama, LlamaContextParams, LlamaInvocation } from "../index";
 import path from "path";
 
-const llama = LLama.new(
-    path.resolve(process.cwd(), "../../ggjt-alpaca-7b-q4.bin")
+const llama = LLama.load(
+    path.resolve(process.cwd(), "../../ggml-vicuna-7b-4bit-rev1.bin"),
+    null,
+    false
 );
 
-const template = `how are you`;
+const template = `Who is the president of the United States?`;
 
-const prompt = `Below is an instruction that describes a task. Write a response that appropriately completes the request.
+const prompt = `
+### Human: ${template}
 
-### Instruction:
-
-${template}
-
-### Response:`;
+### Assistant:`;
 
 const params: LlamaInvocation = {
     nThreads: 4,
-    nTokPredict: 0,
+    nTokPredict: 2048,
     topK: 40,
-    topP: 0.0,
-    temp: 0.7,
-    repeatPenalty: 1.2,
-    stopSequence: "\n\n",
+    topP: 0.1,
+    temp: 0.2,
+    repeatPenalty: 1,
+    stopSequence: "### Human",
     prompt,
 };
 
-llama.run(params, () => void {});
+llama.inference(params, (data) => {
+    process.stdout.write(data);
+});
