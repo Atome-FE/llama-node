@@ -10,3 +10,6 @@ members = [
     "packages/core",
     "packages/llama-sys"
 ]
+
+[profile.release]
+lto = true
