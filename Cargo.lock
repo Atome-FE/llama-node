@@ -625,8 +625,7 @@ dependencies = [
 [[package]]
 name = "llm-chain-llama-sys"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45f7534db89948ae8416c4f4812419fa4f41148088fdf57bb872b8aeee0ed299"
+source = "git+https://github.com/hlhr202/llm-chain.git?branch=feature/fix-cross-compile#6778902a2d4bc0337609b1b376325b867a630a67"
 dependencies = [
  "bindgen",
 ]

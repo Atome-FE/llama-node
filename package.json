@@ -9,6 +9,7 @@
     "build": "tsup",
     "prepublish": "npm run build",
     "type-check": "tsc --noEmit",
+    "artifacts": "tsx scripts/artifacts.ts",
     "start": "tsx example/tokenize.ts",
     "embedding": "tsx example/embedding.ts",
     "semantic-compare": "tsx example/semantic-compare/compare.ts",
