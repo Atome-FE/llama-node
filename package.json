@@ -25,7 +25,8 @@
   },
   "workspaces": [
     "packages/core",
-    "packages/cli"
+    "packages/cli",
+    "packages/llama-sys"
   ],
   "author": "hlhr202@163.com",
   "license": "MIT",

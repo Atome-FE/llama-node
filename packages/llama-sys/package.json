@@ -34,8 +34,7 @@
     "tokenize": "tsx example/tokenize.ts",
     "semantic-compare": "tsx example/semantic-compare/compare.ts",
     "universal": "napi universal",
-    "version": "napi version",
-    "postinstall": "node scripts/postinstall.js"
+    "version": "napi version"
   },
   "repository": {
     "url": "https://github.com/hlhr202/llama-node"
