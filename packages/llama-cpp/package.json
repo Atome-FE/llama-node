@@ -1,10 +1,10 @@
 {
-  "name": "@llama-node/llama-sys",
+  "name": "@llama-node/llama-cpp",
   "version": "0.0.18",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "@llama-node/llama-sys",
+    "name": "@llama-node/llama-cpp",
     "triples": {
       "additional": [
         "aarch64-apple-darwin",

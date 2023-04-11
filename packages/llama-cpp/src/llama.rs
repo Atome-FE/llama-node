@@ -1,3 +1,4 @@
+use napi::bindgen_prelude::*;
 use std::{
     sync::{
         mpsc::{channel, Receiver, Sender, TryRecvError},
@@ -24,11 +25,32 @@ pub struct LLamaInternal {
 
 #[derive(Clone, Debug)]
 pub enum LLamaCommand {
-    Inference(LlamaInvocation, Sender<String>),
+    Inference(LlamaInvocation, Sender<InferenceResult>),
+}
+
+#[napi(object)]
+#[derive(Clone, Debug)]
+pub struct InferenceToken {
+    pub token: String,
+    pub completed: bool,
+}
+
+#[napi]
+pub enum InferenceResultType {
+    Error,
+    Data,
+    End,
+}
+
+#[napi(object)]
+pub struct InferenceResult {
+    pub r#type: InferenceResultType,
+    pub data: Option<InferenceToken>,
+    pub message: Option<String>,
 }
 
 impl LLamaInternal {
-    pub fn inference(&self, input: &LlamaInvocation, sender: &Sender<String>) {
+    pub fn inference(&self, input: &LlamaInvocation, sender: &Sender<InferenceResult>) {
         let context_params_c = LlamaContextParams::or_default(&self.context_params);
         log::info!("inference: {:?}", input);
         log::info!("context_params: {:?}", context_params_c);
@@ -81,11 +103,25 @@ impl LLamaInternal {
             n_remaining -= 1;
             embd[n_used] = tok;
             if tok == token_eos {
+                sender
+                    .send(InferenceResult {
+                        r#type: InferenceResultType::End,
+                        data: None,
+                        message: None,
+                    })
+                    .unwrap();
                 break;
             }
             if input.n_tok_predict != 0
                 && n_used > (input.n_tok_predict as usize) + tokenized_input.len() - 1
             {
+                sender
+                    .send(InferenceResult {
+                        r#type: InferenceResultType::Error,
+                        data: None,
+                        message: Some("Too many tokens predicted".to_string()),
+                    })
+                    .unwrap();
                 break;
             }
 
@@ -93,6 +129,13 @@ impl LLamaInternal {
                 if tok == tokenized_stop_prompt[stop_sequence_i] {
                     stop_sequence_i += 1;
                     if stop_sequence_i >= tokenized_stop_prompt.len() {
+                        sender
+                            .send(InferenceResult {
+                                r#type: InferenceResultType::End,
+                                data: None,
+                                message: None,
+                            })
+                            .unwrap();
                         break;
                     }
                 } else {
@@ -107,7 +150,16 @@ impl LLamaInternal {
             let output = input_ctx.llama_token_to_str(&embd[n_used]);
 
             if stop_sequence_i == 0 {
-                sender.send(output).unwrap();
+                sender
+                    .send(InferenceResult {
+                        r#type: InferenceResultType::Data,
+                        data: Some(InferenceToken {
+                            token: output,
+                            completed: false,
+                        }),
+                        message: None,
+                    })
+                    .unwrap();
             }
         }
         embedding_to_output(
@@ -136,7 +188,7 @@ impl LLamaChannel {
         Arc::new(channel)
     }
 
-    pub fn inference(&self, params: LlamaInvocation, sender: Sender<String>) {
+    pub fn inference(&self, params: LlamaInvocation, sender: Sender<InferenceResult>) {
         self.command_sender
             .send(LLamaCommand::Inference(params, sender))
             .unwrap();

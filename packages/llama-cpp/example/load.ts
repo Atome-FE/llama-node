@@ -26,5 +26,5 @@ const params: LlamaInvocation = {
 };
 
 llama.inference(params, (data) => {
-    process.stdout.write(data);
+    process.stdout.write(data.data?.token ?? "");
 });

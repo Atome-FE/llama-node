@@ -8,7 +8,7 @@ edition = "2021"
 [workspace]
 members = [
     "packages/core",
-    "packages/llama-sys"
+    "packages/llama-cpp"
 ]
 
 [profile.release]

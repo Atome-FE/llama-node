@@ -586,7 +586,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "llama-node-sys"
+name = "llama-node-cpp"
 version = "0.1.0"
 dependencies = [
  "anyhow",

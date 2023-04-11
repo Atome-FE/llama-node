@@ -1,16 +1,13 @@
-import { LLamaClient } from "../src";
-import fs from "fs";
+import { LLama } from "../../src";
+import { LLamaRS } from "../../src/llm/llama-rs";
 import path from "path";
+import fs from "fs";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
+const llama = new LLama(LLamaRS);
+
+llama.load({ path: model });
 
 const getWordEmbeddings = async (prompt: string, file: string) => {
     const data = await llama.getEmbedding({

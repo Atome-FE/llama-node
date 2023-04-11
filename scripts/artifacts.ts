@@ -47,7 +47,7 @@ getLatestGithubAction().then(async (latestStep) => {
     );
 
     await moveForPackages("core");
-    await moveForPackages("llama-sys");
+    await moveForPackages("llama-cpp");
 
     execSync(`rm -r ${process.cwd()}/tmp/artifacts/`);
 });

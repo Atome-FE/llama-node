@@ -54,7 +54,7 @@ jobs:
       - run: npm install
       - run: cargo clippy --all-targets --all-features
       - run: npm run --workspace=packages/core cross-compile
-      - run: npm run --workspace=packages/llama-sys cross-compile
+      - run: npm run --workspace=packages/llama-cpp cross-compile
       - run: npm run type-check
       - uses: actions/upload-artifact@v3
         with:

@@ -4,15 +4,18 @@
   "description": "",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
+  "files": [
+    "dist",
+    "dist/llm"
+  ],
   "scripts": {
     "build": "tsup",
     "prepublish": "npm run build",
     "type-check": "tsc --noEmit",
     "artifacts": "tsx scripts/artifacts.ts",
-    "start": "tsx example/tokenize.ts",
-    "embedding": "tsx example/embedding.ts",
-    "semantic-compare": "tsx example/semantic-compare/compare.ts",
+    "tsx": "tsx",
     "test:core": "npm t --workspaces=packages/core",
     "start:core": "npm start --workspaces=packages/core",
     "build:core": "npm run build --workspaces=packages/core",
@@ -27,7 +30,7 @@
   "workspaces": [
     "packages/core",
     "packages/cli",
-    "packages/llama-sys"
+    "packages/llama-cpp"
   ],
   "author": "hlhr202@163.com",
   "license": "MIT",
@@ -47,14 +50,19 @@
     "tsup": "^6.7.0",
     "tsx": "^3.12.6",
     "typescript": "^5.0.4",
-    "vitest": "^0.29.8"
-  },
-  "dependencies": {
+    "vitest": "^0.29.8",
     "@llama-node/cli": "0.0.18",
-    "@llama-node/core": "0.0.18"
+    "@llama-node/core": "0.0.18",
+    "@llama-node/llama-cpp": "0.0.18"
+  },
+  "optionalDependencies": {
+    "@llama-node/cli": "0.0.18",
+    "@llama-node/core": "0.0.18",
+    "@llama-node/llama-cpp": "0.0.18"
   },
   "peerDependencies": {
     "@llama-node/cli": "0.0.18",
-    "@llama-node/core": "0.0.18"
+    "@llama-node/core": "0.0.18",
+    "@llama-node/llama-cpp": "0.0.18"
   }
 }

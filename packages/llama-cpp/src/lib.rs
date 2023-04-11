@@ -11,7 +11,7 @@ mod tokenizer;
 use std::sync::{mpsc::channel, Arc};
 
 use context::{LlamaContextParams, LlamaInvocation};
-use llama::LLamaChannel;
+use llama::{InferenceResult, LLamaChannel};
 use napi::{
     bindgen_prelude::*,
     threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode},
@@ -57,14 +57,11 @@ impl LLama {
         Ok(Self { llama_channel })
     }
 
-    #[napi]
+    #[napi(ts_args_type = "input: LlamaInvocation,
+        callback: (result: InferenceResult) => void")]
     pub fn inference(&self, input: LlamaInvocation, callback: JsFunction) -> Result<()> {
-        let tsfn: ThreadsafeFunction<String, ErrorStrategy::Fatal> = callback
-            .create_threadsafe_function(0, |ctx| {
-                let value = ctx.value;
-                let data = ctx.env.create_string_from_std(value).unwrap();
-                Ok(vec![data])
-            })?;
+        let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> =
+            callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
         let (inference_sender, inference_receiver) = channel();
         let llama_channel = self.llama_channel.clone();
 

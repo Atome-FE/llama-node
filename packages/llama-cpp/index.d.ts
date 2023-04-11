@@ -23,7 +23,22 @@ export interface LlamaContextParams {
   useMlock: boolean
   embedding: boolean
 }
+export interface InferenceToken {
+  token: string
+  completed: boolean
+}
+export const enum InferenceResultType {
+  Error = 0,
+  Data = 1,
+  End = 2
+}
+export interface InferenceResult {
+  type: InferenceResultType
+  data?: InferenceToken
+  message?: string
+}
 export class LLama {
   static load(path: string, params: LlamaContextParams | undefined | null, enableLogger: boolean): LLama
-  inference(input: LlamaInvocation, callback: (...args: any[]) => any): void
+  inference(input: LlamaInvocation,
+  callback: (result: InferenceResult) => void): void
 }
