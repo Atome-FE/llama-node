@@ -21,24 +21,26 @@ This project is in an early stage, the API for nodejs may change in the future, 
 
 - [llama-node](#llama-node)
   - [Introduction](#introduction)
+  - [Install](#install)
   - [Getting the weights](#getting-the-weights)
     - [Model versioning](#model-versioning)
-  - [Usage](#usage)
+  - [Usage (llama.cpp backend)](#usage-llamacpp-backend)
+  - [Usage (llama-rs backend)](#usage-llama-rs-backend)
     - [Inference](#inference)
-    - [Chatting](#chatting)
     - [Tokenize](#tokenize)
     - [Embedding](#embedding)
   - [Performance related](#performance-related)
     - [Manual compilation (from node\_modules)](#manual-compilation-from-node_modules)
     - [Manual compilation (from source)](#manual-compilation-from-source)
-  - [Install](#install)
   - [Future plan](#future-plan)
 
 ---
 
 ## Introduction
 
-This is a nodejs client library for llama LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
+This is a nodejs client library for llama (or llama based) LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs) and [llm-chain-llama-sys](https://github.com/sobelio/llm-chain/tree/main/llm-chain-llama/sys). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
+
+From v0.0.20, both llama-rs and llama.cpp backends are supported!
 
 Currently supported platforms:
 - darwin-x64
@@ -55,6 +57,25 @@ I do not have hardware for testing 13B or larger models, but I have tested it su
 
 ---
 
+## Install
+
+- Install main package
+```bash
+npm install llama-node
+```
+
+- Install llama-rs backend
+```bash
+npm install @llama-node/core
+```
+
+- Install llama.cpp backend
+```bash
+npm install @llama-node/llama-cpp
+```
+
+---
+
 ## Getting the weights
 
 The llama-node uses llama-rs under the hook and uses the model format derived from llama.cpp. Due to the fact that the meta-release model is only used for research purposes, this project does not provide model downloads. If you have obtained the original **.pth** model, please read the document [Getting the weights](https://github.com/rustformers/llama-rs#getting-the-weights) and use the convert tool provided by llama-rs for conversion.
@@ -67,11 +88,71 @@ There are now 3 versions from llama.cpp community:
 - GGMF: also legacy format, newer than GGML, older than GGJT
 - GGJT: mmap-able format
 
-The llama-rs backend now only supports GGML/GGMF models, so does the llama-node. For GGJT(mmap) models support, please wait for [standalone loader](https://github.com/rustformers/llama-rs/pull/125) to be merged.
+The llama-rs backend now only supports GGML/GGMF models, and llama.cpp backend only supports GGJT models.
 
 ---
 
-## Usage
+## Usage (llama.cpp backend)
+
+The current version supports only one inference session on one LLama instance at the same time
+
+If you wish to have multiple inference sessions concurrently, you need to create multiple LLama instances
+
+llama.cpp backend now only supports inferencing. Please wait for embedding and tokenization feature.
+
+```typescript
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+
+const llama = new LLama(LLamaCpp);
+
+const config: LoadConfig = {
+    path: model,
+    enableLogging: true,
+    nCtx: 1024,
+    nParts: -1,
+    seed: 0,
+    f16Kv: false,
+    logitsAll: false,
+    vocabOnly: false,
+    useMlock: false,
+    embedding: false,
+};
+
+llama.load(config);
+
+const template = `How are you`;
+
+const prompt = `### Human:
+
+${template}
+
+### Assistant:`;
+
+llama.createCompletion(
+    {
+        nThreads: 4,
+        nTokPredict: 2048,
+        topK: 40,
+        topP: 0.1,
+        temp: 0.2,
+        repeatPenalty: 1,
+        stopSequence: "### Human",
+        prompt,
+    },
+    (response) => {
+        process.stdout.write(response.token);
+    }
+);
+
+```
+
+---
+
+## Usage (llama-rs backend)
 
 The current version supports only one inference session on one LLama instance at the same time
 
@@ -80,18 +161,15 @@ If you wish to have multiple inference sessions concurrently, you need to create
 ### Inference
 
 ```typescript
+import { LLama } from "llama-node";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs";
 import path from "path";
-import { LLamaClient } from "llama-node";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
+const llama = new LLama(LLamaRS);
+
+llama.load({ path: model });
 
 const template = `how are you`;
 
@@ -103,7 +181,7 @@ ${template}
 
 ### Response:`;
 
-llama.createTextCompletion(
+llama.createCompletion(
     {
         prompt,
         numPredict: 128,
@@ -121,67 +199,25 @@ llama.createTextCompletion(
 );
 ```
 
-### Chatting
-
-Working on alpaca, this just make a context of alpaca instructions. Make sure your last message is end with user role.
-
-```typescript
-import { LLamaClient } from "llama-node";
-import path from "path";
-
-const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
-
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
-
-const content = "how are you?";
-
-llama.createChatCompletion(
-    {
-        messages: [{ role: "user", content }],
-        numPredict: 128,
-        temp: 0.2,
-        topP: 1,
-        topK: 40,
-        repeatPenalty: 1,
-        repeatLastN: 64,
-        seed: 0,
-    },
-    (response) => {
-        if (!response.completed) {
-            process.stdout.write(response.token);
-        }
-    }
-);
-
-```
-
 ### Tokenize
 
 Get tokenization result from LLaMA
 
 ```typescript
-import { LLamaClient } from "llama-node";
+import { LLama } from "llama-node";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
+const llama = new LLama(LLamaRS);
+
+llama.load({ path: model });
 
 const content = "how are you?";
 
 llama.tokenize(content).then(console.log);
+
 ```
 
 ### Embedding
@@ -189,23 +225,19 @@ llama.tokenize(content).then(console.log);
 Preview version, embedding end token may change in the future. Do not use it in production!
 
 ```typescript
-import { LLamaClient } from "llama-node";
+import { LLama } from "llama-node";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs";
 import path from "path";
+import fs from "fs";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
+const llama = new LLama(LLamaRS);
 
-const prompt = `how are you`;
+llama.load({ path: model });
 
-llama
-    .getEmbedding({
+const getWordEmbeddings = async (prompt: string, file: string) => {
+    const data = await llama.getEmbedding({
         prompt,
         numPredict: 128,
         temp: 0.2,
@@ -214,10 +246,28 @@ llama
         repeatPenalty: 1,
         repeatLastN: 64,
         seed: 0,
-        feedPrompt: true,
-    })
-    .then(console.log);
+    });
 
+    console.log(prompt, data);
+
+    await fs.promises.writeFile(
+        path.resolve(process.cwd(), file),
+        JSON.stringify(data)
+    );
+};
+
+const run = async () => {
+    const dog1 = `My favourite animal is the dog`;
+    await getWordEmbeddings(dog1, "./example/semantic-compare/dog1.json");
+
+    const dog2 = `I have just adopted a cute dog`;
+    await getWordEmbeddings(dog2, "./example/semantic-compare/dog2.json");
+
+    const cat1 = `My favourite animal is the cat`;
+    await getWordEmbeddings(cat1, "./example/semantic-compare/cat1.json");
+};
+
+run();
 ```
 
 ---
@@ -263,16 +313,10 @@ The following steps will allow you to compile the binary with best quality on yo
 
 ---
 
-## Install
-```bash
-npm install llama-node
-```
-
----
-
 ## Future plan
 - [ ] prompt extensions
 - [ ] more platforms and cross compile (performance related)
 - [ ] tweak embedding API, make end token configurable
 - [ ] cli and interactive
 - [ ] support more open source models as llama-rs planned https://github.com/rustformers/llama-rs/pull/85 https://github.com/rustformers/llama-rs/issues/75
+- [ ] more backends supports!

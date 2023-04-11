@@ -19,12 +19,12 @@ Node.js运行的大语言模型LLaMA。
 
 - [llama-node](#llama-node)
   - [介绍](#介绍)
+  - [安装](#安装)
   - [模型获取](#模型获取)
     - [模型版本](#模型版本)
-  - [安装](#安装)
-  - [使用](#使用)
+  - [使用 (llama.cpp后端)](#使用-llamacpp后端)
+  - [使用（llama-rs后端）](#使用llama-rs后端)
     - [推理](#推理)
-    - [聊天](#聊天)
     - [分词](#分词)
     - [嵌入](#嵌入)
   - [关于性能](#关于性能)
@@ -36,7 +36,9 @@ Node.js运行的大语言模型LLaMA。
 
 ## 介绍
 
-这是一个基于[llama-rs](https://github.com/rustformers/llama-rs)开发的nodejs客户端库，用于Llama LLM。它使用[napi-rs](https://github.com/napi-rs/napi-rs)在node.js和llama线程之间传递消息。
+这是一个基于[llama-rs](https://github.com/rustformers/llama-rs)和[llm-chain-llama-sys](https://github.com/sobelio/llm-chain/tree/main/llm-chain-llama/sys)开发的nodejs客户端库，用于Llama（及部分周边模型） LLM。它使用[napi-rs](https://github.com/napi-rs/napi-rs)在node.js和llama线程之间传递消息。
+
+从v0.0.20开始，同时支持llama-rs和llama.cpp后端
 
 当前支持平台:
 - darwin-x64
@@ -53,6 +55,25 @@ Node.js运行的大语言模型LLaMA。
 
 ---
 
+## 安装
+
+- 安装核心包
+```bash
+npm install llama-node
+```
+
+- 安装llama-rs后端
+```bash
+npm install @llama-node/core
+```
+
+- 安装llama.cpp后端
+```bash
+npm install @llama-node/llama-cpp
+```
+
+---
+
 ## 模型获取
 
 llama-node底层调用llama-rs，它使用的模型格式源自llama.cpp。由于meta发布模型仅用于研究机构测试，本项目不提供模型下载。如果你获取到了 **.pth** 原始模型，请阅读[Getting the weights](https://github.com/rustformers/llama-rs#getting-the-weights)这份文档并使用llama-rs提供的convert工具进行转化
@@ -65,18 +86,71 @@ llama-node底层调用llama-rs，它使用的模型格式源自llama.cpp。由�
 - GGMF：也是旧版格式，比GGML新，比GGJT旧。
 - GGJT：可进行mmap映射的格式。
 
-llama-rs后端现在只支持GGML / GGMF模型，llama-node也是如此。对于GGJT（mmap）模型的支持，请等待该PR[standalone loader](https://github.com/rustformers/llama-rs/pull/125)合入llama-rs。
+llama-rs后端现在只支持GGML / GGMF模型。llama.cpp后端仅支持GGJT模型
 
 ---
 
-## 安装
-```bash
-npm install llama-node
+## 使用 (llama.cpp后端)
+
+当前版本只支持在一个LLama实例上进行单个推理会话。
+
+如果您希望同时进行多个推理会话，则需要创建多个LLama实例。
+
+llama.cpp后端现仅支持推理. 嵌入和分词功能请等待后期更新。
+
+```typescript
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+
+const llama = new LLama(LLamaCpp);
+
+const config: LoadConfig = {
+    path: model,
+    enableLogging: true,
+    nCtx: 1024,
+    nParts: -1,
+    seed: 0,
+    f16Kv: false,
+    logitsAll: false,
+    vocabOnly: false,
+    useMlock: false,
+    embedding: false,
+};
+
+llama.load(config);
+
+const template = `How are you`;
+
+const prompt = `### Human:
+
+${template}
+
+### Assistant:`;
+
+llama.createCompletion(
+    {
+        nThreads: 4,
+        nTokPredict: 2048,
+        topK: 40,
+        topP: 0.1,
+        temp: 0.2,
+        repeatPenalty: 1,
+        stopSequence: "### Human",
+        prompt,
+    },
+    (response) => {
+        process.stdout.write(response.token);
+    }
+);
+
 ```
 
 ---
 
-## 使用
+## 使用（llama-rs后端）
 
 当前版本只支持在一个LLama实例上进行单个推理会话。
 
@@ -85,18 +159,15 @@ npm install llama-node
 ### 推理
 
 ```typescript
+import { LLama } from "llama-node";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs";
 import path from "path";
-import { LLamaClient } from "llama-node";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
+const llama = new LLama(LLamaRS);
+
+llama.load({ path: model });
 
 const template = `how are you`;
 
@@ -108,7 +179,7 @@ ${template}
 
 ### Response:`;
 
-llama.createTextCompletion(
+llama.createCompletion(
     {
         prompt,
         numPredict: 128,
@@ -126,63 +197,20 @@ llama.createTextCompletion(
 );
 ```
 
-### 聊天
-
-这段代码目前只用于Alpaca模型，它只是建立了一个Alpaca指令的上下文。请确保您的最后一条消息以“用户角色（user role）”结尾。
-
-```typescript
-import { LLamaClient } from "llama-node";
-import path from "path";
-
-const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
-
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
-
-const content = "how are you?";
-
-llama.createChatCompletion(
-    {
-        messages: [{ role: "user", content }],
-        numPredict: 128,
-        temp: 0.2,
-        topP: 1,
-        topK: 40,
-        repeatPenalty: 1,
-        repeatLastN: 64,
-        seed: 0,
-    },
-    (response) => {
-        if (!response.completed) {
-            process.stdout.write(response.token);
-        }
-    }
-);
-
-```
-
 ### 分词
 
 从LLama-rs中获取分词
 
 ```typescript
-import { LLamaClient } from "llama-node";
+import { LLama } from "llama-node";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
+const llama = new LLama(LLamaRS);
+
+llama.load({ path: model });
 
 const content = "how are you?";
 
@@ -194,23 +222,19 @@ llama.tokenize(content).then(console.log);
 这是一份预览版本的代码，嵌入所使用的尾词在未来可能会发生变化。请勿在生产环境中使用！
 
 ```typescript
-import { LLamaClient } from "llama-node";
+import { LLama } from "llama-node";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs";
 import path from "path";
+import fs from "fs";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
 
-const llama = new LLamaClient(
-    {
-        path: model,
-        numCtxTokens: 128,
-    },
-    true
-);
+const llama = new LLama(LLamaRS);
 
-const prompt = `how are you`;
+llama.load({ path: model });
 
-llama
-    .getEmbedding({
+const getWordEmbeddings = async (prompt: string, file: string) => {
+    const data = await llama.getEmbedding({
         prompt,
         numPredict: 128,
         temp: 0.2,
@@ -219,10 +243,28 @@ llama
         repeatPenalty: 1,
         repeatLastN: 64,
         seed: 0,
-        feedPrompt: true,
-    })
-    .then(console.log);
+    });
 
+    console.log(prompt, data);
+
+    await fs.promises.writeFile(
+        path.resolve(process.cwd(), file),
+        JSON.stringify(data)
+    );
+};
+
+const run = async () => {
+    const dog1 = `My favourite animal is the dog`;
+    await getWordEmbeddings(dog1, "./example/semantic-compare/dog1.json");
+
+    const dog2 = `I have just adopted a cute dog`;
+    await getWordEmbeddings(dog2, "./example/semantic-compare/dog2.json");
+
+    const cat1 = `My favourite animal is the cat`;
+    await getWordEmbeddings(cat1, "./example/semantic-compare/cat1.json");
+};
+
+run();
 ```
 
 ---
@@ -270,3 +312,5 @@ llama
 - [ ] 更多平台和处理器架构（在最高的性能条件下）
 - [ ] 优化嵌入API，提供可以配置尾词的选项
 - [ ] 命令行工具
+- [ ] 更新llama-rs以支持更多模型 https://github.com/rustformers/llama-rs/pull/85 https://github.com/rustformers/llama-rs/issues/75
+- [ ] 更多native推理后端支持！
