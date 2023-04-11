@@ -1,6 +1,6 @@
 {
   "name": "llama-node",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -47,20 +47,20 @@
     "tsx": "^3.12.6",
     "typescript": "^5.0.4",
     "vitest": "^0.29.8",
-    "@llama-node/cli": "0.0.18",
-    "@llama-node/core": "0.0.18",
-    "@llama-node/llama-cpp": "0.0.18"
+    "@llama-node/cli": "0.0.20",
+    "@llama-node/core": "0.0.20",
+    "@llama-node/llama-cpp": "0.0.20"
   },
   "dependencies": {
-    "@llama-node/cli": "0.0.18"
+    "@llama-node/cli": "0.0.20"
   },
   "optionalDependencies": {
-    "@llama-node/core": "0.0.18",
-    "@llama-node/llama-cpp": "0.0.18"
+    "@llama-node/core": "0.0.20",
+    "@llama-node/llama-cpp": "0.0.20"
   },
   "peerDependencies": {
-    "@llama-node/cli": "0.0.18",
-    "@llama-node/core": "0.0.18",
-    "@llama-node/llama-cpp": "0.0.18"
+    "@llama-node/cli": "0.0.20",
+    "@llama-node/core": "0.0.20",
+    "@llama-node/llama-cpp": "0.0.20"
   }
 }
