@@ -1,0 +1,43 @@
+{
+  "name": "@llama-node/llama-cpp",
+  "version": "0.0.18",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "napi": {
+    "name": "@llama-node/llama-cpp",
+    "triples": {
+      "additional": [
+        "aarch64-apple-darwin",
+        "aarch64-linux-android",
+        "aarch64-unknown-linux-gnu"
+      ]
+    }
+  },
+  "license": "MIT",
+  "devDependencies": {},
+  "ava": {
+    "timeout": "3m"
+  },
+  "engines": {
+    "node": ">= 10"
+  },
+  "scripts": {
+    "prepublish": "npm run artifacts",
+    "cross-compile": "rimraf @llama-node && tsx scripts/cross-compile.ts",
+    "artifacts": "tsx scripts/artifacts.ts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "test": "vitest",
+    "start": "tsx example/load.ts",
+    "embedding": "tsx example/embedding.ts",
+    "inference": "tsx example/inference.ts",
+    "tokenize": "tsx example/tokenize.ts",
+    "semantic-compare": "tsx example/semantic-compare/compare.ts",
+    "universal": "napi universal",
+    "version": "napi version"
+  },
+  "repository": {
+    "url": "https://github.com/hlhr202/llama-node"
+  },
+  "homepage": "https://github.com/hlhr202/llama-node"
+}

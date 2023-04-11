@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - develop
+      - feature/llama-sys
   pull_request:
     branches:
       - master
@@ -52,14 +53,15 @@ jobs:
       # - run: cargo install cargo-xwin
       - run: npm install
       - run: cargo clippy --all-targets --all-features
-        working-directory: ./packages/core
       - run: npm run --workspace=packages/core cross-compile
+      - run: npm run --workspace=packages/llama-cpp cross-compile
       - run: npm run type-check
       - uses: actions/upload-artifact@v3
         with:
-          name: bindings-${{ matrix.os }}
-          path: packages/core/@llama-node/*.node
+          name: binding-${{ matrix.os }}
+          path: packages/**/@llama-node/*.node
           if-no-files-found: error
+
   # test-host:
   #   strategy:
   #     fail-fast: false

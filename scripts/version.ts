@@ -1,5 +1,6 @@
 import main from "../package.json";
 import core from "../packages/core/package.json";
+import cpp from "../packages/llama-cpp/package.json";
 import cli from "../packages/cli/package.json";
 import semver from "semver";
 import path from "path";
@@ -33,6 +34,7 @@ console.log("Current versions: ");
 console.log(`main: ${main.version}`);
 console.log(`core: ${core.version}`);
 console.log(`cli: ${cli.version}`);
+console.log(`cpp: ${cpp.version}`);
 
 console.log(`New version: ${newVersion}`);
 
@@ -40,9 +42,12 @@ console.log("Updating versions...");
 main.version = newVersion;
 core.version = newVersion;
 cli.version = newVersion;
-main.dependencies["@llama-node/core"] = newVersion;
-main.dependencies["@llama-node/cli"] = newVersion;
+cpp.version = newVersion;
+main.optionalDependencies["@llama-node/core"] = newVersion;
+main.optionalDependencies["@llama-node/llama-cpp"] = newVersion;
+main.devDependencies["@llama-node/cli"] = newVersion;
 main.peerDependencies["@llama-node/core"] = newVersion;
+main.peerDependencies["@llama-node/llama-cpp"] = newVersion;
 main.peerDependencies["@llama-node/cli"] = newVersion;
 cli.dependencies["@llama-node/core"] = newVersion;
 
@@ -55,6 +60,11 @@ fs.writeFileSync(
 fs.writeFileSync(
     path.join(__dirname, "../packages/core/package.json"),
     JSON.stringify(core, null, 2)
+);
+
+fs.writeFileSync(
+    path.join(__dirname, "../packages/llama-cpp/package.json"),
+    JSON.stringify(cpp, null, 2)
 );
 
 fs.writeFileSync(
