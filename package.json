@@ -55,8 +55,10 @@
     "@llama-node/core": "0.0.18",
     "@llama-node/llama-cpp": "0.0.18"
   },
+  "dependencies": {
+    "@llama-node/cli": "0.0.18"
+  },
   "optionalDependencies": {
-    "@llama-node/cli": "0.0.18",
     "@llama-node/core": "0.0.18",
     "@llama-node/llama-cpp": "0.0.18"
   },
