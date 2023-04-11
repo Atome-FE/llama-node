@@ -625,7 +625,7 @@ dependencies = [
 [[package]]
 name = "llm-chain-llama-sys"
 version = "0.3.3"
-source = "git+https://github.com/hlhr202/llm-chain.git?branch=feature/fix-cross-compile#b79ba63970b1c14370b23086c1845ac2a9992225"
+source = "git+https://github.com/hlhr202/llm-chain.git?branch=feature/fix-cross-compile#55dd5fcc6ae218e61d3f97b0f39a80ca5fd79062"
 dependencies = [
  "bindgen",
 ]
