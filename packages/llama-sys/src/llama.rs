@@ -34,19 +34,15 @@ impl LLamaInternal {
         log::info!("context_params: {:?}", context_params_c);
         let input_ctx = &self.context;
         // Tokenize the stop sequence and input prompt.
-        let tokenized_stop_prompt = if let Some(stop_sequence) = &input.stop_sequence {
-            Some(
-                tokenize(
-                    input_ctx,
-                    &stop_sequence,
-                    context_params_c.n_ctx as usize,
-                    false,
-                )
-                .unwrap(),
+        let tokenized_stop_prompt = input.stop_sequence.as_ref().map(|stop_sequence| {
+            tokenize(
+                input_ctx,
+                stop_sequence,
+                context_params_c.n_ctx as usize,
+                false,
             )
-        } else {
-            None
-        };
+            .unwrap()
+        });
 
         log::info!("tokenized_stop_prompt: {:?}", tokenized_stop_prompt);
 
