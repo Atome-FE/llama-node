@@ -32,7 +32,7 @@ pub struct LlamaContextParams {
     pub vocab_only: bool,
     pub use_mlock: bool,
     pub embedding: bool,
-    pub use_mmap: bool,
+    // pub use_mmap: bool,
 }
 
 impl LlamaContextParams {

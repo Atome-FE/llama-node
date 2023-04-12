@@ -22,7 +22,6 @@ export interface LlamaContextParams {
   vocabOnly: boolean
   useMlock: boolean
   embedding: boolean
-  useMmap: boolean
 }
 export const enum TokenizeResultType {
   Error = 0,

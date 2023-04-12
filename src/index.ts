@@ -5,13 +5,15 @@ export class LLama<
     Instance,
     LoadConfig,
     LLMInferenceArguments,
-    LLMEmbeddingArguments
+    LLMEmbeddingArguments,
+    TokenizeArguments
 > {
     llm: LLM<
         Instance,
         LoadConfig,
         LLMInferenceArguments,
-        LLMEmbeddingArguments
+        LLMEmbeddingArguments,
+        TokenizeArguments
     >;
 
     constructor(
@@ -19,7 +21,8 @@ export class LLama<
             Instance,
             LoadConfig,
             LLMInferenceArguments,
-            LLMEmbeddingArguments
+            LLMEmbeddingArguments,
+            TokenizeArguments
         >
     ) {
         this.llm = new llm();
@@ -45,7 +48,7 @@ export class LLama<
         }
     }
 
-    async tokenize(content: string): Promise<number[]> {
+    async tokenize(content: TokenizeArguments): Promise<number[]> {
         if (!this.llm.tokenize) {
             console.warn("tokenize not implemented for current LLM");
             return [];

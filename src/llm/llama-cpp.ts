@@ -1,4 +1,5 @@
 import {
+    EmbeddingResultType,
     InferenceResultType,
     LLama,
     LlamaContextParams,
@@ -20,7 +21,7 @@ export interface TokenizeArguments {
 
 export class LLamaCpp
     implements
-        LLM<LLama, LoadConfig, LlamaInvocation, unknown, TokenizeArguments>
+        LLM<LLama, LoadConfig, LlamaInvocation, LlamaInvocation, TokenizeArguments>
 {
     instance!: LLama;
 
@@ -61,6 +62,21 @@ export class LLamaCpp
                         errors.push(response.message ?? "Unknown Error");
                         break;
                     }
+                }
+            });
+        });
+    }
+
+    async getEmbedding(params: LlamaInvocation): Promise<number[]> {
+        return new Promise<number[]>((res, rej) => {
+            this.instance.getWordEmbedding(params, (response) => {
+                switch (response.type) {
+                    case EmbeddingResultType.Data:
+                        res(response.data ?? []);
+                        break;
+                    case EmbeddingResultType.Error:
+                        rej(new Error("Unknown Error"));
+                        break;
                 }
             });
         });

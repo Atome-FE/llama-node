@@ -10,7 +10,6 @@ const llama = LLama.load(
         f16Kv: false,
         logitsAll: false,
         vocabOnly: false,
-        useMmap: true,
         useMlock: false,
         embedding: true,
     },
