@@ -3,6 +3,7 @@ import {
     LLama,
     LlamaContextParams,
     LlamaInvocation,
+    TokenizeResultType,
 } from "@llama-node/llama-cpp";
 
 import { LLM } from "../llm";
@@ -12,8 +13,14 @@ export interface LoadConfig extends LlamaContextParams {
     enableLogging: boolean;
 }
 
+export interface TokenizeArguments {
+    content: string;
+    nCtx: number;
+}
+
 export class LLamaCpp
-    implements LLM<LLama, LoadConfig, LlamaInvocation, unknown>
+    implements
+        LLM<LLama, LoadConfig, LlamaInvocation, unknown, TokenizeArguments>
 {
     instance!: LLama;
 
@@ -54,6 +61,18 @@ export class LLamaCpp
                         errors.push(response.message ?? "Unknown Error");
                         break;
                     }
+                }
+            });
+        });
+    }
+
+    async tokenize(params: TokenizeArguments): Promise<number[]> {
+        return new Promise<number[]>((res, rej) => {
+            this.instance.tokenize(params.content, params.nCtx, (response) => {
+                if (response.type === TokenizeResultType.Data) {
+                    res(response.data);
+                } else {
+                    rej(new Error("Unknown Error"));
                 }
             });
         });

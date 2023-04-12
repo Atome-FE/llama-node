@@ -6,7 +6,8 @@ export interface LLM<
     Instance,
     LoadConfig,
     LLMInferenceArguments,
-    LLMEmbeddingArguments
+    LLMEmbeddingArguments,
+    LLMTokenizeArguments,
 > {
     readonly instance: Instance;
 
@@ -19,5 +20,5 @@ export interface LLM<
 
     getEmbedding?(params: LLMEmbeddingArguments): Promise<number[]>;
 
-    tokenize?(content: string): Promise<number[]>;
+    tokenize?(content: LLMTokenizeArguments): Promise<number[]>;
 }

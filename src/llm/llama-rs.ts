@@ -7,7 +7,8 @@ export class LLamaRS
             LLama,
             LLamaConfig,
             LLamaInferenceArguments,
-            LLamaInferenceArguments
+            LLamaInferenceArguments,
+            string
         >
 {
     instance!: LLama;
