@@ -23,6 +23,14 @@ export interface LlamaContextParams {
   useMlock: boolean
   embedding: boolean
 }
+export const enum TokenizeResultType {
+  Error = 0,
+  Data = 1
+}
+export interface TokenizeResult {
+  type: TokenizeResultType
+  data: Array<number>
+}
 export interface InferenceToken {
   token: string
   completed: boolean
@@ -37,8 +45,23 @@ export interface InferenceResult {
   data?: InferenceToken
   message?: string
 }
+export const enum EmbeddingResultType {
+  Error = 0,
+  Data = 1
+}
+export interface EmbeddingResult {
+  type: EmbeddingResultType
+  data: Array<number>
+}
 export class LLama {
   static load(path: string, params: LlamaContextParams | undefined | null, enableLogger: boolean): LLama
+  getWordEmbedding(input: LlamaInvocation,
+  callback: (result: EmbeddingResult) => void): void
+  tokenize(params: string,
+  nCtx: number,
+  callback: (result:
+  { type: TokenizeResultType, data: number[] }
+  ) => void): void
   inference(input: LlamaInvocation,
   callback: (result: InferenceResult) => void): void
 }

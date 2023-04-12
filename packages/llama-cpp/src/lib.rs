@@ -7,16 +7,23 @@ mod context;
 mod llama;
 mod output;
 mod tokenizer;
+mod types;
 
-use std::sync::{mpsc::channel, Arc};
+use std::{
+    sync::{mpsc::channel, Arc},
+    thread, time,
+};
 
 use context::{LlamaContextParams, LlamaInvocation};
-use llama::{InferenceResult, LLamaChannel};
+use llama::LLamaChannel;
 use napi::{
     bindgen_prelude::*,
-    threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode},
+    threadsafe_function::{
+        ErrorStrategy, ThreadSafeCallContext, ThreadsafeFunction, ThreadsafeFunctionCallMode,
+    },
     JsFunction,
 };
+use types::{InferenceResult, TokenizeResult, EmbeddingResult};
 
 #[napi]
 pub struct LLama {
@@ -50,11 +57,77 @@ impl LLama {
                     break 'waiting_load;
                 }
                 _ => {
-                    std::thread::yield_now();
+                    thread::yield_now();
                 }
             }
         }
         Ok(Self { llama_channel })
+    }
+
+    #[napi(ts_args_type = "input: LlamaInvocation,
+        callback: (result: EmbeddingResult) => void")]
+    pub fn get_word_embedding(&self, input: LlamaInvocation, callback: JsFunction) -> Result<()> {
+        let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> =
+            callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
+        let (embeddings_sender, embeddings_receiver) = channel();
+        let llama_channel = self.llama_channel.clone();
+
+        llama_channel.embedding(input, embeddings_sender);
+
+        thread::spawn(move || {
+            loop {
+                let result = embeddings_receiver.recv();
+                match result {
+                    Ok(result) => {
+                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                    }
+                    Err(_) => {
+                        break;
+                    }
+                }
+            }
+            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
+            tsfn.abort().unwrap();
+        });
+
+        Ok(())
+    }
+
+    #[napi(ts_args_type = "params: string,
+    nCtx: number,
+    callback: (result:
+      { type: TokenizeResultType, data: number[] }
+    ) => void")]
+    pub fn tokenize(&self, params: String, n_ctx: i32, callback: JsFunction) -> Result<()> {
+        let (tokenize_sender, tokenize_receiver) = channel::<TokenizeResult>();
+
+        let tsfn: ThreadsafeFunction<TokenizeResult, ErrorStrategy::Fatal> = callback
+            .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<TokenizeResult>| {
+                Ok(vec![ctx.value])
+            })?;
+
+        let llama_channel = self.llama_channel.clone();
+
+        llama_channel.tokenize(params, n_ctx as usize, tokenize_sender);
+
+        thread::spawn(move || {
+            'waiting_tokenize: loop {
+                let recv = tokenize_receiver.recv();
+                match recv {
+                    Ok(callback) => {
+                        tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
+                        break 'waiting_tokenize;
+                    }
+                    _ => {
+                        thread::yield_now();
+                    }
+                }
+            }
+            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
+            tsfn.abort().unwrap();
+        });
+
+        Ok(())
     }
 
     #[napi(ts_args_type = "input: LlamaInvocation,
@@ -67,16 +140,20 @@ impl LLama {
 
         llama_channel.inference(input, inference_sender);
 
-        std::thread::spawn(move || loop {
-            let result = inference_receiver.recv();
-            match result {
-                Ok(result) => {
-                    tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                }
-                Err(_) => {
-                    break;
+        thread::spawn(move || {
+            loop {
+                let result = inference_receiver.recv();
+                match result {
+                    Ok(result) => {
+                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                    }
+                    Err(_) => {
+                        break;
+                    }
                 }
             }
+            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
+            tsfn.abort().unwrap();
         });
 
         Ok(())

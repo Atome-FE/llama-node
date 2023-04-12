@@ -1,4 +1,3 @@
-use napi::bindgen_prelude::*;
 use std::{
     sync::{
         mpsc::{channel, Receiver, Sender, TryRecvError},
@@ -10,6 +9,10 @@ use std::{
 use crate::{
     context::{LLamaContext, LlamaContextParams, LlamaInvocation},
     tokenizer::{embedding_to_output, llama_token_eos, tokenize},
+    types::{
+        EmbeddingResult, EmbeddingResultType, InferenceResult, InferenceResultType, InferenceToken,
+        LLamaCommand, TokenizeResult, TokenizeResultType,
+    },
 };
 
 #[derive(Clone)]
@@ -23,37 +26,65 @@ pub struct LLamaInternal {
     context_params: Option<LlamaContextParams>,
 }
 
-#[derive(Clone, Debug)]
-pub enum LLamaCommand {
-    Inference(LlamaInvocation, Sender<InferenceResult>),
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct InferenceToken {
-    pub token: String,
-    pub completed: bool,
-}
-
-#[napi]
-pub enum InferenceResultType {
-    Error,
-    Data,
-    End,
-}
-
-#[napi(object)]
-pub struct InferenceResult {
-    pub r#type: InferenceResultType,
-    pub data: Option<InferenceToken>,
-    pub message: Option<String>,
-}
-
 impl LLamaInternal {
+    pub fn tokenize(&self, input: &str, n_ctx: usize, sender: &Sender<TokenizeResult>) {
+        if let Ok(data) = tokenize(&self.context, input, n_ctx, false) {
+            sender
+                .send(TokenizeResult {
+                    data,
+                    r#type: TokenizeResultType::Data,
+                })
+                .unwrap();
+        } else {
+            sender
+                .send(TokenizeResult {
+                    data: vec![],
+                    r#type: TokenizeResultType::Error,
+                })
+                .unwrap();
+        }
+    }
+
+    pub fn embedding(&self, input: &LlamaInvocation, sender: &Sender<EmbeddingResult>) {
+        let context_params_c = LlamaContextParams::or_default(&self.context_params);
+        let input_ctx = &self.context;
+        let embd_inp = tokenize(
+            input_ctx,
+            input.prompt.as_str(),
+            context_params_c.n_ctx as usize,
+            true,
+        )
+        .unwrap();
+
+        // let end_text = "\n";
+        // let end_token =
+        //     tokenize(input_ctx, end_text, context_params_c.n_ctx as usize, false).unwrap();
+
+        input_ctx
+            .llama_eval(embd_inp.as_slice(), embd_inp.len() as i32, 0, input)
+            .unwrap();
+
+        let embeddings = input_ctx.llama_get_embeddings();
+
+        if let Ok(embeddings) = embeddings {
+            sender
+                .send(EmbeddingResult {
+                    r#type: EmbeddingResultType::Data,
+                    data: embeddings.iter().map(|&x| x as f64).collect(),
+                })
+                .unwrap();
+        } else {
+            sender
+                .send(EmbeddingResult {
+                    r#type: EmbeddingResultType::Error,
+                    data: vec![],
+                })
+                .unwrap();
+        }
+    }
+
     pub fn inference(&self, input: &LlamaInvocation, sender: &Sender<InferenceResult>) {
         let context_params_c = LlamaContextParams::or_default(&self.context_params);
-        log::info!("inference: {:?}", input);
-        log::info!("context_params: {:?}", context_params_c);
         let input_ctx = &self.context;
         // Tokenize the stop sequence and input prompt.
         let tokenized_stop_prompt = input.stop_sequence.as_ref().map(|stop_sequence| {
@@ -188,6 +219,18 @@ impl LLamaChannel {
         Arc::new(channel)
     }
 
+    pub fn tokenize(&self, input: String, n_ctx: usize, sender: Sender<TokenizeResult>) {
+        self.command_sender
+            .send(LLamaCommand::Tokenize(input, n_ctx, sender))
+            .unwrap();
+    }
+
+    pub fn embedding(&self, params: LlamaInvocation, sender: Sender<EmbeddingResult>) {
+        self.command_sender
+            .send(LLamaCommand::Embedding(params, sender))
+            .unwrap();
+    }
+
     pub fn inference(&self, params: LlamaInvocation, sender: Sender<InferenceResult>) {
         self.command_sender
             .send(LLamaCommand::Inference(params, sender))
@@ -223,6 +266,12 @@ impl LLamaChannel {
                 match command {
                     Ok(LLamaCommand::Inference(params, sender)) => {
                         llama.inference(&params, &sender);
+                    }
+                    Ok(LLamaCommand::Embedding(params, sender)) => {
+                        llama.embedding(&params, &sender);
+                    }
+                    Ok(LLamaCommand::Tokenize(text, n_ctx, sender)) => {
+                        llama.tokenize(&text, n_ctx, &sender);
                     }
                     Err(TryRecvError::Disconnected) => {
                         break 'llama_loop;

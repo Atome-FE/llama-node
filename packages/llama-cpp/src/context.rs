@@ -1,10 +1,10 @@
-use std::{ffi::CStr, ptr::null_mut};
+use std::{ffi::CStr, ptr::null_mut, slice};
 
 use anyhow::Result;
 use llm_chain_llama_sys::{
     llama_context, llama_context_default_params, llama_context_params, llama_eval, llama_free,
-    llama_init_from_file, llama_print_system_info, llama_sample_top_p_top_k, llama_token,
-    llama_token_to_str,
+    llama_get_embeddings, llama_init_from_file, llama_n_embd, llama_print_system_info,
+    llama_sample_top_p_top_k, llama_token, llama_token_to_str,
 };
 
 #[napi(object)]
@@ -32,6 +32,7 @@ pub struct LlamaContextParams {
     pub vocab_only: bool,
     pub use_mlock: bool,
     pub embedding: bool,
+    // pub use_mmap: bool,
 }
 
 impl LlamaContextParams {
@@ -57,6 +58,7 @@ impl From<LlamaContextParams> for llama_context_params {
             embedding: params.embedding,
             progress_callback: None,
             progress_callback_user_data: null_mut(),
+            // use_mmap: params.use_mmap,
         }
     }
 }
@@ -68,10 +70,7 @@ pub struct LLamaContext {
 
 impl LLamaContext {
     // Creates a new LLamaContext from the specified file and configuration parameters.
-    pub fn from_file_and_params(
-        path: &str,
-        params: &Option<LlamaContextParams>,
-    ) -> Self {
+    pub fn from_file_and_params(path: &str, params: &Option<LlamaContextParams>) -> Self {
         let params = LlamaContextParams::or_default(params);
         let ctx = unsafe { llama_init_from_file(path.as_ptr() as *const i8, params) };
         Self { ctx }
@@ -116,6 +115,17 @@ impl LLamaContext {
             .unwrap()
             .to_owned();
         native_string
+    }
+
+    pub fn llama_get_embeddings(&self) -> Result<Vec<f32>, ()> {
+        unsafe {
+            let embd_size = llama_n_embd(self.ctx);
+            let embd_ptr = llama_get_embeddings(self.ctx);
+            if embd_ptr.is_null() {
+                return Err(());
+            }
+            Ok(slice::from_raw_parts(embd_ptr, embd_size as usize).to_vec())
+        }
     }
 
     // Evaluates the given tokens with the specified configuration.
