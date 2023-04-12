@@ -22,7 +22,7 @@ Node.js运行的大语言模型LLaMA。
   - [安装](#安装)
   - [模型获取](#模型获取)
     - [模型版本](#模型版本)
-  - [使用 (llama.cpp后端)](#使用-llamacpp后端)
+  - [使用（llama.cpp后端）](#使用llamacpp后端)
   - [使用（llama-rs后端）](#使用llama-rs后端)
     - [推理](#推理)
     - [分词](#分词)
@@ -36,9 +36,9 @@ Node.js运行的大语言模型LLaMA。
 
 ## 介绍
 
-这是一个基于[llama-rs](https://github.com/rustformers/llama-rs)和[llm-chain-llama-sys](https://github.com/sobelio/llm-chain/tree/main/llm-chain-llama/sys)开发的nodejs客户端库，用于Llama（及部分周边模型） LLM。它使用[napi-rs](https://github.com/napi-rs/napi-rs)在node.js和llama线程之间传递消息。
+这是一个基于[llama-rs](https://github.com/rustformers/llama-rs)和[llm-chain-llama-sys](https://github.com/sobelio/llm-chain/tree/main/llm-chain-llama/sys)（为[llama.cpp](https://github.com/ggerganov/llama.cpp)生成的rust绑定）开发的nodejs客户端库，用于Llama（及部分周边模型） LLM。它使用[napi-rs](https://github.com/napi-rs/napi-rs)在node.js和llama线程之间传递消息。
 
-从v0.0.20开始，同时支持llama-rs和llama.cpp后端
+从v0.0.21开始，同时支持llama-rs和llama.cpp后端
 
 当前支持平台:
 - darwin-x64
@@ -90,7 +90,7 @@ llama-rs后端现在只支持GGML / GGMF模型。llama.cpp后端仅支持GGJT模
 
 ---
 
-## 使用 (llama.cpp后端)
+## 使用（llama.cpp后端）
 
 当前版本只支持在一个LLama实例上进行单个推理会话。
 
@@ -313,4 +313,4 @@ run();
 - [ ] 优化嵌入API，提供可以配置尾词的选项
 - [ ] 命令行工具
 - [ ] 更新llama-rs以支持更多模型 https://github.com/rustformers/llama-rs/pull/85 https://github.com/rustformers/llama-rs/issues/75
-- [ ] 更多native推理后端支持！
+- [ ] 更多native推理后端（如rwkv）支持！

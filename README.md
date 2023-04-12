@@ -38,9 +38,9 @@ This project is in an early stage, the API for nodejs may change in the future, 
 
 ## Introduction
 
-This is a nodejs client library for llama (or llama based) LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs) and [llm-chain-llama-sys](https://github.com/sobelio/llm-chain/tree/main/llm-chain-llama/sys). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
+This is a nodejs client library for llama (or llama based) LLM built on top of [llama-rs](https://github.com/rustformers/llama-rs) and [llm-chain-llama-sys](https://github.com/sobelio/llm-chain/tree/main/llm-chain-llama/sys) which generate bindings for [llama.cpp](https://github.com/ggerganov/llama.cpp). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
 
-From v0.0.20, both llama-rs and llama.cpp backends are supported!
+From v0.0.21, both llama-rs and llama.cpp backends are supported!
 
 Currently supported platforms:
 - darwin-x64
@@ -319,4 +319,4 @@ The following steps will allow you to compile the binary with best quality on yo
 - [ ] tweak embedding API, make end token configurable
 - [ ] cli and interactive
 - [ ] support more open source models as llama-rs planned https://github.com/rustformers/llama-rs/pull/85 https://github.com/rustformers/llama-rs/issues/75
-- [ ] more backends supports!
+- [ ] more backends (eg. rwkv) supports!
