@@ -1,4 +1,4 @@
-import { LLama } from "../index";
+import { EmbeddingResultType, LLama } from "../index";
 import path from "path";
 import fs from "fs";
 
@@ -25,14 +25,14 @@ const getWordEmbeddings = (prompt: string, file: string) => {
         },
         (response) => {
             switch (response.type) {
-                case "DATA": {
+                case EmbeddingResultType.Data: {
                     fs.writeFileSync(
                         path.resolve(process.cwd(), file),
                         JSON.stringify(response.data)
                     );
                     break;
                 }
-                case "ERROR": {
+                case EmbeddingResultType.Error: {
                     console.log(response);
                     break;
                 }

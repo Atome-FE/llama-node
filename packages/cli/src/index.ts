@@ -4,6 +4,7 @@ import {
     LLamaInferenceArguments,
     LLama,
     LLamaConfig,
+    InferenceResultType,
 } from "@llama-node/core";
 import yargs from "yargs";
 import path from "path";
@@ -77,13 +78,13 @@ class InferenceCommand implements yargs.CommandModule {
         const llama = LLama.create({ path: absolutePath, numCtxTokens });
         llama.inference(rest, (result) => {
             switch (result.type) {
-                case "DATA":
-                    process.stdout.write(result.data.token);
+                case InferenceResultType.Data:
+                    process.stdout.write(result.data?.token ?? "");
                     break;
-                case "ERROR":
+                case InferenceResultType.Error:
                     console.error(result.message);
                     break;
-                case "END":
+                case InferenceResultType.End:
                     break;
             }
         });

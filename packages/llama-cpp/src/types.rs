@@ -9,7 +9,7 @@ pub enum LLamaCommand {
     Embedding(LlamaInvocation, Sender<EmbeddingResult>),
 }
 
-#[napi]
+#[napi(string_enum)]
 pub enum TokenizeResultType {
     Error,
     Data,
@@ -28,7 +28,7 @@ pub struct InferenceToken {
     pub completed: bool,
 }
 
-#[napi]
+#[napi(string_enum)]
 pub enum InferenceResultType {
     Error,
     Data,
@@ -42,7 +42,7 @@ pub struct InferenceResult {
     pub message: Option<String>,
 }
 
-#[napi]
+#[napi(string_enum)]
 pub enum EmbeddingResultType {
     Error,
     Data,

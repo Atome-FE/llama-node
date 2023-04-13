@@ -8,8 +8,9 @@ use std::{
 };
 
 use crate::types::{
-  EmbeddingResult, InferenceResult, InferenceToken, LLamaCommand, LLamaConfig,
-  LLamaInferenceArguments, LoadModelResult, TokenizeResult,
+  EmbeddingResult, EmbeddingResultType, InferenceResult, InferenceResultType, InferenceToken,
+  LLamaCommand, LLamaConfig, LLamaInferenceArguments, LoadModelResult, TokenizeResult,
+  TokenizeResultType,
 };
 use llama_rs::{
   EvaluateOutputRequest, InferenceError, InferenceParameters, InferenceSession,
@@ -120,7 +121,10 @@ impl LLamaInternal {
       .collect::<Vec<_>>();
     if let Some(sender) = sender {
       sender
-        .send(TokenizeResult { data: tokens.clone() })
+        .send(TokenizeResult {
+          data: tokens.clone(),
+          r#type: TokenizeResultType::Data,
+        })
         .unwrap();
     }
     tokens
@@ -169,14 +173,12 @@ impl LLamaInternal {
       play_back_previous_tokens: false,
     };
 
-    // log::info!("repeat_last_n: {}", repeat_last_n);
     log::info!("n_threads: {}", inference_params.n_threads);
     log::info!("n_batch: {}", inference_params.n_batch);
     log::info!("top_k: {}", inference_params.top_k);
     log::info!("top_p: {}", inference_params.top_p);
     log::info!("repeat_penalty: {}", inference_params.repeat_penalty);
     log::info!("temp: {}", inference_params.temperature);
-    // log::info!("seed: {:?}", seed);
 
     inference_params
   }
@@ -213,15 +215,19 @@ impl LLamaInternal {
     let vocab = self.vocab.as_ref().unwrap();
     let prompt_for_feed = format!(" {}", params.prompt);
 
-    if let Err(InferenceError::ContextFull) =
-      session.feed_prompt::<Infallible>(model, vocab, &inference_params, prompt_for_feed.as_str(), |_| {
-        Ok(())
-      })
-    {
+    if let Err(InferenceError::ContextFull) = session.feed_prompt::<Infallible>(
+      model,
+      vocab,
+      &inference_params,
+      prompt_for_feed.as_str(),
+      |_| Ok(()),
+    ) {
       sender
-        .send(EmbeddingResult::EmbeddingError(
-          "Context window full.".to_string(),
-        ))
+        .send(EmbeddingResult {
+          r#type: EmbeddingResultType::Error,
+          message: Some("Context window full.".to_string()),
+          data: None,
+        })
         .unwrap();
     }
 
@@ -240,7 +246,13 @@ impl LLamaInternal {
     );
 
     sender
-      .send(EmbeddingResult::EmbeddingData(output_request.embeddings))
+      .send(EmbeddingResult {
+        r#type: EmbeddingResultType::Data,
+        message: None,
+        data: output_request
+          .embeddings
+          .map(|embd| embd.into_iter().map(|data| data.into()).collect()),
+      })
       .unwrap();
   }
 
@@ -266,9 +278,11 @@ impl LLamaInternal {
       session.feed_prompt::<Infallible>(model, vocab, &inference_params, prompt, |_| Ok(()))
     {
       sender
-        .send(InferenceResult::InferenceError(
-          "Context window full.".to_string(),
-        ))
+        .send(InferenceResult {
+          r#type: InferenceResultType::Error,
+          message: Some("Context window full.".to_string()),
+          data: None,
+        })
         .unwrap();
     }
 
@@ -282,10 +296,14 @@ impl LLamaInternal {
       Some(num_predict),
       &mut rng,
       |t| {
-        let to_send = InferenceResult::InferenceData(InferenceToken {
-          token: t.to_string(),
-          completed: false,
-        });
+        let to_send = InferenceResult {
+          r#type: InferenceResultType::Data,
+          message: None,
+          data: Some(InferenceToken {
+            token: t.to_string(),
+            completed: false,
+          }),
+        };
 
         sender.send(to_send).unwrap();
 
@@ -295,34 +313,43 @@ impl LLamaInternal {
 
     match res {
       Ok(_) => {
-        let to_send = InferenceResult::InferenceData(InferenceToken {
-          token: "\n\n<end>\n".to_string(),
-          completed: true,
-        });
+        let to_send = InferenceResult {
+          r#type: InferenceResultType::Data,
+          message: None,
+          data: Some(InferenceToken {
+            token: "\n\n<end>\n".to_string(),
+            completed: true,
+          }),
+        };
+
         sender.send(to_send).unwrap();
       }
-      Err(llama_rs::InferenceError::EndOfText) => {
-        let to_send = InferenceResult::InferenceError("End of text.".to_string());
-        sender.send(to_send).unwrap();
-      }
-      Err(llama_rs::InferenceError::ContextFull) => {
+      Err(error) => {
         sender
-          .send(InferenceResult::InferenceError(
-            "Context window full, stopping inference.".to_string(),
-          ))
+          .send(InferenceResult {
+            r#type: InferenceResultType::Error,
+            message: match error {
+              llama_rs::InferenceError::EndOfText => Some("End of text.".to_string()),
+              llama_rs::InferenceError::ContextFull => {
+                Some("Context window full, stopping inference.".to_string())
+              }
+              llama_rs::InferenceError::TokenizationFailed => {
+                Some("Tokenization failed.".to_string())
+              }
+              llama_rs::InferenceError::UserCallback(_) => Some("Inference failed.".to_string()),
+            },
+            data: None,
+          })
           .unwrap();
-        log::warn!("Context window full, stopping inference.")
       }
-      Err(llama_rs::InferenceError::TokenizationFailed) => {
-        sender
-          .send(InferenceResult::InferenceError(
-            "Failed to tokenize initial prompt.".to_string(),
-          ))
-          .unwrap();
-      }
-      Err(llama_rs::InferenceError::UserCallback(_)) => unreachable!("cannot fail"),
     }
-    sender.send(InferenceResult::InferenceEnd).unwrap();
+    sender
+      .send(InferenceResult {
+        r#type: InferenceResultType::End,
+        message: None,
+        data: None,
+      })
+      .unwrap();
   }
 }
 

@@ -1,4 +1,10 @@
-import { LLama, LLamaConfig, LLamaInferenceArguments } from "@llama-node/core";
+import {
+    EmbeddingResultType,
+    InferenceResultType,
+    LLama,
+    LLamaConfig,
+    LLamaInferenceArguments,
+} from "@llama-node/core";
 import type { LLM } from "../llm";
 
 export class LLamaRS
@@ -26,10 +32,10 @@ export class LLamaRS
         return new Promise<boolean>((res, rej) => {
             this.instance.inference(params, (response) => {
                 switch (response.type) {
-                    case "DATA": {
+                    case InferenceResultType.Data: {
                         const data = {
-                            token: response.data.token,
-                            completed: !!response.data.completed,
+                            token: response.data!.token,
+                            completed: !!response.data!.completed,
                         };
                         if (data.completed) {
                             completed = true;
@@ -37,7 +43,7 @@ export class LLamaRS
                         callback(data);
                         break;
                     }
-                    case "END": {
+                    case InferenceResultType.Error: {
                         if (errors.length) {
                             rej(new Error(errors.join("\n")));
                         } else {
@@ -45,8 +51,8 @@ export class LLamaRS
                         }
                         break;
                     }
-                    case "ERROR": {
-                        errors.push(response.message);
+                    case InferenceResultType.End: {
+                        errors.push(response.message ?? "Unknown error");
                         break;
                     }
                 }
@@ -58,10 +64,10 @@ export class LLamaRS
         return new Promise<number[]>((res, rej) => {
             this.instance.getWordEmbeddings(params, (response) => {
                 switch (response.type) {
-                    case "DATA":
+                    case EmbeddingResultType.Data:
                         res(response.data ?? []);
                         break;
-                    case "ERROR":
+                    case EmbeddingResultType.Error:
                         rej(response.message);
                         break;
                 }

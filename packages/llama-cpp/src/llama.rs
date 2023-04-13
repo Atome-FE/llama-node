@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     context::{LLamaContext, LlamaContextParams, LlamaInvocation},
-    tokenizer::{embedding_to_output, llama_token_eos, tokenize},
+    tokenizer::{llama_token_eos, tokenize},
     types::{
         EmbeddingResult, EmbeddingResultType, InferenceResult, InferenceResultType, InferenceToken,
         LLamaCommand, TokenizeResult, TokenizeResultType,
@@ -122,25 +122,18 @@ impl LLamaInternal {
             .unwrap();
         let token_eos = llama_token_eos();
 
-        log::info!("hard coded token_eos: {}", token_eos);
-
         // Generate remaining tokens.
         let mut n_remaining = context_params_c.n_ctx - tokenized_input.len() as i32;
         let mut n_used = tokenized_input.len() - 1;
         let mut stop_sequence_i = 0;
+        let mut completed = false;
         while n_remaining > 0 {
             let tok = input_ctx.llama_sample(embd.as_slice(), n_used as i32, input);
             n_used += 1;
             n_remaining -= 1;
             embd[n_used] = tok;
             if tok == token_eos {
-                sender
-                    .send(InferenceResult {
-                        r#type: InferenceResultType::End,
-                        data: None,
-                        message: None,
-                    })
-                    .unwrap();
+                completed = true;
                 break;
             }
             if input.n_tok_predict != 0
@@ -160,13 +153,7 @@ impl LLamaInternal {
                 if tok == tokenized_stop_prompt[stop_sequence_i] {
                     stop_sequence_i += 1;
                     if stop_sequence_i >= tokenized_stop_prompt.len() {
-                        sender
-                            .send(InferenceResult {
-                                r#type: InferenceResultType::End,
-                                data: None,
-                                message: None,
-                            })
-                            .unwrap();
+                        completed = true;
                         break;
                     }
                 } else {
@@ -193,10 +180,31 @@ impl LLamaInternal {
                     .unwrap();
             }
         }
-        embedding_to_output(
-            input_ctx,
-            &embd[tokenized_input.len()..n_used + 1 - stop_sequence_i],
-        );
+
+        if completed {
+            sender
+                .send(InferenceResult {
+                    r#type: InferenceResultType::Data,
+                    data: Some(InferenceToken {
+                        token: "\n\n<end>\n".to_string(),
+                        completed: true,
+                    }),
+                    message: None,
+                })
+                .unwrap();
+        }
+
+        sender
+            .send(InferenceResult {
+                r#type: InferenceResultType::End,
+                data: None,
+                message: None,
+            })
+            .unwrap();
+        // embedding_to_output(
+        //     input_ctx,
+        //     &embd[tokenized_input.len()..n_used + 1 - stop_sequence_i],
+        // );
     }
 }
 

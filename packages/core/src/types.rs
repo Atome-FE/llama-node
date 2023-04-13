@@ -1,3 +1,4 @@
+use napi::bindgen_prelude::*;
 use std::sync::mpsc::Sender;
 
 #[napi(object)]
@@ -7,17 +8,65 @@ pub struct InferenceToken {
   pub completed: bool,
 }
 
-#[derive(Clone, Debug)]
-pub enum InferenceResult {
-  InferenceData(InferenceToken),
-  InferenceError(String),
-  InferenceEnd,
+#[napi(string_enum)]
+#[derive(Debug)]
+pub enum InferenceResultType {
+  Data,
+  End,
+  Error,
 }
 
+#[napi(object)]
 #[derive(Clone, Debug)]
-pub enum EmbeddingResult {
-  EmbeddingError(String),
-  EmbeddingData(Option<Vec<f32>>)
+pub struct InferenceResult {
+  pub r#type: InferenceResultType,
+  pub message: Option<String>,
+  pub data: Option<InferenceToken>,
+}
+
+
+/**
+ * Embedding result
+ */
+#[napi(string_enum)]
+#[derive(Debug)]
+pub enum EmbeddingResultType {
+  Data,
+  Error,
+}
+
+#[napi(object)]
+#[derive(Clone, Debug)]
+pub struct EmbeddingResult {
+  pub r#type: EmbeddingResultType,
+  pub message: Option<String>,
+  pub data: Option<Vec<f64>>,
+}
+
+/**
+ * Tokenize result
+ */
+#[napi(string_enum)]
+#[derive(Debug)]
+pub enum TokenizeResultType {
+  Data,
+}
+
+#[napi(object)]
+#[derive(Clone, Debug)]
+pub struct TokenizeResult {
+  pub r#type: TokenizeResultType,
+  pub data: Vec<i32>,
+}
+
+/**
+ * LLama model load config
+ */
+#[napi(object)]
+#[derive(Clone, Debug)]
+pub struct LLamaConfig {
+  pub path: String,
+  pub num_ctx_tokens: Option<i64>,
 }
 
 #[napi(object)]
@@ -25,19 +74,6 @@ pub enum EmbeddingResult {
 pub struct LoadModelResult {
   pub error: bool,
   pub message: Option<String>,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct TokenizeResult {
-  pub data: Vec<i32>
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct LLamaConfig {
-  pub path: String,
-  pub num_ctx_tokens: Option<i64>,
 }
 
 #[napi(object)]

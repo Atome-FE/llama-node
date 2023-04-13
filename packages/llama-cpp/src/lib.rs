@@ -23,7 +23,7 @@ use napi::{
     },
     JsFunction,
 };
-use types::{InferenceResult, TokenizeResult, EmbeddingResult};
+use types::{EmbeddingResult, InferenceResult, TokenizeResult};
 
 #[napi]
 pub struct LLama {
@@ -64,9 +64,12 @@ impl LLama {
         Ok(Self { llama_channel })
     }
 
-    #[napi(ts_args_type = "input: LlamaInvocation,
-        callback: (result: EmbeddingResult) => void")]
-    pub fn get_word_embedding(&self, input: LlamaInvocation, callback: JsFunction) -> Result<()> {
+    #[napi]
+    pub fn get_word_embedding(
+        &self,
+        input: LlamaInvocation,
+        #[napi(ts_arg_type = "(result: EmbeddingResult) => void")] callback: JsFunction,
+    ) -> Result<()> {
         let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> =
             callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
         let (embeddings_sender, embeddings_receiver) = channel();
@@ -93,12 +96,13 @@ impl LLama {
         Ok(())
     }
 
-    #[napi(ts_args_type = "params: string,
-    nCtx: number,
-    callback: (result:
-      { type: TokenizeResultType, data: number[] }
-    ) => void")]
-    pub fn tokenize(&self, params: String, n_ctx: i32, callback: JsFunction) -> Result<()> {
+    #[napi]
+    pub fn tokenize(
+        &self,
+        params: String,
+        n_ctx: i32,
+        #[napi(ts_arg_type = "(result: TokenizeResult) => void")] callback: JsFunction,
+    ) -> Result<()> {
         let (tokenize_sender, tokenize_receiver) = channel::<TokenizeResult>();
 
         let tsfn: ThreadsafeFunction<TokenizeResult, ErrorStrategy::Fatal> = callback
@@ -130,9 +134,12 @@ impl LLama {
         Ok(())
     }
 
-    #[napi(ts_args_type = "input: LlamaInvocation,
-        callback: (result: InferenceResult) => void")]
-    pub fn inference(&self, input: LlamaInvocation, callback: JsFunction) -> Result<()> {
+    #[napi]
+    pub fn inference(
+        &self,
+        input: LlamaInvocation,
+        #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
+    ) -> Result<()> {
         let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> =
             callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
         let (inference_sender, inference_receiver) = channel();

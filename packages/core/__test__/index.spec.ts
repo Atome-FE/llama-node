@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { LLama } from "../index.js";
+import { InferenceResultType, LLama } from "../index.js";
 
 test(
     "inference is working",
@@ -36,14 +36,20 @@ ${template}
                     },
                     (response) => {
                         switch (response.type) {
-                            case "DATA": {
-                                process.stdout.write(response.data.token);
+                            case InferenceResultType.Data: {
+                                process.stdout.write(
+                                    response.data?.token ?? ""
+                                );
                                 break;
                             }
-                            case "END":
-                            case "ERROR": {
-                                expect(response.type).toEqual("END");
-                                res(response.type === "END");
+                            case InferenceResultType.Error: {
+                                break;
+                            }
+                            case InferenceResultType.End: {
+                                expect(response.type).toEqual(
+                                    InferenceResultType.End
+                                );
+                                res(response.type === InferenceResultType.End);
                                 break;
                             }
                         }

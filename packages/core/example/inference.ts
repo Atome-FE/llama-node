@@ -1,4 +1,4 @@
-import { LLama } from "../index";
+import { InferenceResultType, LLama } from "../index";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
@@ -18,7 +18,7 @@ const prompt = `Below is an instruction that describes a task. Write a response 
 
 ${template}
 
-### Response:`
+### Response:`;
 
 llama.inference(
     {
@@ -33,12 +33,12 @@ llama.inference(
     },
     (response) => {
         switch (response.type) {
-            case "DATA": {
-                process.stdout.write(response.data.token);
+            case InferenceResultType.Data: {
+                process.stdout.write(response.data?.token ?? "");
                 break;
             }
-            case "END":
-            case "ERROR": {
+            case InferenceResultType.End:
+            case InferenceResultType.Error: {
                 console.log(response);
                 break;
             }
