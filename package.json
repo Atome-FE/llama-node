@@ -26,7 +26,8 @@
   "workspaces": [
     "packages/core",
     "packages/cli",
-    "packages/llama-cpp"
+    "packages/llama-cpp",
+    "example"
   ],
   "author": "hlhr202@163.com",
   "license": "MIT",
