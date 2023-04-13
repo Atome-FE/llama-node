@@ -7,16 +7,48 @@ export interface InferenceToken {
   token: string
   completed: boolean
 }
-export interface LoadModelResult {
-  error: boolean
+export const enum InferenceResultType {
+  Data = 'Data',
+  End = 'End',
+  Error = 'Error'
+}
+export interface InferenceResult {
+  type: InferenceResultType
   message?: string
+  data?: InferenceToken
+}
+/**
+ * Embedding result
+*/
+export const enum EmbeddingResultType {
+  Data = 'Data',
+  Error = 'Error'
+}
+export interface EmbeddingResult {
+  type: EmbeddingResultType
+  message?: string
+  data?: Array<number>
+}
+/**
+ * Tokenize result
+*/
+export const enum TokenizeResultType {
+  Data = 'Data'
 }
 export interface TokenizeResult {
+  type: TokenizeResultType
   data: Array<number>
 }
+/**
+ * LLama model load config
+*/
 export interface LLamaConfig {
   path: string
   numCtxTokens?: number
+}
+export interface LoadModelResult {
+  error: boolean
+  message?: string
 }
 export interface LLamaInferenceArguments {
   nThreads?: number
@@ -48,19 +80,7 @@ export function convert(path: string, elementType: ElementType): Promise<void>
 export class LLama {
   static enableLogger(): void
   static create(config: LLamaConfig): LLama
-  tokenize(params: string,
-  callback: (result:
-  { type: 'DATA', data: number[] }
-  ) => void): void
-  getWordEmbeddings(params: LLamaInferenceArguments,
-  callback: (result:
-  { type: 'ERROR', message: string } |
-  { type: 'DATA', data?: number[] }
-  ) => void): void
-  inference(params: LLamaInferenceArguments,
-  callback: (result:
-  { type: 'ERROR', message: string } |
-  { type: 'DATA', data: InferenceToken } |
-  { type: 'END' }
-  ) => void): void
+  tokenize(params: string, callback: (result: TokenizeResult) => void): void
+  getWordEmbeddings(params: LLamaInferenceArguments, callback: (result: EmbeddingResult) => void): void
+  inference(params: LLamaInferenceArguments, callback: (result: InferenceResult) => void): void
 }

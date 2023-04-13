@@ -16,8 +16,8 @@ use std::{
 use llama::LLamaChannel;
 use llama_rs::convert::convert_pth_to_ggml;
 use types::{
-  EmbeddingResult, InferenceResult, LLamaConfig, LLamaInferenceArguments, LoadModelResult,
-  TokenizeResult,
+  EmbeddingResult, InferenceResult, InferenceResultType, LLamaConfig, LLamaInferenceArguments,
+  LoadModelResult, TokenizeResult,
 };
 
 use napi::{
@@ -114,27 +114,17 @@ impl LLama {
     Ok(LLama { llama_channel })
   }
 
-  #[napi(ts_args_type = "params: string,
-    callback: (result:
-      { type: 'DATA', data: number[] }
-    ) => void")]
-  pub fn tokenize(&self, params: String, callback: JsFunction) -> Result<()> {
+  #[napi]
+  pub fn tokenize(
+    &self,
+    params: String,
+    #[napi(ts_arg_type = "(result: TokenizeResult) => void")] callback: JsFunction,
+  ) -> Result<()> {
     let (tokenize_sender, tokenize_receiver) = channel::<TokenizeResult>();
 
     let tsfn: ThreadsafeFunction<TokenizeResult, ErrorStrategy::Fatal> = callback
       .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<TokenizeResult>| {
-        let mut obj = ctx.env.create_object().unwrap();
-        let array = ctx.value.data;
-        let mut js_array = ctx.env.create_array_with_length(array.len()).unwrap();
-        for (i, d) in array.iter().enumerate() {
-          let item = ctx.env.create_int32(*d).unwrap();
-          js_array.set_element(i.try_into().unwrap(), item).unwrap();
-        }
-        obj
-          .set_named_property("type", ctx.env.create_string("DATA"))
-          .unwrap();
-        obj.set_named_property("data", js_array).unwrap();
-        Ok(vec![obj])
+        Ok(vec![ctx.value])
       })?;
 
     let llama_channel = self.llama_channel.clone();
@@ -142,8 +132,45 @@ impl LLama {
     llama_channel.tokenize(&params, tokenize_sender);
 
     thread::spawn(move || {
-      'waiting_embedding: loop {
+      'waiting_tokenize: loop {
         let recv = tokenize_receiver.recv();
+        match recv {
+          Ok(callback) => {
+            tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
+            break 'waiting_tokenize;
+          }
+          _ => {
+            thread::yield_now();
+          }
+        }
+      }
+      thread::sleep(time::Duration::from_millis(300)); // wait for end signal
+      tsfn.abort().unwrap();
+    });
+
+    Ok(())
+  }
+
+  #[napi]
+  pub fn get_word_embeddings(
+    &self,
+    params: LLamaInferenceArguments,
+    #[napi(ts_arg_type = "(result: EmbeddingResult) => void")] callback: JsFunction,
+  ) -> Result<()> {
+    let (embedding_sender, embedding_receiver) = channel::<EmbeddingResult>();
+
+    let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> = callback
+      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<EmbeddingResult>| {
+        Ok(vec![ctx.value])
+      })?;
+
+    let llama_channel = self.llama_channel.clone();
+
+    llama_channel.get_word_embedding(params, embedding_sender);
+
+    thread::spawn(move || {
+      'waiting_embedding: loop {
+        let recv = embedding_receiver.recv();
         match recv {
           Ok(callback) => {
             tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
@@ -161,119 +188,17 @@ impl LLama {
     Ok(())
   }
 
-  #[napi(ts_args_type = "params: LLamaInferenceArguments,
-    callback: (result:
-      { type: 'ERROR', message: string } |
-      { type: 'DATA', data?: number[] }
-    ) => void")]
-  pub fn get_word_embeddings(
+  #[napi]
+  pub fn inference(
     &self,
     params: LLamaInferenceArguments,
-    callback: JsFunction,
+    #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
   ) -> Result<()> {
-    let (embedding_sender, embedding_receiver) = channel::<EmbeddingResult>();
-
-    let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> = callback
-      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<EmbeddingResult>| {
-        let mut obj = ctx.env.create_object().unwrap();
-        match ctx.value.clone() {
-          EmbeddingResult::EmbeddingData(data) => {
-            if let Some(array) = data {
-              let mut js_array = ctx.env.create_array_with_length(array.len()).unwrap();
-              for (i, d) in array.iter().enumerate() {
-                let item = ctx.env.create_double(*d as f64).unwrap();
-                js_array.set_element(i.try_into().unwrap(), item).unwrap();
-              }
-              obj.set_named_property("data", js_array).unwrap();
-            } else {
-              let js_array = ctx.env.create_array_with_length(0).unwrap();
-              obj.set_named_property("data", js_array).unwrap();
-            }
-            obj
-              .set_named_property("type", ctx.env.create_string("DATA").unwrap())
-              .unwrap();
-          }
-          EmbeddingResult::EmbeddingError(err) => {
-            let error = ctx.env.create_string(err.as_str()).unwrap();
-            obj
-              .set_named_property("type", ctx.env.create_string("ERROR").unwrap())
-              .unwrap();
-            obj.set_named_property("message", error).unwrap();
-          }
-        }
-        Ok(vec![obj])
-      })?;
-
-    let llama_channel = self.llama_channel.clone();
-
-    llama_channel.get_word_embedding(params, embedding_sender);
-
-    thread::spawn(move || {
-      'waiting_embedding: loop {
-        let recv = embedding_receiver.recv();
-        match recv {
-          Ok(callback) => match callback {
-            EmbeddingResult::EmbeddingData(_) => {
-              tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
-              break 'waiting_embedding;
-            }
-            _ => {
-              tsfn.call(callback, ThreadsafeFunctionCallMode::NonBlocking);
-            }
-          },
-          _ => {
-            thread::yield_now();
-          }
-        }
-      }
-      thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-      tsfn.abort().unwrap();
-    });
-
-    Ok(())
-  }
-
-  #[napi(ts_args_type = "params: LLamaInferenceArguments,
-    callback: (result: 
-      { type: 'ERROR', message: string } |
-      { type: 'DATA', data: InferenceToken } |
-      { type: 'END' }
-    ) => void")]
-  pub fn inference(&self, params: LLamaInferenceArguments, callback: JsFunction) -> Result<()> {
     let (inference_sender, inference_receiver) = channel::<InferenceResult>();
 
     let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
       .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
-        let mut obj = ctx.env.create_object().unwrap();
-        match ctx.value.clone() {
-          InferenceResult::InferenceData(it) => {
-            let mut data = ctx.env.create_object().unwrap();
-            let token = ctx.env.create_string(it.token.as_str()).unwrap();
-            let completed = ctx
-              .env
-              .create_int32(if it.completed { 1 } else { 0 })
-              .unwrap();
-            data.set_named_property("token", token).unwrap();
-            data.set_named_property("completed", completed).unwrap();
-            obj
-              .set_named_property("type", ctx.env.create_string("DATA").unwrap())
-              .unwrap();
-            obj.set_named_property("data", data).unwrap();
-          }
-          InferenceResult::InferenceError(err) => {
-            let error = ctx.env.create_string(err.as_str()).unwrap();
-            obj
-              .set_named_property("type", ctx.env.create_string("ERROR").unwrap())
-              .unwrap();
-            obj.set_named_property("message", error).unwrap();
-          }
-          InferenceResult::InferenceEnd => {
-            obj
-              .set_named_property("type", ctx.env.create_string("END").unwrap())
-              .unwrap();
-          }
-        };
-        Ok(vec![obj])
+        Ok(vec![ctx.value])
       })?;
 
     let llama_channel = self.llama_channel.clone();
@@ -284,8 +209,8 @@ impl LLama {
       'waiting_inference: loop {
         let recv = inference_receiver.recv();
         match recv {
-          Ok(callback) => match callback {
-            InferenceResult::InferenceEnd => {
+          Ok(callback) => match callback.r#type {
+            InferenceResultType::End => {
               tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
               break 'waiting_inference;
             }
