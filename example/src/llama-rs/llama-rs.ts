@@ -1,8 +1,8 @@
-import { LLama } from "../../src";
-import { LLamaRS } from "../../src/llm/llama-rs";
+import { LLama } from "llama-node";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
+const model = path.resolve(process.cwd(), "../ggml-alpaca-7b-q4.bin");
 
 const llama = new LLama(LLamaRS);
 

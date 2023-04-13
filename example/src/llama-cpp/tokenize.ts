@@ -1,8 +1,8 @@
-import { LLama } from "../../src";
-import { LLamaCpp, LoadConfig } from "../../src/llm/llama-cpp";
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-4bit-rev1.bin");
 
 const llama = new LLama(LLamaCpp);
 
