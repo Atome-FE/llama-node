@@ -25,10 +25,13 @@ This project is in an early stage, the API for nodejs may change in the future, 
   - [Getting the weights](#getting-the-weights)
     - [Model versioning](#model-versioning)
   - [Usage (llama.cpp backend)](#usage-llamacpp-backend)
-  - [Usage (llama-rs backend)](#usage-llama-rs-backend)
     - [Inference](#inference)
     - [Tokenize](#tokenize)
     - [Embedding](#embedding)
+  - [Usage (llama-rs backend)](#usage-llama-rs-backend)
+    - [Inference](#inference-1)
+    - [Tokenize](#tokenize-1)
+    - [Embedding](#embedding-1)
   - [Performance related](#performance-related)
     - [Manual compilation (from node\_modules)](#manual-compilation-from-node_modules)
     - [Manual compilation (from source)](#manual-compilation-from-source)
@@ -98,11 +101,11 @@ The current version supports only one inference session on one LLama instance at
 
 If you wish to have multiple inference sessions concurrently, you need to create multiple LLama instances
 
-llama.cpp backend now only supports inferencing. Please wait for embedding and tokenization feature.
+### Inference
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
@@ -150,6 +153,79 @@ llama.createCompletion(
 
 ```
 
+### Tokenize
+
+```typescript
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+
+const llama = new LLama(LLamaCpp);
+
+const config: LoadConfig = {
+    path: model,
+    enableLogging: true,
+    nCtx: 1024,
+    nParts: -1,
+    seed: 0,
+    f16Kv: false,
+    logitsAll: false,
+    vocabOnly: false,
+    useMlock: false,
+    embedding: false,
+};
+
+llama.load(config);
+
+const content = "how are you?";
+
+llama.tokenize({ content, nCtx: 2048 }).then(console.log);
+
+```
+
+### Embedding
+```typescript
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+
+const llama = new LLama(LLamaCpp);
+
+const config: LoadConfig = {
+    path: model,
+    enableLogging: true,
+    nCtx: 1024,
+    nParts: -1,
+    seed: 0,
+    f16Kv: false,
+    logitsAll: false,
+    vocabOnly: false,
+    useMlock: false,
+    embedding: false,
+};
+
+llama.load(config);
+
+const prompt = `Who is the president of the United States?`;
+
+const params = {
+    nThreads: 4,
+    nTokPredict: 2048,
+    topK: 40,
+    topP: 0.1,
+    temp: 0.2,
+    repeatPenalty: 1,
+    prompt,
+};
+
+llama.getEmbedding(params).then(console.log);
+
+```
+
 ---
 
 ## Usage (llama-rs backend)
@@ -162,7 +238,7 @@ If you wish to have multiple inference sessions concurrently, you need to create
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
@@ -205,7 +281,7 @@ Get tokenization result from LLaMA
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
@@ -226,7 +302,7 @@ Preview version, embedding end token may change in the future. Do not use it in 
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 import fs from "fs";
 

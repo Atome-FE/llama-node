@@ -7,7 +7,7 @@ import {
     TokenizeResultType,
 } from "@llama-node/llama-cpp";
 
-import { LLM } from "../llm";
+import type { LLM } from "../llm";
 
 export interface LoadConfig extends LlamaContextParams {
     path: string;
