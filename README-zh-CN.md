@@ -23,10 +23,13 @@ Node.js运行的大语言模型LLaMA。
   - [模型获取](#模型获取)
     - [模型版本](#模型版本)
   - [使用（llama.cpp后端）](#使用llamacpp后端)
-  - [使用（llama-rs后端）](#使用llama-rs后端)
     - [推理](#推理)
     - [分词](#分词)
     - [嵌入](#嵌入)
+  - [使用（llama-rs后端）](#使用llama-rs后端)
+    - [推理](#推理-1)
+    - [分词](#分词-1)
+    - [嵌入](#嵌入-1)
   - [关于性能](#关于性能)
     - [手动编译 (from node\_modules)](#手动编译-from-node_modules)
     - [手动编译 (from source)](#手动编译-from-source)
@@ -96,11 +99,11 @@ llama-rs后端现在只支持GGML / GGMF模型。llama.cpp后端仅支持GGJT模
 
 如果您希望同时进行多个推理会话，则需要创建多个LLama实例。
 
-llama.cpp后端现仅支持推理. 嵌入和分词功能请等待后期更新。
+### 推理
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
@@ -148,6 +151,79 @@ llama.createCompletion(
 
 ```
 
+### 分词
+
+```typescript
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+
+const llama = new LLama(LLamaCpp);
+
+const config: LoadConfig = {
+    path: model,
+    enableLogging: true,
+    nCtx: 1024,
+    nParts: -1,
+    seed: 0,
+    f16Kv: false,
+    logitsAll: false,
+    vocabOnly: false,
+    useMlock: false,
+    embedding: false,
+};
+
+llama.load(config);
+
+const content = "how are you?";
+
+llama.tokenize({ content, nCtx: 2048 }).then(console.log);
+
+```
+
+### 嵌入
+```typescript
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+
+const llama = new LLama(LLamaCpp);
+
+const config: LoadConfig = {
+    path: model,
+    enableLogging: true,
+    nCtx: 1024,
+    nParts: -1,
+    seed: 0,
+    f16Kv: false,
+    logitsAll: false,
+    vocabOnly: false,
+    useMlock: false,
+    embedding: false,
+};
+
+llama.load(config);
+
+const prompt = `Who is the president of the United States?`;
+
+const params = {
+    nThreads: 4,
+    nTokPredict: 2048,
+    topK: 40,
+    topP: 0.1,
+    temp: 0.2,
+    repeatPenalty: 1,
+    prompt,
+};
+
+llama.getEmbedding(params).then(console.log);
+
+```
+
 ---
 
 ## 使用（llama-rs后端）
@@ -160,7 +236,7 @@ llama.createCompletion(
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
@@ -203,7 +279,7 @@ llama.createCompletion(
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "./ggml-alpaca-7b-q4.bin");
@@ -223,7 +299,7 @@ llama.tokenize(content).then(console.log);
 
 ```typescript
 import { LLama } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs";
+import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 import fs from "fs";
 

@@ -1,5 +1,5 @@
 import { CompletionCallback } from "./llm";
-import { LLM } from "./llm";
+import type { LLM } from "./llm";
 
 export class LLama<
     Instance,
