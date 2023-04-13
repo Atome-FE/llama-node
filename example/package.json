@@ -15,8 +15,8 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@llama-node/core": "^0.0.22",
-    "@llama-node/llama-cpp": "^0.0.22",
-    "llama-node": "^0.0.22"
+    "@llama-node/core": "file:../packages/core",
+    "@llama-node/llama-cpp": "file:../packages/llama-cpp",
+    "llama-node": "file:../"
   }
 }
