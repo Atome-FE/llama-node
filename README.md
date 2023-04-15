@@ -52,6 +52,8 @@ Currently supported platforms:
 - linux-x64-musl
 - win32-x64-msvc
 
+Node.js version: >= 16
+
 
 I do not have hardware for testing 13B or larger models, but I have tested it supported llama 7B model with both ggml llama and ggml alpaca.
 

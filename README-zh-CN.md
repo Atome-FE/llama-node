@@ -50,6 +50,8 @@ Node.js运行的大语言模型LLaMA。
 - linux-x64-musl
 - win32-x64-msvc
 
+Node.js最低版本：16
+
 
 我没有硬件能够测试13B或更大的模型，但我已成功地测试了支持llama 7B模型的ggml llama和ggml alpaca。
 
