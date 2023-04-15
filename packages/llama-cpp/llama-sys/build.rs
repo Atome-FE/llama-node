@@ -8,6 +8,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
+    let (_host, target_arch, _target_os) = get_build_target();
     let target = env::var("TARGET").unwrap();
     // Link C++ standard library
     if let Some(cpp_stdlib) = get_cpp_link_stdlib(&target) {
@@ -21,6 +22,10 @@ fn main() {
     println!("cargo:rustc-link-search={}", env::var("OUT_DIR").unwrap());
     println!("cargo:rustc-link-lib=static=llama");
     println!("cargo:rerun-if-changed=wrapper.h");
+
+    env::set_var("CXXFLAGS", "-fPIC");
+    env::set_var("CFLAGS", "-fPIC");
+    env::set_var("CMAKE_SYSTEM_PROCESSOR", target_arch);
 
     if env::var("LLAMA_DONT_GENERATE_BINDINGS").is_ok() {
         let _: u64 = std::fs::copy(
@@ -65,8 +70,6 @@ fn main() {
     _ = std::fs::create_dir("build");
     env::set_current_dir("build").expect("Unable to change directory to llama.cpp build");
 
-    env::set_var("CXXFLAGS", "-fPIC");
-    env::set_var("CFLAGS", "-fPIC");
 
     let code = std::process::Command::new("cmake")
         .arg("..")
@@ -126,4 +129,17 @@ fn get_cpp_link_stdlib(target: &str) -> Option<&'static str> {
     } else {
         Some("stdc++")
     }
+}
+
+fn get_build_target() -> (String, String, String) {
+    let target = env::var("TARGET").unwrap();
+    let target_triple = target.split('-').collect::<Vec<&str>>();
+    let target_arch = target_triple[0];
+    let target_os = target_triple[2];
+    println!("target_arch: {}", target_arch);
+    println!("target_os: {}", target_os);
+    let host = env::var("HOST").unwrap();
+    println!("host: {}", host);
+
+    (host, target_arch.to_string(), target_os.to_string())
 }

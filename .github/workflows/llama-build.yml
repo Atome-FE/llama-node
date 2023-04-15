@@ -4,7 +4,7 @@ on:
     branches:
       - main
       - develop
-      - feature/llama-sys
+      - 18-zsh-illegal-hardware-instruction
   pull_request:
     branches:
       - master
