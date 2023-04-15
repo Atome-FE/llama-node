@@ -3,7 +3,7 @@ use anyhow::Result;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
-use llm_chain_llama_sys::{
+use llama_sys::{
     llama_token, llama_token_eos as inner_eos, llama_token_to_str, llama_tokenize,
 };
 
