@@ -20,7 +20,7 @@ const compile = () => {
     const targets = getTargets();
     targets.forEach((target) => {
         const buildProcess = exec(
-            `napi build --platform --target ${target} --release`
+            `rustup target add ${target} && napi build --platform --target ${target} --release`
         );
         buildProcess.stdout?.pipe(process.stdout);
         buildProcess.stderr?.pipe(process.stderr);
