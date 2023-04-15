@@ -47,6 +47,7 @@ Node.js运行的大语言模型LLaMA。
 - darwin-x64
 - darwin-arm64
 - linux-x64-gnu
+- linux-x64-musl
 - win32-x64-msvc
 
 

@@ -27,6 +27,3 @@ anyhow = "1.0.70"
 
 [build-dependencies]
 napi-build = "2.0.1"
-
-[profile.release]
-lto = true
