@@ -53,6 +53,7 @@ jobs:
       # - run: cargo install cargo-xwin
       - run: sudo apt install -y musl-tools
         if: matrix.os == 'ubuntu-latest'
+      - run: git submodule update --init
       - run: npm install
       - run: cargo clippy --all-targets --all-features
       - run: npm run --workspace=packages/core cross-compile
