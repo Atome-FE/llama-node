@@ -6,7 +6,7 @@ const getTargets = () => {
             return ["aarch64-apple-darwin", "x86_64-apple-darwin"];
         }
         case "linux": {
-            return ["x86_64-unknown-linux-gnu"];
+            return ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl"];
         }
         case "win32": {
             return ["x86_64-pc-windows-msvc"];

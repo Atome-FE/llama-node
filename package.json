@@ -1,6 +1,6 @@
 {
   "name": "llama-node",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -21,7 +21,7 @@
   "repository": {
     "type": "git",
     "test": "tsx",
-    "url": "git+https://github.com/hlhr202/llama-node.git"
+    "url": "git+https://github.com/Atome-FE/llama-node.git"
   },
   "workspaces": [
     "packages/core",
@@ -32,13 +32,17 @@
   "author": "hlhr202@163.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hlhr202/llama-node/issues"
+    "url": "https://github.com/Atome-FE/llama-node/issues"
   },
-  "homepage": "https://github.com/hlhr202/llama-node#readme",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=7.0.0"
+  },
+  "homepage": "https://github.com/Atome-FE/llama-node#readme",
   "devDependencies": {
-    "@llama-node/cli": "0.0.23",
-    "@llama-node/core": "0.0.23",
-    "@llama-node/llama-cpp": "0.0.23",
+    "@llama-node/cli": "0.0.24",
+    "@llama-node/core": "0.0.24",
+    "@llama-node/llama-cpp": "0.0.24",
     "@napi-rs/cli": "^2.15.2",
     "@tensorflow/tfjs-node": "^4.2.0",
     "@types/node": "^18.15.5",
@@ -53,15 +57,15 @@
     "vitest": "^0.29.8"
   },
   "dependencies": {
-    "@llama-node/cli": "0.0.23"
+    "@llama-node/cli": "0.0.24"
   },
   "optionalDependencies": {
-    "@llama-node/core": "0.0.23",
-    "@llama-node/llama-cpp": "0.0.23"
+    "@llama-node/core": "0.0.24",
+    "@llama-node/llama-cpp": "0.0.24"
   },
   "peerDependencies": {
-    "@llama-node/cli": "0.0.23",
-    "@llama-node/core": "0.0.23",
-    "@llama-node/llama-cpp": "0.0.23"
+    "@llama-node/cli": "0.0.24",
+    "@llama-node/core": "0.0.24",
+    "@llama-node/llama-cpp": "0.0.24"
   }
 }
