@@ -1,7 +1,7 @@
 use std::{ffi::CStr, ptr::null_mut, slice};
 
 use anyhow::Result;
-use llm_chain_llama_sys::{
+use llama_sys::{
     llama_context, llama_context_default_params, llama_context_params, llama_eval, llama_free,
     llama_get_embeddings, llama_init_from_file, llama_n_embd, llama_print_system_info,
     llama_sample_top_p_top_k, llama_token, llama_token_to_str,
@@ -32,7 +32,7 @@ pub struct LlamaContextParams {
     pub vocab_only: bool,
     pub use_mlock: bool,
     pub embedding: bool,
-    // pub use_mmap: bool,
+    pub use_mmap: bool,
 }
 
 impl LlamaContextParams {
@@ -58,7 +58,7 @@ impl From<LlamaContextParams> for llama_context_params {
             embedding: params.embedding,
             progress_callback: None,
             progress_callback_user_data: null_mut(),
-            // use_mmap: params.use_mmap,
+            use_mmap: params.use_mmap,
         }
     }
 }

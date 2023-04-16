@@ -12,6 +12,7 @@ const llama = LLama.load(
         vocabOnly: false,
         useMlock: false,
         embedding: true,
+        useMmap: true,
     },
     false
 );

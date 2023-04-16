@@ -16,7 +16,7 @@ log = "0.4"
 once_cell = "1.17.1"
 num_cpus = "1.15.0"
 rand = "0.8.5"
-llm-chain-llama-sys = { git = "https://github.com/hlhr202/llm-chain.git", branch = "feature/fix-cross-compile" }
+llama-sys = { path = "./llama-sys" }
 # llm-chain-llama-sys = { path = "../../../llm-chain/llm-chain-llama/sys" }
 napi = { version = "2.12.2", default-features = false, features = ["napi6", "async"] }
 napi-derive = "2.12.2"

@@ -17,6 +17,7 @@ const config: LoadConfig = {
     vocabOnly: false,
     useMlock: false,
     embedding: true,
+    useMmap: true,
 };
 
 llama.load(config);
