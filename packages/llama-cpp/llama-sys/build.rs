@@ -80,7 +80,7 @@ fn main() {
 
     if target_os.contains("darwin") && target_arch.contains("aarch64") {
         command
-            .arg("-DCMAKE_SYSTEM_NAME=Generic")
+            .arg("-DCMAKE_SYSTEM_NAME=Darwin")
             .arg("-DCMAKE_SYSTEM_PROCESSOR=apple-m1")
             .arg("-DCMAKE_OSX_ARCHITECTURES=arm64")
             .arg("-DLLAMA_NATIVE=OFF");
