@@ -16,6 +16,8 @@ async function getLatestGithubAction() {
 
         const lastId: string = res.data.workflow_runs[0].id;
 
+        console.log(`Last workflow run id: ${lastId}`);
+
         return lastId;
     } catch (error) {
         console.error(error);
