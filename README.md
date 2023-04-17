@@ -126,6 +126,7 @@ const config: LoadConfig = {
     vocabOnly: false,
     useMlock: false,
     embedding: false,
+    useMmap: true,
 };
 
 llama.load(config);
@@ -178,6 +179,7 @@ const config: LoadConfig = {
     vocabOnly: false,
     useMlock: false,
     embedding: false,
+    useMmap: true,
 };
 
 llama.load(config);
@@ -208,7 +210,8 @@ const config: LoadConfig = {
     logitsAll: false,
     vocabOnly: false,
     useMlock: false,
-    embedding: false,
+    embedding: true,
+    useMmap: true,
 };
 
 llama.load(config);
