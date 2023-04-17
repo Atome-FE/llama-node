@@ -8,7 +8,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let (_host, target_arch, _target_os) = get_build_target();
+    let (_host, target_arch, target_os) = get_build_target();
     let target = env::var("TARGET").unwrap();
     // Link C++ standard library
     if let Some(cpp_stdlib) = get_cpp_link_stdlib(&target) {
@@ -25,7 +25,6 @@ fn main() {
 
     env::set_var("CXXFLAGS", "-fPIC");
     env::set_var("CFLAGS", "-fPIC");
-    env::set_var("CMAKE_SYSTEM_PROCESSOR", target_arch);
 
     if env::var("LLAMA_DONT_GENERATE_BINDINGS").is_ok() {
         let _: u64 = std::fs::copy(
@@ -65,23 +64,31 @@ fn main() {
     }
 
     // build lib
-    env::set_current_dir("llama.cpp").expect("Unable to change directory to whisper.cpp");
+    env::set_current_dir("llama.cpp").expect("Unable to change directory to llama.cpp");
     _ = std::fs::remove_dir_all("build");
     _ = std::fs::create_dir("build");
     env::set_current_dir("build").expect("Unable to change directory to llama.cpp build");
 
-
-    let code = std::process::Command::new("cmake")
+    let mut command = std::process::Command::new("cmake");
+    let command = command
         .arg("..")
         .arg("-DCMAKE_BUILD_TYPE=Release")
-        // .arg("-DBUILD_SHARED_LIBS=OFF")
         .arg("-DLLAMA_ALL_WARNINGS=OFF")
         .arg("-DLLAMA_ALL_WARNINGS_3RD_PARTY=OFF")
         .arg("-DLLAMA_BUILD_TESTS=OFF")
-        .arg("-DLLAMA_BUILD_EXAMPLES=OFF")
-        // .arg("-DLLAMA_STATIC=ON")
-        .status()
-        .expect("Failed to generate build script");
+        .arg("-DLLAMA_BUILD_EXAMPLES=OFF");
+
+    if target_os.contains("darwin") && target_arch.contains("aarch64") {
+        command
+            .arg("-DCMAKE_SYSTEM_NAME=Generic")
+            .arg("-DCMAKE_SYSTEM_PROCESSOR=apple-m1")
+            .arg("-DCMAKE_OSX_ARCHITECTURES=arm64")
+            .arg("-DLLAMA_NATIVE=OFF");
+
+        println!("command: {:?}", command.get_args());
+    }
+
+    let code = command.status().expect("Failed to generate build script");
     if code.code() != Some(0) {
         panic!("Failed to generate build script");
     }
@@ -136,9 +143,9 @@ fn get_build_target() -> (String, String, String) {
     let target_triple = target.split('-').collect::<Vec<&str>>();
     let target_arch = target_triple[0];
     let target_os = target_triple[2];
+    let host = env::var("HOST").unwrap();
     println!("target_arch: {}", target_arch);
     println!("target_os: {}", target_os);
-    let host = env::var("HOST").unwrap();
     println!("host: {}", host);
 
     (host, target_arch.to_string(), target_os.to_string())
