@@ -2,11 +2,11 @@ import { CompletionCallback } from "./llm";
 import type { LLM } from "./llm";
 
 export class LLama<
-    Instance,
-    LoadConfig,
-    LLMInferenceArguments,
-    LLMEmbeddingArguments,
-    TokenizeArguments
+    Instance = any,
+    LoadConfig = any,
+    LLMInferenceArguments = any,
+    LLMEmbeddingArguments = any,
+    TokenizeArguments = any
 > {
     llm: LLM<
         Instance,
@@ -45,6 +45,15 @@ export class LLama<
             return [];
         } else {
             return this.llm.getEmbedding(params);
+        }
+    }
+
+    async getDefaultEmbeddings(text: string): Promise<number[]> {
+        if (!this.llm.getDefaultEmbedding) {
+            console.warn("getDefaultEmbedding not implemented for current LLM");
+            return [];
+        } else {
+            return this.llm.getDefaultEmbedding(text);
         }
     }
 

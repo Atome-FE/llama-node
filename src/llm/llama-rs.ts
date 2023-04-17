@@ -75,6 +75,18 @@ export class LLamaRS
         });
     }
 
+    async getDefaultEmbedding(text: string): Promise<number[]> {
+        return this.getEmbedding({
+            nThreads: 4,
+            numPredict: 1024,
+            topK: 40,
+            topP: 0.1,
+            temp: 0.1,
+            repeatPenalty: 1,
+            prompt: text,
+        });
+    }
+
     async tokenize(params: string): Promise<number[]> {
         return new Promise<number[]>((res) => {
             this.instance.tokenize(params, (response) => {

@@ -21,7 +21,13 @@ export interface TokenizeArguments {
 
 export class LLamaCpp
     implements
-        LLM<LLama, LoadConfig, LlamaInvocation, LlamaInvocation, TokenizeArguments>
+        LLM<
+            LLama,
+            LoadConfig,
+            LlamaInvocation,
+            LlamaInvocation,
+            TokenizeArguments
+        >
 {
     instance!: LLama;
 
@@ -79,6 +85,18 @@ export class LLamaCpp
                         break;
                 }
             });
+        });
+    }
+
+    async getDefaultEmbedding(text: string): Promise<number[]> {
+        return this.getEmbedding({
+            nThreads: 4,
+            nTokPredict: 1024,
+            topK: 40,
+            topP: 0.1,
+            temp: 0.1,
+            repeatPenalty: 1,
+            prompt: text,
         });
     }
 
