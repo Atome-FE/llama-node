@@ -108,13 +108,17 @@ impl LLamaContext {
         }
     }
 
-    pub fn llama_token_to_str(&self, token: &i32) -> String {
+    pub fn llama_token_to_str(&self, token: &i32) -> Option<String> {
         let c_ptr = unsafe { llama_token_to_str(self.ctx, *token) };
+        if c_ptr.is_null() {
+            return None;
+        }
+
         let native_string = unsafe { CStr::from_ptr(c_ptr) }
-            .to_str()
-            .unwrap()
-            .to_owned();
-        native_string
+            .to_string_lossy()
+            .into_owned();
+
+        Some(native_string)
     }
 
     pub fn llama_get_embeddings(&self) -> Result<Vec<f32>, ()> {

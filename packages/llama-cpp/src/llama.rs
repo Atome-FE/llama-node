@@ -167,17 +167,19 @@ impl LLamaInternal {
 
             let output = input_ctx.llama_token_to_str(&embd[n_used]);
 
-            if stop_sequence_i == 0 {
-                sender
-                    .send(InferenceResult {
-                        r#type: InferenceResultType::Data,
-                        data: Some(InferenceToken {
-                            token: output,
-                            completed: false,
-                        }),
-                        message: None,
-                    })
-                    .unwrap();
+            if let Some(output) = output {
+                if stop_sequence_i == 0 {
+                    sender
+                        .send(InferenceResult {
+                            r#type: InferenceResultType::Data,
+                            data: Some(InferenceToken {
+                                token: output,
+                                completed: false,
+                            }),
+                            message: None,
+                        })
+                        .unwrap();
+                }
             }
         }
 

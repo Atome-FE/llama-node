@@ -24,7 +24,7 @@ fn to_cstring(s: &str) -> CString {
 /// # Returns
 ///
 /// A Rust String representation of the given llama_token.
-fn to_output(context: &LLamaContext, token: i32) -> String {
+fn _to_output(context: &LLamaContext, token: i32) -> String {
     let c_ptr = unsafe { llama_token_to_str(**context, token) };
     let native_string = unsafe { CStr::from_ptr(c_ptr) }
         .to_str()
@@ -92,9 +92,9 @@ fn llama_tokenize_helper(context: &LLamaContext, text: &str, add_bos: bool) -> V
 }
 
 /// Converts an embedding represented as a slice into the Output string.
-pub(crate) fn embedding_to_output(context: &LLamaContext, embd: &[i32]) -> Output {
+pub(crate) fn _embedding_to_output(context: &LLamaContext, embd: &[i32]) -> Output {
     embd.iter()
-        .map(|token| to_output(context, *token))
+        .map(|token| _to_output(context, *token))
         .fold("".to_string(), |cur, nxt| cur + &nxt)
         .into()
 }
