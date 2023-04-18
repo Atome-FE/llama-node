@@ -30,6 +30,7 @@ Node.js运行的大语言模型LLaMA。
     - [推理](#推理-1)
     - [分词](#分词-1)
     - [嵌入](#嵌入-1)
+  - [LangChain.js 扩展!](#langchainjs-扩展)
   - [关于性能](#关于性能)
     - [手动编译 (from node\_modules)](#手动编译-from-node_modules)
     - [手动编译 (from source)](#手动编译-from-source)
@@ -347,6 +348,57 @@ const run = async () => {
 };
 
 run();
+```
+
+---
+
+## LangChain.js 扩展!
+
+从v0.0.28我们增加了LangChain.js的支持！虽然准确性未经我们测试，但希望这个方式可以work！
+
+```typescript
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { LLamaEmbeddings } from "llama-node/dist/extensions/langchain.js";
+import { LLama } from "llama-node";
+import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
+import path from "path";
+
+const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-4bit-rev1.bin");
+
+const llama = new LLama(LLamaCpp);
+
+const config: LoadConfig = {
+    path: model,
+    enableLogging: true,
+    nCtx: 1024,
+    nParts: -1,
+    seed: 0,
+    f16Kv: false,
+    logitsAll: false,
+    vocabOnly: false,
+    useMlock: false,
+    embedding: true,
+    useMmap: true,
+};
+
+llama.load(config);
+
+const run = async () => {
+    // Load the docs into the vector store
+    const vectorStore = await MemoryVectorStore.fromTexts(
+        ["Hello world", "Bye bye", "hello nice world"],
+        [{ id: 2 }, { id: 1 }, { id: 3 }],
+        new LLamaEmbeddings({ maxConcurrency: 1 }, llama)
+    );
+
+    // Search for the most similar document
+    const resultOne = await vectorStore.similaritySearch("hello world", 1);
+
+    console.log(resultOne);
+};
+
+run();
+
 ```
 
 ---

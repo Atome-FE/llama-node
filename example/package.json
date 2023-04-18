@@ -6,13 +6,18 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p .",
+    "langchain": "tsx src/langchain/langchain.ts",
+    "llama-cpp": "tsx src/llama-cpp/llama-cpp.ts",
+    "llama-rs": "tsx src/llama-rs/llama-rs.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^18.15.11",
-    "typescript": "^5.0.4"
+    "tsx": "^3.12.6",
+    "typescript": "^5.0.4",
+    "langchain": "^0.0.56"
   },
   "dependencies": {
     "@llama-node/core": "file:../packages/core",
