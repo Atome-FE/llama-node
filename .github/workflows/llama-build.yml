@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [
-          'ubuntu-latest',
+          'ubuntu-20.04',
           'macos-latest',
           'windows-latest'
         ]
@@ -30,7 +30,7 @@ jobs:
           - target: aarch64-apple-darwin
             os: macos-latest
           - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
+            os: ubuntu-20.04
           - target: x86_64-pc-windows-msvc
             os: windows-latest
     runs-on: ${{ matrix.os }}
@@ -52,7 +52,7 @@ jobs:
       #     version: 0.10.0
       # - run: cargo install cargo-xwin
       - run: sudo apt install -y musl-tools
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-20.04'
       - run: git submodule update --init
       - run: npm install
       - run: cargo clippy --all-targets --all-features
@@ -126,7 +126,7 @@ jobs:
   #         - target: armv7-unknown-linux-gnueabihf
   #           docker: ghcr.io/napi-rs/napi-rs/nodejs:armhf-18
   #           setup: 'exit 0'
-  #   runs-on: ubuntu-latest
+  #   runs-on: ubuntu-20.04
   #   needs:
   #     - build
   #   steps:

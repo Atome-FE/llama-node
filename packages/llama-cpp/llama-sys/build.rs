@@ -10,21 +10,44 @@ use std::path::PathBuf;
 fn main() {
     let (_host, target_arch, target_os) = get_build_target();
     let target = env::var("TARGET").unwrap();
-    // Link C++ standard library
-    if let Some(cpp_stdlib) = get_cpp_link_stdlib(&target) {
-        println!("cargo:rustc-link-lib=dylib={}", cpp_stdlib);
-        println!("cargo:rustc-link-arg=-l{}", cpp_stdlib);
-    }
+    env::set_var("RUSTFLAGS", "-C target-feature=+crt-static");
+    env::set_var("CXXFLAGS", "-fPIC");
+    env::set_var("CFLAGS", "-fPIC");
+
+    /* if target.contains("apple")
+        || target.contains("freebsd")
+        || target.contains("openbsd")
+        || target.contains("msvc")
+        || target.contains("android")
+    {
+        // Link C++ standard library
+        if let Some(cpp_stdlib) = get_cpp_link_stdlib(&target) {
+            println!("cargo:rustc-link-lib=dylib={}", cpp_stdlib);
+            println!("cargo:rustc-link-arg=-l{}", cpp_stdlib);
+        }
+    } else {
+        // Link C++ standard library
+        if let Some(_cpp_stdlib) = get_cpp_link_stdlib(&target) {
+            println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu");
+            println!("cargo:rustc-link-search=native=/usr/lib/gcc/x86_64-linux-gnu/11");
+            println!("cargo:rustc-link-search=native=/usr/lib");
+            // println!("cargo:rustc-link-lib=static=stdc++");
+            // println!("cargo:rustc-link-lib=static=pthread");
+            // println!("cargo:rustc-link-lib=static=dl");
+            // println!("cargo:rustc-link-lib=static=rt");
+            // println!("cargo:rustc-link-lib=static=c");
+            // println!("cargo:rustc-link-lib=static=m");
+        }
+    } */
+
     // Link macOS Accelerate framework for matrix calculations
     if target.contains("apple") {
         println!("cargo:rustc-link-lib=framework=Accelerate");
     }
+
     println!("cargo:rustc-link-search={}", env::var("OUT_DIR").unwrap());
     println!("cargo:rustc-link-lib=static=llama");
     println!("cargo:rerun-if-changed=wrapper.h");
-
-    env::set_var("CXXFLAGS", "-fPIC");
-    env::set_var("CFLAGS", "-fPIC");
 
     if env::var("LLAMA_DONT_GENERATE_BINDINGS").is_ok() {
         let _: u64 = std::fs::copy(
@@ -73,6 +96,7 @@ fn main() {
     let command = command
         .arg("..")
         .arg("-DCMAKE_BUILD_TYPE=Release")
+        .arg("-DLLAMA_STATIC=ON")
         .arg("-DLLAMA_ALL_WARNINGS=OFF")
         .arg("-DLLAMA_ALL_WARNINGS_3RD_PARTY=OFF")
         .arg("-DLLAMA_BUILD_TESTS=OFF")
