@@ -14,32 +14,6 @@ fn main() {
     env::set_var("CXXFLAGS", "-fPIC");
     env::set_var("CFLAGS", "-fPIC");
 
-    /* if target.contains("apple")
-        || target.contains("freebsd")
-        || target.contains("openbsd")
-        || target.contains("msvc")
-        || target.contains("android")
-    {
-        // Link C++ standard library
-        if let Some(cpp_stdlib) = get_cpp_link_stdlib(&target) {
-            println!("cargo:rustc-link-lib=dylib={}", cpp_stdlib);
-            println!("cargo:rustc-link-arg=-l{}", cpp_stdlib);
-        }
-    } else {
-        // Link C++ standard library
-        if let Some(_cpp_stdlib) = get_cpp_link_stdlib(&target) {
-            println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu");
-            println!("cargo:rustc-link-search=native=/usr/lib/gcc/x86_64-linux-gnu/11");
-            println!("cargo:rustc-link-search=native=/usr/lib");
-            // println!("cargo:rustc-link-lib=static=stdc++");
-            // println!("cargo:rustc-link-lib=static=pthread");
-            // println!("cargo:rustc-link-lib=static=dl");
-            // println!("cargo:rustc-link-lib=static=rt");
-            // println!("cargo:rustc-link-lib=static=c");
-            // println!("cargo:rustc-link-lib=static=m");
-        }
-    } */
-
     // Link macOS Accelerate framework for matrix calculations
     if target.contains("apple") {
         println!("cargo:rustc-link-lib=framework=Accelerate");
@@ -150,17 +124,17 @@ fn main() {
 }
 
 // From https://github.com/alexcrichton/cc-rs/blob/fba7feded71ee4f63cfe885673ead6d7b4f2f454/src/lib.rs#L2462
-fn get_cpp_link_stdlib(target: &str) -> Option<&'static str> {
-    if target.contains("msvc") {
-        None
-    } else if target.contains("apple") || target.contains("freebsd") || target.contains("openbsd") {
-        Some("c++")
-    } else if target.contains("android") {
-        Some("c++_shared")
-    } else {
-        Some("stdc++")
-    }
-}
+// fn get_cpp_link_stdlib(target: &str) -> Option<&'static str> {
+//     if target.contains("msvc") {
+//         None
+//     } else if target.contains("apple") || target.contains("freebsd") || target.contains("openbsd") {
+//         Some("c++")
+//     } else if target.contains("android") {
+//         Some("c++_shared")
+//     } else {
+//         Some("stdc++")
+//     }
+// }
 
 fn get_build_target() -> (String, String, String) {
     let target = env::var("TARGET").unwrap();

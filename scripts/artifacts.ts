@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 import glob from "glob";
 import path from "path";
 
-const repoOwner = "hlhr202";
+const repoOwner = "Atome-FE";
 const repoName = "llama-node";
 const branch = "main";
 

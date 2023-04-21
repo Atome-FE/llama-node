@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/cli",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "description": "",
   "main": "index.js",
   "type": "commonjs",
@@ -12,7 +12,7 @@
     "test": "tsx src/index.ts"
   },
   "dependencies": {
-    "@llama-node/core": "0.0.28",
+    "@llama-node/core": "0.0.29",
     "yargs": "^17.7.1"
   },
   "author": "",

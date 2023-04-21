@@ -47,7 +47,7 @@ Node.js运行的大语言模型LLaMA。
 当前支持平台:
 - darwin-x64
 - darwin-arm64
-- linux-x64-gnu
+- linux-x64-gnu (glibc >= 2.31)
 - linux-x64-musl
 - win32-x64-msvc
 

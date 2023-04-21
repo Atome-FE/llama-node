@@ -49,7 +49,7 @@ From v0.0.21, both llama-rs and llama.cpp backends are supported!
 Currently supported platforms:
 - darwin-x64
 - darwin-arm64
-- linux-x64-gnu
+- linux-x64-gnu (glibc >= 2.31)
 - linux-x64-musl
 - win32-x64-msvc
 
