@@ -50,6 +50,7 @@
     "axios": "*",
     "glob": "^9.3.4",
     "langchain": "^0.0.56",
+    "p-all": "^5.0.0",
     "rimraf": "^4.4.1",
     "semver": "^7.3.8",
     "tsup": "^6.7.0",
@@ -58,8 +59,7 @@
     "vitest": "^0.29.8"
   },
   "dependencies": {
-    "@llama-node/cli": "0.0.29",
-    "p-all": "^5.0.0"
+    "@llama-node/cli": "0.0.29"
   },
   "optionalDependencies": {
     "@llama-node/core": "0.0.29",
