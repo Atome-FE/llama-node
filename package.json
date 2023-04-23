@@ -49,16 +49,17 @@
     "@types/semver": "^7.3.13",
     "axios": "*",
     "glob": "^9.3.4",
+    "langchain": "^0.0.56",
     "rimraf": "^4.4.1",
     "semver": "^7.3.8",
     "tsup": "^6.7.0",
     "tsx": "^3.12.6",
     "typescript": "^5.0.4",
-    "vitest": "^0.29.8",
-    "langchain": "^0.0.56"
+    "vitest": "^0.29.8"
   },
   "dependencies": {
-    "@llama-node/cli": "0.0.29"
+    "@llama-node/cli": "0.0.29",
+    "p-all": "^5.0.0"
   },
   "optionalDependencies": {
     "@llama-node/core": "0.0.29",
