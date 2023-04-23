@@ -9,7 +9,6 @@ on:
       - master
       - main
     types: 
-      - opened
       - ready_for_review
       - review_requested
 
