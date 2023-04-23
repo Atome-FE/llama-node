@@ -14,7 +14,7 @@ use crate::types::{
 };
 use llama_rs::{
   EvaluateOutputRequest, InferenceError, InferenceParameters, InferenceSession,
-  InferenceSessionParameters, Model, ModelKVMemoryType, TokenBias, Vocabulary, EOT_TOKEN_ID,
+  InferenceSessionParameters, Model, ModelKVMemoryType, TokenBias, EOT_TOKEN_ID,
 };
 use rand::SeedableRng;
 
@@ -26,7 +26,6 @@ pub struct LLamaChannel {
 
 struct LLamaInternal {
   model: Option<Model>,
-  vocab: Option<Vocabulary>,
 }
 
 fn parse_bias(s: &str) -> Result<TokenBias, String> {
@@ -36,21 +35,22 @@ fn parse_bias(s: &str) -> Result<TokenBias, String> {
 impl LLamaInternal {
   pub fn load_model(&mut self, params: &LLamaConfig, sender: &Sender<LoadModelResult>) {
     let num_ctx_tokens = params.num_ctx_tokens.unwrap_or(512);
+    let use_mmap = params.use_mmap.unwrap_or(true);
     log::info!("num_ctx_tokens: {}", num_ctx_tokens);
     // let restore_prompt: Option<String> = None;
     // let cache_prompt: Option<String> = None;
     // let repeat_last_n = 64;
     // let num_predict = Some(128);
 
-    if let Ok((model, vocab)) =
-      llama_rs::Model::load(params.path.clone(), num_ctx_tokens as usize, |progress| {
+    if let Ok(model) = llama_rs::Model::load(
+      params.path.clone(),
+      use_mmap,
+      num_ctx_tokens as usize,
+      |progress| {
         use llama_rs::LoadProgress;
         match progress {
           LoadProgress::HyperparametersLoaded(hparams) => {
-            log::debug!("Loaded HyperParams {hparams:#?}")
-          }
-          LoadProgress::BadToken { index } => {
-            log::info!("Warning: Bad token in vocab at index {index}")
+            log::debug!("Loaded hyperparameters {hparams:#?}")
           }
           LoadProgress::ContextSize { bytes } => log::info!(
             "ggml ctx size = {:.2} MB\n",
@@ -60,17 +60,22 @@ impl LLamaInternal {
             file,
             current_part,
             total_parts,
-          } => log::info!(
-            "Loading model part {}/{} from '{}'\n",
-            current_part,
-            total_parts,
-            file.to_string_lossy(),
-          ),
+          } => {
+            let current_part = current_part + 1;
+            log::info!(
+              "Loading model part {}/{} from '{}' (mmap preferred: {})\n",
+              current_part,
+              total_parts,
+              file.to_string_lossy(),
+              use_mmap
+            )
+          }
           LoadProgress::PartTensorLoaded {
             current_tensor,
             tensor_count,
             ..
           } => {
+            let current_tensor = current_tensor + 1;
             if current_tensor % 8 == 0 {
               log::info!("Loaded tensor {current_tensor}/{tensor_count}");
             }
@@ -88,10 +93,9 @@ impl LLamaInternal {
             );
           }
         }
-      })
-    {
+      },
+    ) {
       self.model = Some(model);
-      self.vocab = Some(vocab);
 
       log::info!("Model fully loaded!");
 
@@ -112,7 +116,7 @@ impl LLamaInternal {
   }
 
   pub fn tokenize(&self, text: &str, sender: &Option<Sender<TokenizeResult>>) -> Vec<i32> {
-    let vocab = self.vocab.as_ref().unwrap();
+    let vocab = self.model.as_ref().unwrap().vocabulary();
     let tokens = vocab
       .tokenize(text, false)
       .unwrap()
@@ -212,16 +216,13 @@ impl LLamaInternal {
     let mut session = self.start_new_session(params);
     let inference_params = self.get_inference_params(params);
     let model = self.model.as_ref().unwrap();
-    let vocab = self.vocab.as_ref().unwrap();
     let prompt_for_feed = format!(" {}", params.prompt);
 
-    if let Err(InferenceError::ContextFull) = session.feed_prompt::<Infallible>(
-      model,
-      vocab,
-      &inference_params,
-      prompt_for_feed.as_str(),
-      |_| Ok(()),
-    ) {
+    if let Err(InferenceError::ContextFull) =
+      session.feed_prompt::<Infallible>(model, &inference_params, prompt_for_feed.as_str(), |_| {
+        Ok(())
+      })
+    {
       sender
         .send(EmbeddingResult {
           r#type: EmbeddingResultType::Error,
@@ -259,7 +260,6 @@ impl LLamaInternal {
   pub fn inference(&mut self, params: &LLamaInferenceArguments, sender: &Sender<InferenceResult>) {
     let num_predict = params.num_predict.unwrap_or(512) as usize;
     let model = self.model.as_ref().unwrap();
-    let vocab = self.vocab.as_ref().unwrap();
 
     let prompt = &params.prompt;
     let feed_prompt = params.feed_prompt.unwrap_or(false);
@@ -275,7 +275,7 @@ impl LLamaInternal {
     };
 
     if let Err(InferenceError::ContextFull) =
-      session.feed_prompt::<Infallible>(model, vocab, &inference_params, prompt, |_| Ok(()))
+      session.feed_prompt::<Infallible>(model, &inference_params, prompt, |_| Ok(()))
     {
       sender
         .send(InferenceResult {
@@ -290,12 +290,13 @@ impl LLamaInternal {
 
     let res = session.inference_with_prompt::<Infallible>(
       model,
-      vocab,
       &inference_params,
       inference_input,
       Some(num_predict),
       &mut rng,
       |t| {
+        // need stop prompt to handle the model like vicuna
+        // https://github.com/rustformers/llama-rs/issues/151
         let to_send = InferenceResult {
           r#type: InferenceResultType::Data,
           message: None,
@@ -404,10 +405,7 @@ impl LLamaChannel {
     let rv = self.command_receiver.clone();
 
     thread::spawn(move || {
-      let mut llama = LLamaInternal {
-        model: None,
-        vocab: None,
-      };
+      let mut llama = LLamaInternal { model: None };
 
       let rv = rv.lock().unwrap();
 

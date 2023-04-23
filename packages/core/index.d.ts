@@ -45,6 +45,7 @@ export interface TokenizeResult {
 export interface LLamaConfig {
   path: string
   numCtxTokens?: number
+  useMmap?: boolean
 }
 export interface LoadModelResult {
   error: boolean

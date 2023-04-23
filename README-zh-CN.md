@@ -22,6 +22,8 @@ Node.js运行的大语言模型LLaMA。
   - [安装](#安装)
   - [模型获取](#模型获取)
     - [模型版本](#模型版本)
+      - [llama.cpp](#llamacpp)
+      - [llama-rs](#llama-rs)
   - [使用（llama.cpp后端）](#使用llamacpp后端)
     - [推理](#推理)
     - [分词](#分词)
@@ -87,13 +89,48 @@ llama-node底层调用llama-rs，它使用的模型格式源自llama.cpp。由�
 
 ### 模型版本
 
-目前llama.cpp社区有3个版本：
+#### llama.cpp
 
-- GGML：旧版格式，最早的GGML张量文件格式。
-- GGMF：也是旧版格式，比GGML新，比GGJT旧。
-- GGJT：可进行mmap映射的格式。
+以下是llama.cpp支持的模型类型，ggml.h源码中可找到：
 
-llama-rs后端现在只支持GGML / GGMF模型。llama.cpp后端仅支持GGJT模型
+```c
+enum ggml_type {
+    // explicitly numbered values are used in llama.cpp files
+    GGML_TYPE_F32  = 0,
+    GGML_TYPE_F16  = 1,
+    GGML_TYPE_Q4_0 = 2,
+    GGML_TYPE_Q4_1 = 3,
+    GGML_TYPE_Q4_2 = 4,
+    GGML_TYPE_Q4_3 = 5,
+    GGML_TYPE_Q8_0 = 6,
+    GGML_TYPE_I8,
+    GGML_TYPE_I16,
+    GGML_TYPE_I32,
+    GGML_TYPE_COUNT,
+};
+```
+
+#### llama-rs
+
+以下是llama-rs支持的模型类型，从llama-rs的ggml绑定中可找到：
+
+```rust
+pub enum Type {
+    /// Quantized 4-bit (type 0).
+    #[default]
+    Q4_0,
+    /// Quantized 4-bit (type 1); used by GPTQ.
+    Q4_1,
+    /// Integer 32-bit.
+    I32,
+    /// Float 16-bit.
+    F16,
+    /// Float 32-bit.
+    F32,
+}
+```
+
+llama-rs也支持旧版的ggml/ggmf模型
 
 ---
 
@@ -110,7 +147,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -163,7 +200,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -195,7 +232,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -363,7 +400,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -446,5 +483,5 @@ run();
 - [ ] 更多平台和处理器架构（在最高的性能条件下）
 - [ ] 优化嵌入API，提供可以配置尾词的选项
 - [ ] 命令行工具
-- [ ] 更新llama-rs以支持更多模型 https://github.com/rustformers/llama-rs/pull/85 https://github.com/rustformers/llama-rs/issues/75
+- [ ] 更新llama-rs以支持更多模型 https://github.com/rustformers/llama-rs/pull/141
 - [ ] 更多native推理后端（如rwkv）支持！

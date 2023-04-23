@@ -24,6 +24,8 @@ This project is in an early stage, the API for nodejs may change in the future, 
   - [Install](#install)
   - [Getting the weights](#getting-the-weights)
     - [Model versioning](#model-versioning)
+      - [llama.cpp](#llamacpp)
+      - [llama-rs](#llama-rs)
   - [Usage (llama.cpp backend)](#usage-llamacpp-backend)
     - [Inference](#inference)
     - [Tokenize](#tokenize)
@@ -89,13 +91,48 @@ The llama-node uses llama-rs under the hook and uses the model format derived fr
 
 ### Model versioning
 
-There are now 3 versions from llama.cpp community:
+#### llama.cpp
 
-- GGML: legacy format, oldest ggml tensor file format
-- GGMF: also legacy format, newer than GGML, older than GGJT
-- GGJT: mmap-able format
+For llama.cpp, supported types can check from ggml.h source:
 
-The llama-rs backend now only supports GGML/GGMF models, and llama.cpp backend only supports GGJT models.
+```c
+enum ggml_type {
+    // explicitly numbered values are used in llama.cpp files
+    GGML_TYPE_F32  = 0,
+    GGML_TYPE_F16  = 1,
+    GGML_TYPE_Q4_0 = 2,
+    GGML_TYPE_Q4_1 = 3,
+    GGML_TYPE_Q4_2 = 4,
+    GGML_TYPE_Q4_3 = 5,
+    GGML_TYPE_Q8_0 = 6,
+    GGML_TYPE_I8,
+    GGML_TYPE_I16,
+    GGML_TYPE_I32,
+    GGML_TYPE_COUNT,
+};
+```
+
+#### llama-rs
+
+For llama-rs, supported model types can check from llama-rs ggml bindings:
+
+```rust
+pub enum Type {
+    /// Quantized 4-bit (type 0).
+    #[default]
+    Q4_0,
+    /// Quantized 4-bit (type 1); used by GPTQ.
+    Q4_1,
+    /// Integer 32-bit.
+    I32,
+    /// Float 16-bit.
+    F16,
+    /// Float 32-bit.
+    F32,
+}
+```
+
+llama-rs also supports legacy llama.cpp models
 
 ---
 
@@ -112,7 +149,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -165,7 +202,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -197,7 +234,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "./ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -366,7 +403,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -452,5 +489,5 @@ The following steps will allow you to compile the binary with best quality on yo
 - [ ] more platforms and cross compile (performance related)
 - [ ] tweak embedding API, make end token configurable
 - [ ] cli and interactive
-- [ ] support more open source models as llama-rs planned https://github.com/rustformers/llama-rs/pull/85 https://github.com/rustformers/llama-rs/issues/75
+- [ ] support more open source models as llama-rs planned https://github.com/rustformers/llama-rs/pull/141
 - [ ] more backends (eg. rwkv) supports!
