@@ -5,7 +5,21 @@ import path from "path";
 
 const repoOwner = "Atome-FE";
 const repoName = "llama-node";
-const branch = "main";
+const branch = process.argv[2] ?? "main";
+
+interface WorkflowRun {
+    id: string;
+    status: "queued" | "in_progress" | "completed";
+    conclusion:
+        | "success"
+        | "failure"
+        | "cancelled"
+        | "skipped"
+        | "timed_out"
+        | "action_required"
+        | "stale"
+        | null;
+}
 
 async function getLatestGithubAction() {
     try {
@@ -14,9 +28,16 @@ async function getLatestGithubAction() {
             `https://api.github.com/repos/${repoOwner}/${repoName}/actions/runs?branch=${branch}`
         );
 
-        const lastId: string = res.data.workflow_runs[0].id;
+        const workflowRuns: WorkflowRun[] = res.data.workflow_runs;
 
-        console.log(`Last workflow run id: ${lastId}`);
+        const firstThatSuccess = workflowRuns.find(
+            (run) => run.status === "completed" && run.conclusion === "success"
+        );
+
+        const lastId = firstThatSuccess?.id;
+
+        console.log(`Branch: ${branch}`);
+        console.log(`Last successful workflow run id: ${lastId}`);
 
         return lastId;
     } catch (error) {
@@ -43,13 +64,16 @@ const moveForPackages = async (packageName: string) => {
 };
 
 getLatestGithubAction().then(async (latestStep) => {
+    console.log("Downloading artifacts...");
     execSync(`rimraf ${process.cwd()}/tmp/artifacts/`);
     execSync(
-        `gh run download ${latestStep} --repo ${repoOwner}/${repoName} --dir ${process.cwd()}/tmp/artifacts/`
+        `gh run download ${latestStep} --repo ${repoOwner}/${repoName} --dir ${process.cwd()}/tmp/artifacts/`,
+        { stdio: "inherit" }
     );
 
     await moveForPackages("core");
     await moveForPackages("llama-cpp");
 
     execSync(`rm -r ${process.cwd()}/tmp/artifacts/`);
+    console.log("Done!");
 });
