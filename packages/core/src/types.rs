@@ -67,6 +67,7 @@ pub struct TokenizeResult {
 pub struct LLamaConfig {
   pub path: String,
   pub num_ctx_tokens: Option<i64>,
+  pub use_mmap: Option<bool>,
 }
 
 #[napi(object)]

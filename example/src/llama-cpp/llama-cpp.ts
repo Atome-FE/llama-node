@@ -2,7 +2,7 @@ import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
-const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-4bit-rev1.bin");
+const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
 
 const llama = new LLama(LLamaCpp);
 
@@ -22,7 +22,7 @@ const config: LoadConfig = {
 
 llama.load(config);
 
-const template = `How are you`;
+const template = `How are you?`;
 
 const prompt = `### Human:
 

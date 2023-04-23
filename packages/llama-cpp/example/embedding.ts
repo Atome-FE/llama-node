@@ -2,7 +2,7 @@ import { LLama, LlamaContextParams, LlamaInvocation } from "../index";
 import path from "path";
 
 const llama = LLama.load(
-    path.resolve(process.cwd(), "../../ggml-vicuna-7b-4bit-rev1.bin"),
+    path.resolve(process.cwd(), "../../ggml-vicuna-7b-1.1-q4_1.bin"),
     {
         nCtx: 512,
         nParts: -1,

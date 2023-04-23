@@ -30,6 +30,7 @@ llama.inference(
         repeatPenalty: 1,
         repeatLastN: 64,
         seed: 0,
+        feedPrompt: true,
     },
     (response) => {
         switch (response.type) {
