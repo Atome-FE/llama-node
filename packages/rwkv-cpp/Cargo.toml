@@ -1,0 +1,30 @@
+[package]
+name = "rwkv-node-cpp"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
+clap = { version = "4.1.8", features = ["derive"] }
+env_logger = "0.10.0"
+log = "0.4"
+once_cell = "1.17.1"
+num_cpus = "1.15.0"
+rand = "0.8.5"
+rwkv-sys = { path = "./rwkv-sys" }
+tokenizers = "0.13.3"
+# llm-chain-llama-sys = { path = "../../../llm-chain/llm-chain-llama/sys" }
+napi = { version = "2.12.2", default-features = false, features = ["napi6", "async"] }
+napi-derive = "2.12.2"
+tokio = { version = "1.26.0", features = ["full"] }
+futures = "0.3"
+anyhow = "1.0.70"
+
+
+[build-dependencies]
+napi-build = "2.0.1"

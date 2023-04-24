@@ -71,7 +71,7 @@ jobs:
 
       - run: sudo apt install -y musl-tools
         if: matrix.os == 'ubuntu-20.04'
-      - run: git submodule update --init
+      - run: git submodule update --init --recursive
       - run: pnpm install
       - run: cargo clippy --all-targets --all-features
       - run: pnpm build:llama-rs
