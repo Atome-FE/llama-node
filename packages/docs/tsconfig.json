@@ -3,6 +3,7 @@
     "compilerOptions": {
         "composite": false,
         "baseUrl": ".",
-        "jsx": "react"
+        "jsx": "react",
+        "resolveJsonModule": true,
     }
 }
