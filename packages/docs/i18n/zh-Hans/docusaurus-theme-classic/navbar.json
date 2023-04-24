@@ -1,0 +1,14 @@
+{
+  "title": {
+    "message": "llama-node",
+    "description": "The title in the navbar"
+  },
+  "item.label.Get started": {
+    "message": "开始",
+    "description": "Navbar item with label Get started"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}
