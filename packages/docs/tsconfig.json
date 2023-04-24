@@ -1,6 +1,8 @@
 {
     "extends": "@tsconfig/docusaurus/tsconfig.json",
     "compilerOptions": {
-        "baseUrl": "."
+        "composite": false,
+        "baseUrl": ".",
+        "jsx": "react"
     }
 }
