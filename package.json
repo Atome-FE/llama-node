@@ -13,6 +13,7 @@
     "artifacts": "tsx scripts/artifacts.ts",
     "version": "tsx scripts/version.ts",
     "build:cli": "pnpm run --filter=@llama-node/cli build",
+    "start:docs": "pnpm run --filter=@llama-node/docs start",
     "build:docs": "pnpm run --filter=@llama-node/docs build",
     "serve:docs": "pnpm run --filter=@llama-node/docs serve",
     "test:llama-rs": "pnpm test --filter=@llama-node/core",
