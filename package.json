@@ -8,15 +8,17 @@
   "type": "module",
   "scripts": {
     "build": "tsup",
-    "prepublish": "npm run build",
+    "prepublish": "pnpm run build && pnpm run build:cli && pnpm run artifacts",
     "type-check": "tsc --noEmit",
     "artifacts": "tsx scripts/artifacts.ts",
-    "tsx": "tsx",
-    "test:core": "npm t --workspaces=packages/core",
-    "start:core": "npm start --workspaces=packages/core",
-    "build:core": "npm run build --workspaces=packages/core",
     "version": "tsx scripts/version.ts",
-    "test": "tsx __test__/test.ts"
+    "build:cli": "pnpm run --filter=@llama-node/cli build",
+    "build:docs": "pnpm run --filter=@llama-node/docs build",
+    "serve:docs": "pnpm run --filter=@llama-node/docs serve",
+    "test:llama-rs": "pnpm test --filter=@llama-node/core",
+    "build:llama-rs": "pnpm run --filter=@llama-node/core cross-compile",
+    "build:llama-cpp": "pnpm run --filter=@llama-node/llama-cpp cross-compile",
+    "build:example": "pnpm run --filter=@llama-node/examples build"
   },
   "repository": {
     "type": "git",
@@ -24,6 +26,7 @@
     "url": "git+https://github.com/Atome-FE/llama-node.git"
   },
   "workspaces": [
+    "packages/docs",
     "packages/core",
     "packages/cli",
     "packages/llama-cpp",
@@ -36,8 +39,10 @@
   },
   "engines": {
     "node": ">=16.0.0",
-    "npm": ">=7.0.0"
+    "npm": ">=7.0.0",
+    "pnpm": ">=6.0.0"
   },
+  "packageManager": "pnpm@6.0.0",
   "homepage": "https://github.com/Atome-FE/llama-node#readme",
   "devDependencies": {
     "@llama-node/cli": "0.0.30",
@@ -56,7 +61,8 @@
     "tsup": "^6.7.0",
     "tsx": "^3.12.6",
     "typescript": "^5.0.4",
-    "vitest": "^0.29.8"
+    "vite": "^4.3.1",
+    "vitest": "^0.30.1"
   },
   "dependencies": {
     "@llama-node/cli": "0.0.30"

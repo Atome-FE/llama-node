@@ -22,7 +22,6 @@
     "node": ">= 10"
   },
   "scripts": {
-    "prepublish": "npm run artifacts",
     "cross-compile": "rimraf @llama-node && tsx scripts/cross-compile.mts",
     "artifacts": "tsx scripts/artifacts.ts",
     "build": "napi build --platform --release",

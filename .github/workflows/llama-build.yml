@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - develop
+      - feature/doc
   pull_request:
     branches:
       - master
@@ -36,29 +37,47 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           target: ${{ matrix.target }}
+
       - uses: Swatinem/rust-cache@v2
+
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
-      # - name: Install ziglang
-      #   uses: goto-bus-stop/setup-zig@v1
-      #   with:
-      #     version: 0.10.0
-      # - run: cargo install cargo-xwin
+
+      - uses: pnpm/action-setup@v2
+        name: Setup pnpm
+        with:
+          version: 7
+          run_install: true
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - run: sudo apt install -y musl-tools
         if: matrix.os == 'ubuntu-20.04'
       - run: git submodule update --init
-      - run: npm install
+      - run: pnpm install
       - run: cargo clippy --all-targets --all-features
-      - run: npm run --workspace=packages/core cross-compile
-      - run: npm run --workspace=packages/llama-cpp cross-compile
-      - run: npm run type-check
+      - run: pnpm build:llama-rs
+      - run: pnpm build:llama-cpp
+      - run: pnpm type-check
       - uses: actions/upload-artifact@v3
         with:
           name: binding-${{ matrix.os }}
