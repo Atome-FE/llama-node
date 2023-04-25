@@ -62,17 +62,22 @@ fn main() {
     let command = command
         .arg("..")
         .arg("-DCMAKE_BUILD_TYPE=Release")
-        .arg("-DRWKV_STATIC=ON")
         .arg("-DRWKV_ALL_WARNINGS=OFF");
 
     if target_os.contains("darwin") && target_arch.contains("aarch64") {
+        // TODO: check if x86 macOS need static linking
         command
+            .arg("-DAPPLE=ON")
+            .arg("-DRWKV_ACCELERATE=ON")
             .arg("-DCMAKE_SYSTEM_NAME=Darwin")
             .arg("-DCMAKE_SYSTEM_PROCESSOR=apple-m1")
             .arg("-DCMAKE_OSX_ARCHITECTURES=arm64")
             .arg("-DRWKV_NATIVE=OFF");
 
         println!("command: {:?}", command.get_args());
+    } else {
+        // os except macOS arm64 will enable static linking
+        command.arg("-DRWKV_STATIC=ON");
     }
 
     let code = command.status().expect("Failed to generate build script");
