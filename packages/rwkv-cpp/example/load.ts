@@ -5,6 +5,7 @@ const llama = LLama.load(
     path.resolve(
         process.cwd(),
         "../../ggml-rwkv-4_raven-7b-v9-Eng99%-20230412-ctx8192-Q4_1_0.bin"
+        // "./rwkv-sys/rwkv.cpp/tests/tiny-rwkv-660K-FP16.bin"
     ),
     path.resolve(process.cwd(), "../../20B_tokenizer.json"),
     4,
@@ -26,7 +27,7 @@ const params = {
     temp: 0.2,
     repeatPenalty: 1,
     stopSequence: "### Human",
-    prompt,
+    prompt: "what",
 };
 
 llama.inference(params, (data) => {

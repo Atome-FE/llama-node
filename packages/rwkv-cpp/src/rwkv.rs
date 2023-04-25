@@ -3,13 +3,13 @@ use std::{
         mpsc::{channel, Receiver, Sender, TryRecvError},
         Arc, Mutex,
     },
-    thread,
+    thread, io::Write,
 };
 
 use crate::{
-    context::{RWKVContext, RWKVContextParams, RWKVInvocation},
+    context::{RWKVContext, RWKVInvocation},
     types::{
-        EmbeddingResult, EmbeddingResultType, InferenceResult, InferenceResultType, InferenceToken,
+        EmbeddingResult, InferenceResult, InferenceResultType, InferenceToken,
         RWKVCommand, TokenizeResult, TokenizeResultType,
     },
 };
@@ -20,6 +20,7 @@ pub struct RWKVChannel {
     command_receiver: Arc<Mutex<Receiver<RWKVCommand>>>,
 }
 
+#[derive(Clone)]
 pub struct RWKVInternal {
     context: RWKVContext,
 }
@@ -91,8 +92,36 @@ impl RWKVInternal {
         let binding = tokenizer.encode(prompt.as_str(), true).unwrap();
         let tokens = binding.get_ids();
         context.process_tokens(tokens);
-        println!("{:?}", context.logits);
+        let mut logits = context.logits.clone().unwrap();
+
+        for _i in 0..256 {
+            let token =
+            crate::sampling::sample_logits(&mut logits, input.temp as f32, input.top_p as f32);
+            println!("{}, {}", _i, token); // TODO: bug, always 655359, check sampling logic
+            if token >= 50276 {
+                continue;
+            }
+
+            let decoded = context.rwkv_token_to_str(&(token as i32)).unwrap();
+            print!("{}", decoded);
+            std::io::stdout().flush().unwrap();
+
+            sender.send(InferenceResult {
+                r#type: InferenceResultType::Data,
+                message: None,
+                data: Some(InferenceToken {
+                    token: decoded,
+                    completed: false,
+                }),
+            }).unwrap();
+
+            context.process_tokens(&[token.try_into().unwrap()]);
+            // println!("sent");
+
+        }
         // context.rwkv_token_to_str(token)
+
+        // thread::sleep(std::time::Duration::from_millis(10000));
     }
 }
 

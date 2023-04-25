@@ -6,6 +6,7 @@ extern crate napi_derive;
 mod context;
 mod output;
 mod rwkv;
+mod sampling;
 mod types;
 
 use std::{
@@ -13,7 +14,7 @@ use std::{
     thread, time,
 };
 
-use context::{RWKVContextParams, RWKVInvocation};
+use context::RWKVInvocation;
 use napi::{
     bindgen_prelude::*,
     threadsafe_function::{
