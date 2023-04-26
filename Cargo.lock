@@ -1875,6 +1875,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "ndarray",
+ "num-traits",
  "num_cpus",
  "once_cell",
  "rand",

@@ -16,6 +16,7 @@ env_logger = "0.10.0"
 log = "0.4"
 once_cell = "1.17.1"
 num_cpus = "1.15.0"
+num-traits = "0.2.15"
 rand = "0.8.5"
 rwkv-sys = { path = "./rwkv-sys" }
 tokenizers = "0.13.3"

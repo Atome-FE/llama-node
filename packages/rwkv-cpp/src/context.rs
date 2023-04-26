@@ -87,7 +87,7 @@ impl RWKVContext {
     pub fn rwkv_token_to_str(&self, token: &i32) -> Option<String> {
         let tokenizer = &self.tokenizer;
         tokenizer
-            .decode(vec![(*token).try_into().unwrap()], true)
+            .decode(vec![(*token).try_into().unwrap()], false)
             .map(Some)
             .unwrap_or(None)
     }
@@ -96,8 +96,7 @@ impl RWKVContext {
         self.model_tokens.append(&mut tokens.to_vec());
 
         for token in tokens.iter() {
-            let (new_model_state, new_logits) = { self.rwkv_eval(*token as i32).unwrap() };
-
+            let (new_logits, new_model_state) = self.rwkv_eval(*token as i32).unwrap();
             self.model_state = Some(new_model_state);
             self.logits = Some(new_logits);
         }
@@ -116,25 +115,25 @@ impl RWKVContext {
         };
 
         let mut state_out = if let Some(state_out) = state_out {
-            state_out.to_vec()
+            state_out.to_owned()
         } else {
             let mut zero_state_out: Vec<f32> =
                 Vec::with_capacity(self.state_buffer_element_count as usize);
 
             for _i in 0..self.state_buffer_element_count {
-                zero_state_out.push(0.0);
+                zero_state_out.push(0.0_f32);
             }
             zero_state_out
         };
 
         let mut logits_out = if let Some(logits_out) = logits_out {
-            logits_out.to_vec()
+            logits_out.to_owned()
         } else {
             let mut zero_logits_out: Vec<f32> =
                 Vec::with_capacity(self.logits_buffer_element_count as usize);
 
             for _i in 0..self.logits_buffer_element_count {
-                zero_logits_out.push(0.0);
+                zero_logits_out.push(0.0_f32);
             }
             zero_logits_out
         };

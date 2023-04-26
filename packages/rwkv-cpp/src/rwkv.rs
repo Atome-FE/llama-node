@@ -1,16 +1,17 @@
 use std::{
+    io::Write,
     sync::{
         mpsc::{channel, Receiver, Sender, TryRecvError},
         Arc, Mutex,
     },
-    thread, io::Write,
+    thread,
 };
 
 use crate::{
     context::{RWKVContext, RWKVInvocation},
     types::{
-        EmbeddingResult, InferenceResult, InferenceResultType, InferenceToken,
-        RWKVCommand, TokenizeResult, TokenizeResultType,
+        EmbeddingResult, InferenceResult, InferenceResultType, InferenceToken, RWKVCommand,
+        TokenizeResult, TokenizeResultType,
     },
 };
 
@@ -89,35 +90,35 @@ impl RWKVInternal {
         let context = &mut self.context;
         let tokenizer = &context.tokenizer;
         let prompt = &input.prompt;
-        let binding = tokenizer.encode(prompt.as_str(), true).unwrap();
+        let binding = tokenizer.encode(prompt.as_str(), false).unwrap();
         let tokens = binding.get_ids();
         context.process_tokens(tokens);
-        let mut logits = context.logits.clone().unwrap();
 
         for _i in 0..256 {
+            let mut logits = context.logits.clone().unwrap();
             let token =
-            crate::sampling::sample_logits(&mut logits, input.temp as f32, input.top_p as f32);
-            println!("{}, {}", _i, token); // TODO: bug, always 655359, check sampling logic
+                crate::sampling::sample_logits(&mut logits, input.temp as f32, input.top_p as f32);
             if token >= 50276 {
-                continue;
+                break;
             }
 
             let decoded = context.rwkv_token_to_str(&(token as i32)).unwrap();
             print!("{}", decoded);
             std::io::stdout().flush().unwrap();
 
-            sender.send(InferenceResult {
-                r#type: InferenceResultType::Data,
-                message: None,
-                data: Some(InferenceToken {
-                    token: decoded,
-                    completed: false,
-                }),
-            }).unwrap();
+            sender
+                .send(InferenceResult {
+                    r#type: InferenceResultType::Data,
+                    message: None,
+                    data: Some(InferenceToken {
+                        token: decoded,
+                        completed: false,
+                    }),
+                })
+                .unwrap();
 
             context.process_tokens(&[token.try_into().unwrap()]);
             // println!("sent");
-
         }
         // context.rwkv_token_to_str(token)
 

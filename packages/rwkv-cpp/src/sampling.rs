@@ -1,85 +1,117 @@
-use rand::Rng;
+// a lot of codes borrowed from https://github.com/KerfuffleV2/smolrsrwkv/blob/main/smolrwkv/src/util.rs
+use std::ops::{Add, Sub};
 
-pub fn random_choice(probs: &[f32]) -> usize {
-    // Generate a random number between 0 and 1
-    let random_number = rand::thread_rng().gen_range(0.0..1.0);
+use ndarray::{Array1, ArrayView1, NdFloat, ScalarOperand};
+use num_traits::FromPrimitive;
+use rand::{rngs::StdRng, SeedableRng};
 
-    // Iterate through the probabilities to find the corresponding outcome
-    let mut cumulative_prob = 0.0;
-    for (i, &prob) in probs.iter().enumerate() {
-        cumulative_prob += prob;
-        if random_number < cumulative_prob {
-            return i;
-        }
-    }
-
-    // If no outcome is chosen, return the last index
-    probs.len() - 1
+pub trait ReqOps: Sized + Default + Clone
+where
+    Self: NdFloat + ScalarOperand + FromPrimitive,
+    Self: for<'a> Sub<&'a Array1<Self>, Output = Array1<Self>>,
+    Self: for<'a> Add<&'a Array1<Self>, Output = Array1<Self>>,
+{
 }
 
-pub fn soft_max(arr: &[f32]) -> Vec<f32> {
-    let exp = arr.iter().map(|x| x.exp()).collect::<Vec<f32>>();
-    let sum_exp = exp.iter().sum::<f32>();
-    exp.iter().map(|x| x / sum_exp).collect::<Vec<f32>>()
+impl ReqOps for f32 {}
+impl ReqOps for f64 {}
+
+pub fn softmax<T: ReqOps>(x: &ArrayView1<T>) -> Array1<T> {
+    let x_exp = x.mapv(T::exp);
+    &x_exp / x_exp.sum()
 }
 
 pub fn sample_logits(logits: &mut [f32], temp: f32, top_p: f32) -> usize {
-    // println!("logits: {:?}", logits);
-    let logits = logits.to_vec();
-    // softmax on logits
-    let probs = soft_max(&logits);
+    let binding = Array1::from(logits.to_vec());
+    let logits = binding.view();
+    let probs = softmax(&logits);
     sample_probs(&probs, temp, top_p)
 }
 
-pub fn sample_probs(probs: &[f32], temp: f32, mut top_p: f32) -> usize {
+pub fn sample_probs<T: ReqOps + num_traits::AsPrimitive<f32>>(
+    probs: &Array1<T>,
+    temp: f32,
+    mut top_p: f32,
+) -> usize {
     // let probs = Array1::from(probs);
-    let mut probs = probs.to_vec();
+    // let mut probs = probs.to_vec();
+
+    use rand::distributions::{Distribution, WeightedError, WeightedIndex};
+
+    // let mut rng: rand::rngs::StdRng = if let Some(seed) = &args.seed {
+    //     StdRng::seed_from_u64(*seed)
+    // } else {
+    //     StdRng::from_entropy()
+    // };
+
+    let mut rng = StdRng::from_entropy(); // TODO: seed from arguments
+
+    // const EOT_TOKEN_ID: usize = 0;
+
     if top_p == 0.0 {
         top_p = 1.0;
     }
 
-    if temp == 0.0 {
-        // get argmax of probs
-        let index_of_max = probs
-            .iter()
-            .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .unwrap()
-            .0;
-        return index_of_max;
-    }
+    // if temp == 0.0 {
+    //     // get argmax of probs
+    //     let index_of_max = probs
+    //         .iter()
+    //         .enumerate()
+    //         .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+    //         .map(|(i, _)| i)
+    //         .unwrap_or(0);
+    //     return index_of_max;
+    // }
 
-    if top_p < 1.0 {
+    // if top_p < 1.0 {
         // sort the probs
-        let mut sorted_probs = probs.clone();
-        sorted_probs.sort_by(|a, b| a.total_cmp(b));
-        sorted_probs.reverse();
-
-        let cumulative_propbs = sorted_probs.iter().scan(0.0, |acc, x| {
-            *acc += x;
-            Some(*acc)
+        let mut sorted_probs = probs.as_slice().unwrap().to_vec();
+        // FIXME: Don't use unwrap here.
+        sorted_probs.sort_by(|a, b| T::partial_cmp(a, b).unwrap_or(std::cmp::Ordering::Greater).reverse());
+        let mut cumulative_probs = Vec::with_capacity(sorted_probs.len());
+        let _ = sorted_probs.iter().fold(T::zero(), |acc, i| {
+            let newcum = acc + *i;
+            cumulative_probs.push(newcum);
+            newcum
         });
 
-        let cutoff_index = cumulative_propbs
-            .enumerate()
-            .find(|(_, x)| *x > top_p)
-            .map(|(i, _)| i)
-            .unwrap_or(0);
-
-        let cutoff = sorted_probs[cutoff_index];
-
-        probs = probs
+        let cutoffidx = cumulative_probs
             .iter()
-            .map(|x| if *x < cutoff { 0.0 } else { *x })
-            .collect::<Vec<f32>>();
-    }
+            .copied()
+            .enumerate()
+            .find(|(_, v)| v.as_() > top_p)
+            .map(|i| i.0)
+            .unwrap_or_default();
 
-    if temp != 1.0 {
-        probs = probs.iter().map(|x| x.powf(temp)).collect::<Vec<f32>>();
-    }
+        let cutoff = sorted_probs[cutoffidx].as_();
 
-    let sum: f32 = probs.iter().sum();
-    probs = probs.iter().map(|x| x / sum).collect::<Vec<f32>>();
+        let probs = probs.map(|i| {
+            let i: f32 = i.as_();
+            if i < cutoff {
+                0.0
+            } else {
+                i
+            }
+        });
 
-    random_choice(probs.as_slice())
+        let probs = &probs / probs.sum();
+        let dist = match WeightedIndex::new(probs.iter().map(|val| val.powf(1.0 / temp))) {
+            Ok(dist) => dist,
+            Err(WeightedError::AllWeightsZero) => {
+                // Sorry if you wanted tokens forever, but this is how it's got to be.
+                return 0;
+            }
+            e => e.expect("I didn't sign up for this! (Bad weight in generated probability list.)"),
+        };
+        dist.sample(&mut rng)
+    // }
+
+    // if temp != 1.0 {
+    //     probs = probs.iter().map(|x| x.powf(temp)).collect::<Vec<f32>>();
+    // }
+
+    // let sum: f32 = probs.iter().sum();
+    // probs = probs.iter().map(|x| x / sum).collect::<Vec<f32>>();
+
+    // random_choice(probs.as_slice())
 }

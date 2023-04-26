@@ -24,10 +24,10 @@ const params = {
     nTokPredict: 2048,
     topK: 40,
     topP: 0.1,
-    temp: 0.2,
+    temp: 0.1,
     repeatPenalty: 1,
     stopSequence: "### Human",
-    prompt: "what",
+    prompt: "hello ",
 };
 
 llama.inference(params, (data) => {
