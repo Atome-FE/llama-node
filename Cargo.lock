@@ -1866,7 +1866,6 @@ name = "rwkv-node-cpp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bytemuck",
  "clap",
  "env_logger",
  "futures",

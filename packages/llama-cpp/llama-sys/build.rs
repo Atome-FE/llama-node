@@ -23,37 +23,29 @@ fn main() {
     println!("cargo:rustc-link-lib=static=llama");
     println!("cargo:rerun-if-changed=wrapper.h");
 
-    if env::var("LLAMA_DONT_GENERATE_BINDINGS").is_ok() {
-        let _: u64 = std::fs::copy(
-            "src/bindings.rs",
-            env::var("OUT_DIR").unwrap() + "/bindings.rs",
-        )
-        .expect("Failed to copy bindings.rs");
-    } else {
-        let bindings = bindgen::Builder::default()
-            .header("wrapper.h")
-            .clang_arg("-I./llama.cpp")
-            .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-            .generate();
+    let bindings = bindgen::Builder::default()
+        .header("wrapper.h")
+        .clang_arg("-I./llama.cpp")
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .generate();
 
-        match bindings {
-            Ok(b) => {
-                let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-                b.write_to_file(out_path.join("bindings.rs"))
-                    .expect("Couldn't write bindings!");
-            }
-            Err(e) => {
-                println!("cargo:warning=Unable to generate bindings: {}", e);
-                println!("cargo:warning=Using bundled bindings.rs, which may be out of date");
-                // copy src/bindings.rs to OUT_DIR
-                std::fs::copy(
-                    "src/bindings.rs",
-                    env::var("OUT_DIR").unwrap() + "/bindings.rs",
-                )
-                .expect("Unable to copy bindings.rs");
-            }
+    match bindings {
+        Ok(b) => {
+            let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+            b.write_to_file(out_path.join("bindings.rs"))
+                .expect("Couldn't write bindings!");
         }
-    };
+        Err(e) => {
+            println!("cargo:warning=Unable to generate bindings: {}", e);
+            println!("cargo:warning=Using bundled bindings.rs, which may be out of date");
+            // copy src/bindings.rs to OUT_DIR
+            std::fs::copy(
+                "src/bindings.rs",
+                env::var("OUT_DIR").unwrap() + "/bindings.rs",
+            )
+            .expect("Unable to copy bindings.rs");
+        }
+    }
 
     // stop if we're on docs.rs
     if env::var("DOCS_RS").is_ok() {

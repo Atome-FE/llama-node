@@ -64,19 +64,20 @@ fn main() {
         .arg("-DCMAKE_BUILD_TYPE=Release")
         .arg("-DRWKV_ALL_WARNINGS=OFF");
 
-    if target_os.contains("darwin") && target_arch.contains("aarch64") {
-        // TODO: check if x86 macOS need static linking
+    if target_os.contains("darwin") {
         command
             .arg("-DAPPLE=ON")
             .arg("-DRWKV_ACCELERATE=ON")
-            .arg("-DCMAKE_SYSTEM_NAME=Darwin")
-            .arg("-DCMAKE_SYSTEM_PROCESSOR=apple-m1")
-            .arg("-DCMAKE_OSX_ARCHITECTURES=arm64")
-            .arg("-DRWKV_NATIVE=OFF");
+            .arg("-DCMAKE_SYSTEM_NAME=Darwin");
 
-        println!("command: {:?}", command.get_args());
+        if target_arch.contains("aarch64") {
+            command
+                .arg("-DCMAKE_SYSTEM_PROCESSOR=apple-m1")
+                .arg("-DCMAKE_OSX_ARCHITECTURES=arm64")
+                .arg("-DRWKV_NATIVE=OFF");
+        }
     } else {
-        // os except macOS arm64 will enable static linking
+        // os except macOS will enable static linking
         command.arg("-DRWKV_STATIC=ON");
     }
 
@@ -116,19 +117,6 @@ fn main() {
     // clean the rwkv build directory to prevent Cargo from complaining during crate publish
     _ = std::fs::remove_dir_all("build");
 }
-
-// From https://github.com/alexcrichton/cc-rs/blob/fba7feded71ee4f63cfe885673ead6d7b4f2f454/src/lib.rs#L2462
-// fn get_cpp_link_stdlib(target: &str) -> Option<&'static str> {
-//     if target.contains("msvc") {
-//         None
-//     } else if target.contains("apple") || target.contains("freebsd") || target.contains("openbsd") {
-//         Some("c++")
-//     } else if target.contains("android") {
-//         Some("c++_shared")
-//     } else {
-//         Some("stdc++")
-//     }
-// }
 
 fn get_build_target() -> (String, String, String) {
     let target = env::var("TARGET").unwrap();
