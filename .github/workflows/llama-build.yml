@@ -76,6 +76,7 @@ jobs:
       - run: cargo clippy --all-targets --all-features
       - run: pnpm build:llama-rs
       - run: pnpm build:llama-cpp
+      - run: pnpm build:rwkv-cpp
       - run: pnpm build
       - run: pnpm type-check
       - uses: actions/upload-artifact@v3

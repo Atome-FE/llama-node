@@ -19,6 +19,7 @@
     "test:llama-rs": "pnpm test --filter=@llama-node/core",
     "build:llama-rs": "pnpm run --filter=@llama-node/core cross-compile",
     "build:llama-cpp": "pnpm run --filter=@llama-node/llama-cpp cross-compile",
+    "build:rwkv-cpp": "pnpm run --filter=@llama-node/rwkv-cpp cross-compile",
     "build:example": "pnpm run --filter=@llama-node/examples build"
   },
   "repository": {

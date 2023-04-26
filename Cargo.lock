@@ -1164,7 +1164,6 @@ name = "llama-node-cpp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap",
  "env_logger",
  "futures",
  "llama-sys",
@@ -1202,6 +1201,7 @@ name = "llama-sys"
 version = "0.0.1"
 dependencies = [
  "bindgen",
+ "platforms",
 ]
 
 [[package]]
@@ -1510,9 +1510,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "openssl"
-version = "0.10.51"
+version = "0.10.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97ea2d98598bf9ada7ea6ee8a30fb74f9156b63bbe495d64ec2b87c269d2dda3"
+checksum = "01b8574602df80f7b85fdfc5392fa884a4e3b3f4f35402c070ab34c3d3f78d56"
 dependencies = [
  "bitflags 1.3.2",
  "cfg-if",
@@ -1541,13 +1541,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
-name = "openssl-sys"
-version = "0.9.86"
+name = "openssl-src"
+version = "111.25.3+1.1.1t"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "992bac49bdbab4423199c654a5515bd2a6c6a23bf03f2dd3bdb7e5ae6259bc69"
+checksum = "924757a6a226bf60da5f7dd0311a34d2b52283dd82ddeb103208ddc66362f80c"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "openssl-sys"
+version = "0.9.87"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e17f59264b2809d77ae94f0e1ebabc434773f370d6ca667bd223ea10e06cc7e"
 dependencies = [
  "cc",
  "libc",
+ "openssl-src",
  "pkg-config",
  "vcpkg",
 ]
@@ -1639,6 +1649,12 @@ name = "pkg-config"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
+
+[[package]]
+name = "platforms"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3d7ddaed09e0eb771a79ab0fd64609ba0afb0a8366421957936ad14cbd13630"
 
 [[package]]
 name = "ppv-lite86"
@@ -1866,7 +1882,6 @@ name = "rwkv-node-cpp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap",
  "env_logger",
  "futures",
  "log",
@@ -1876,7 +1891,7 @@ dependencies = [
  "ndarray",
  "num-traits",
  "num_cpus",
- "once_cell",
+ "openssl",
  "rand",
  "rwkv-sys",
  "tokenizers",
@@ -1888,6 +1903,7 @@ name = "rwkv-sys"
 version = "0.0.1"
 dependencies = [
  "bindgen",
+ "platforms",
 ]
 
 [[package]]

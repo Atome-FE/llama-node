@@ -10,23 +10,24 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
-clap = { version = "4.1.8", features = ["derive"] }
 env_logger = "0.10.0"
 log = "0.4"
-once_cell = "1.17.1"
 num_cpus = "1.15.0"
 num-traits = "0.2.15"
 rand = "0.8.5"
 rwkv-sys = { path = "./rwkv-sys" }
 tokenizers = "0.13.3"
-ndarray = { version = "0.15.6", fetures = "all" }
-# llm-chain-llama-sys = { path = "../../../llm-chain/llm-chain-llama/sys" }
+ndarray = { version = "0.15.6" }
 napi = { version = "2.12.2", default-features = false, features = ["napi6", "async"] }
 napi-derive = "2.12.2"
 tokio = { version = "1.26.0", features = ["full"] }
 futures = "0.3"
 anyhow = "1.0.70"
+openssl = { version = "0.10.52", features = ["vendored"] }
 
 
 [build-dependencies]
 napi-build = "2.0.1"
+
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64-linux-musl-gcc"

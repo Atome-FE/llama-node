@@ -8,3 +8,4 @@ license = "MIT"
 
 [build-dependencies]
 bindgen = "0.64"
+platforms = "3.0.2"

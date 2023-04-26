@@ -4,18 +4,19 @@
 // https://github.com/sobelio/llm-chain/blob/main/llm-chain-llama/sys/build.rs
 extern crate bindgen;
 
+use platforms::{Arch, Platform, OS};
 use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let (_host, target_arch, target_os) = get_build_target();
     let target = env::var("TARGET").unwrap();
+    let platform = Platform::find(&target).unwrap();
     env::set_var("RUSTFLAGS", "-C target-feature=+crt-static");
     env::set_var("CXXFLAGS", "-fPIC");
     env::set_var("CFLAGS", "-fPIC");
 
     // Link macOS Accelerate framework for matrix calculations
-    if target.contains("apple") {
+    if platform.target_os == OS::MacOS {
         println!("cargo:rustc-link-lib=framework=Accelerate");
     }
 
@@ -64,8 +65,8 @@ fn main() {
         .arg("-DCMAKE_BUILD_TYPE=Release")
         .arg("-DRWKV_ALL_WARNINGS=OFF");
 
-    if target_os.contains("darwin") {
-        if target_arch.contains("aarch64") {
+    if platform.target_os == OS::MacOS {
+        if platform.target_arch == Arch::AArch64 {
             command
                 .arg("-DAPPLE=ON")
                 .arg("-DRWKV_ACCELERATE=ON")
@@ -120,17 +121,4 @@ fn main() {
     }
     // clean the rwkv build directory to prevent Cargo from complaining during crate publish
     _ = std::fs::remove_dir_all("build");
-}
-
-fn get_build_target() -> (String, String, String) {
-    let target = env::var("TARGET").unwrap();
-    let target_triple = target.split('-').collect::<Vec<&str>>();
-    let target_arch = target_triple[0];
-    let target_os = target_triple[2];
-    let host = env::var("HOST").unwrap();
-    println!("target_arch: {}", target_arch);
-    println!("target_os: {}", target_os);
-    println!("host: {}", host);
-
-    (host, target_arch.to_string(), target_os.to_string())
 }

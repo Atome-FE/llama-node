@@ -73,6 +73,7 @@ getLatestGithubAction().then(async (latestStep) => {
 
     await moveForPackages("core");
     await moveForPackages("llama-cpp");
+    await moveForPackages("rwkv-cpp");
 
     execSync(`rm -r ${process.cwd()}/tmp/artifacts/`);
     console.log("Done!");
