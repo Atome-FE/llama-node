@@ -72,7 +72,7 @@ fn main() {
 
         if target_arch.contains("aarch64") {
             command
-                .arg("-DCMAKE_SYSTEM_PROCESSOR=apple-m1")
+                .arg("-DCMAKE_SYSTEM_PROCESSOR=aarch64")
                 .arg("-DCMAKE_OSX_ARCHITECTURES=arm64")
                 .arg("-DRWKV_NATIVE=OFF");
         }
