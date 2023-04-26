@@ -77,7 +77,8 @@ fn main() {
             command
                 .arg("-DAPPLE=ON")
                 .arg("-DRWKV_ACCELERATE=ON")
-                .arg("-DCMAKE_SYSTEM_NAME=Darwin");
+                .arg("-DCMAKE_SYSTEM_NAME=Darwin")
+                .arg("-DCMAKE_SYSTEM_PROCESSOR=x86_64");
         }
     } else {
         // os except macOS will enable static linking
