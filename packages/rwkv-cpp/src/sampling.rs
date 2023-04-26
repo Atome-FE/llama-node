@@ -21,30 +21,26 @@ pub fn softmax<T: ReqOps>(x: &ArrayView1<T>) -> Array1<T> {
     &x_exp / x_exp.sum()
 }
 
-pub fn sample_logits(logits: &mut [f32], temp: f32, top_p: f32) -> usize {
+pub fn sample_logits(logits: &mut [f32], temp: f32, top_p: f32, seed: &Option<u64>) -> usize {
     let binding = Array1::from(logits.to_vec());
     let logits = binding.view();
     let probs = softmax(&logits);
-    sample_probs(&probs, temp, top_p)
+    sample_probs(&probs, temp, top_p, seed)
 }
 
 pub fn sample_probs<T: ReqOps + num_traits::AsPrimitive<f32>>(
     probs: &Array1<T>,
     temp: f32,
     mut top_p: f32,
+    seed: &Option<u64>,
 ) -> usize {
-    // let probs = Array1::from(probs);
-    // let mut probs = probs.to_vec();
-
     use rand::distributions::{Distribution, WeightedError, WeightedIndex};
 
-    // let mut rng: rand::rngs::StdRng = if let Some(seed) = &args.seed {
-    //     StdRng::seed_from_u64(*seed)
-    // } else {
-    //     StdRng::from_entropy()
-    // };
-
-    let mut rng = StdRng::from_entropy(); // TODO: seed from arguments
+    let mut rng: rand::rngs::StdRng = if let Some(seed) = seed {
+        StdRng::seed_from_u64(*seed)
+    } else {
+        StdRng::from_entropy()
+    };
 
     // const EOT_TOKEN_ID: usize = 0;
 
@@ -64,54 +60,46 @@ pub fn sample_probs<T: ReqOps + num_traits::AsPrimitive<f32>>(
     // }
 
     // if top_p < 1.0 {
-        // sort the probs
-        let mut sorted_probs = probs.as_slice().unwrap().to_vec();
-        // FIXME: Don't use unwrap here.
-        sorted_probs.sort_by(|a, b| T::partial_cmp(a, b).unwrap_or(std::cmp::Ordering::Greater).reverse());
-        let mut cumulative_probs = Vec::with_capacity(sorted_probs.len());
-        let _ = sorted_probs.iter().fold(T::zero(), |acc, i| {
-            let newcum = acc + *i;
-            cumulative_probs.push(newcum);
-            newcum
-        });
+    // sort the probs
+    let mut sorted_probs = probs.to_vec();
+    sorted_probs.sort_by(|a, b| {
+        T::partial_cmp(a, b)
+            .unwrap_or(std::cmp::Ordering::Greater)
+            .reverse()
+    });
+    let mut cumulative_probs = Vec::with_capacity(sorted_probs.len());
+    let _ = sorted_probs.iter().fold(T::zero(), |acc, i| {
+        let newcum = acc + *i;
+        cumulative_probs.push(newcum);
+        newcum
+    });
 
-        let cutoffidx = cumulative_probs
-            .iter()
-            .copied()
-            .enumerate()
-            .find(|(_, v)| v.as_() > top_p)
-            .map(|i| i.0)
-            .unwrap_or_default();
+    let cutoffidx = cumulative_probs
+        .iter()
+        .copied()
+        .enumerate()
+        .find(|(_, v)| v.as_() > top_p)
+        .map(|i| i.0)
+        .unwrap_or_default();
 
-        let cutoff = sorted_probs[cutoffidx].as_();
+    let cutoff = sorted_probs[cutoffidx].as_();
 
-        let probs = probs.map(|i| {
-            let i: f32 = i.as_();
-            if i < cutoff {
-                0.0
-            } else {
-                i
-            }
-        });
+    let probs = probs.map(|i| {
+        let i: f32 = i.as_();
+        if i < cutoff {
+            0.0
+        } else {
+            i
+        }
+    });
 
-        let probs = &probs / probs.sum();
-        let dist = match WeightedIndex::new(probs.iter().map(|val| val.powf(1.0 / temp))) {
-            Ok(dist) => dist,
-            Err(WeightedError::AllWeightsZero) => {
-                // Sorry if you wanted tokens forever, but this is how it's got to be.
-                return 0;
-            }
-            e => e.expect("I didn't sign up for this! (Bad weight in generated probability list.)"),
-        };
-        dist.sample(&mut rng)
-    // }
-
-    // if temp != 1.0 {
-    //     probs = probs.iter().map(|x| x.powf(temp)).collect::<Vec<f32>>();
-    // }
-
-    // let sum: f32 = probs.iter().sum();
-    // probs = probs.iter().map(|x| x / sum).collect::<Vec<f32>>();
-
-    // random_choice(probs.as_slice())
+    let probs = &probs / probs.sum();
+    let dist = match WeightedIndex::new(probs.iter().map(|val| val.powf(1.0 / temp))) {
+        Ok(dist) => dist,
+        Err(WeightedError::AllWeightsZero) => {
+            return 0;
+        }
+        e => e.expect("Bad weight"),
+    };
+    dist.sample(&mut rng)
 }

@@ -4,7 +4,6 @@
 extern crate napi_derive;
 
 mod context;
-mod output;
 mod rwkv;
 mod sampling;
 mod types;
@@ -26,19 +25,19 @@ use rwkv::RWKVChannel;
 use types::{EmbeddingResult, InferenceResult, TokenizeResult};
 
 #[napi]
-pub struct LLama {
-    llama_channel: Arc<RWKVChannel>,
+pub struct RWKV {
+    rwkv_channel: Arc<RWKVChannel>,
 }
 
 #[napi]
-impl LLama {
+impl RWKV {
     #[napi]
     pub fn load(
         model_path: String,
         tokenizer_path: String,
         params: u32,
         enable_logger: bool,
-    ) -> Result<LLama> {
+    ) -> Result<RWKV> {
         if enable_logger {
             env_logger::builder()
                 .filter_level(log::LevelFilter::Info)
@@ -47,7 +46,7 @@ impl LLama {
         }
 
         let (load_result_sender, load_result_receiver) = channel::<bool>();
-        let llama_channel = RWKVChannel::new(
+        let rwkv_channel = RWKVChannel::new(
             model_path,
             tokenizer_path,
             params,
@@ -68,7 +67,7 @@ impl LLama {
                 }
             }
         }
-        Ok(Self { llama_channel })
+        Ok(Self { rwkv_channel })
     }
 
     #[napi]
@@ -80,9 +79,9 @@ impl LLama {
         let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> =
             callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
         let (embeddings_sender, embeddings_receiver) = channel();
-        let llama_channel = self.llama_channel.clone();
+        let rwkv_channel = self.rwkv_channel.clone();
 
-        llama_channel.embedding(input, embeddings_sender);
+        rwkv_channel.embedding(input, embeddings_sender);
 
         thread::spawn(move || {
             loop {
@@ -116,9 +115,9 @@ impl LLama {
                 Ok(vec![ctx.value])
             })?;
 
-        let llama_channel = self.llama_channel.clone();
+        let rwkv_channel = self.rwkv_channel.clone();
 
-        llama_channel.tokenize(params, tokenize_sender);
+        rwkv_channel.tokenize(params, tokenize_sender);
 
         thread::spawn(move || {
             'waiting_tokenize: loop {
@@ -149,9 +148,9 @@ impl LLama {
         let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> =
             callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
         let (inference_sender, inference_receiver) = channel();
-        let llama_channel = self.llama_channel.clone();
+        let rwkv_channel = self.rwkv_channel.clone();
 
-        llama_channel.inference(input, inference_sender);
+        rwkv_channel.inference(input, inference_sender);
 
         thread::spawn(move || {
             loop {

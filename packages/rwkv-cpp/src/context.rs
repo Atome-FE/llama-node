@@ -4,32 +4,22 @@ use tokenizers::tokenizer::Tokenizer;
 
 use anyhow::Result;
 use rwkv_sys::{
-    // llama_context, llama_context_default_params, llama_context_params, llama_eval, llama_free,
-    // llama_get_embeddings, llama_init_from_file, llama_n_embd, llama_print_system_info,
-    // llama_sample_top_p_top_k, llama_token, llama_token_to_str,
-    rwkv_context,
-    rwkv_eval,
-    rwkv_free,
-    rwkv_get_logits_buffer_element_count,
-    rwkv_get_state_buffer_element_count,
-    rwkv_get_system_info_string,
-    rwkv_init_from_file,
+    rwkv_context, rwkv_eval, rwkv_free, rwkv_get_logits_buffer_element_count,
+    rwkv_get_state_buffer_element_count, rwkv_get_system_info_string, rwkv_init_from_file,
 };
 
 #[napi(object)]
 #[derive(Debug, Clone)]
 pub struct RWKVInvocation {
-    pub n_threads: i32,
-    pub n_tok_predict: i32,
-    pub top_k: i32,
+    pub max_predict_length: i32,
     pub top_p: f64,
     pub temp: f64,
-    pub repeat_penalty: f64,
-    pub stop_sequence: Option<String>,
+    pub end_token: Option<i32>,
+    pub seed: Option<i32>,
     pub prompt: String,
 }
 
-// Represents the configuration parameters for a LLamaContext.
+// Represents the configuration parameters for a RWKVContext.
 #[napi(object)]
 #[derive(Debug, Clone)]
 pub struct RWKVContextParams {
@@ -44,7 +34,7 @@ pub struct RWKVContextParams {
     pub use_mmap: bool,
 }
 
-// Represents the LLamaContext which wraps FFI calls to the llama.cpp library.
+// Represents the RWKVContext which wraps FFI calls to the rwkv.cpp library.
 #[derive(Clone)]
 pub struct RWKVContext {
     ctx: *mut rwkv_context,
@@ -57,10 +47,9 @@ pub struct RWKVContext {
 }
 
 impl RWKVContext {
-    // Creates a new LLamaContext from the specified file and configuration parameters.
-    pub fn from_file_and_params(model_path: &str, tokenizer_path: &str, params: u32) -> Self {
-        // let params = LlamaContextParams::or_default(params);
-        let ctx = unsafe { rwkv_init_from_file(model_path.as_ptr() as *const i8, params) };
+    // Creates a new RWKVContext from the specified file and configuration parameters.
+    pub fn from_file_and_params(model_path: &str, tokenizer_path: &str, n_threads: u32) -> Self {
+        let ctx = unsafe { rwkv_init_from_file(model_path.as_ptr() as *const i8, n_threads) };
         let state_buffer_element_count = unsafe { rwkv_get_state_buffer_element_count(ctx) };
         let logits_buffer_element_count = unsafe { rwkv_get_logits_buffer_element_count(ctx) };
         let tokenizer = Tokenizer::from_file(tokenizer_path).unwrap();
@@ -103,6 +92,7 @@ impl RWKVContext {
     }
 
     // Evaluates the given tokens with the specified configuration.
+    // TODO: investigate performance of this function
     pub fn rwkv_eval(&mut self, token: i32) -> Result<(Vec<f32>, Vec<f32>), ()> {
         let state_in = &self.model_state;
         let state_out = &self.model_state;
@@ -149,7 +139,7 @@ impl RWKVContext {
         };
 
         if res {
-            Ok((logits_out.clone(), state_out.clone()))
+            Ok((logits_out, state_out))
         } else {
             Err(())
         }
@@ -160,7 +150,7 @@ impl RWKVContext {
 unsafe impl Send for RWKVContext {}
 unsafe impl Sync for RWKVContext {}
 
-// Enables dereferencing RWKVContext to access the underlying *mut llama_context.
+// Enables dereferencing RWKVContext to access the underlying *mut rwkv_context.
 impl std::ops::Deref for RWKVContext {
     type Target = *mut rwkv_context;
     fn deref(&self) -> &*mut rwkv_context {

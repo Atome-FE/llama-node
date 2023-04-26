@@ -9,6 +9,7 @@ use std::{
 
 use crate::{
     context::{RWKVContext, RWKVInvocation},
+    sampling::sample_logits,
     types::{
         EmbeddingResult, InferenceResult, InferenceResultType, InferenceToken, RWKVCommand,
         TokenizeResult, TokenizeResultType,
@@ -87,23 +88,38 @@ impl RWKVInternal {
     } */
 
     pub fn inference(&mut self, input: &RWKVInvocation, sender: &Sender<InferenceResult>) {
+        let end_token = input.end_token.unwrap_or(0) as usize;
+        let temp = input.temp as f32;
+        let top_p = input.top_p as f32;
+        let seed = input.seed.map(|x| x as u64);
+
         let context = &mut self.context;
         let tokenizer = &context.tokenizer;
         let prompt = &input.prompt;
         let binding = tokenizer.encode(prompt.as_str(), false).unwrap();
         let tokens = binding.get_ids();
+
         context.process_tokens(tokens);
 
-        for _i in 0..256 {
-            let mut logits = context.logits.clone().unwrap();
-            let token =
-                crate::sampling::sample_logits(&mut logits, input.temp as f32, input.top_p as f32);
-            if token >= 50276 {
+        for _i in 0..input.max_predict_length {
+            let logits = context.logits.as_mut().unwrap();
+            let token = sample_logits(logits, temp, top_p, &seed);
+
+            if token >= 50276 || token == end_token {
+                sender
+                    .send(InferenceResult {
+                        r#type: InferenceResultType::Data,
+                        message: None,
+                        data: Some(InferenceToken {
+                            token: "\n\n<end>\n".to_string(),
+                            completed: true,
+                        }),
+                    })
+                    .unwrap();
                 break;
             }
 
             let decoded = context.rwkv_token_to_str(&(token as i32)).unwrap();
-            print!("{}", decoded);
             std::io::stdout().flush().unwrap();
 
             sender
@@ -118,11 +134,7 @@ impl RWKVInternal {
                 .unwrap();
 
             context.process_tokens(&[token.try_into().unwrap()]);
-            // println!("sent");
         }
-        // context.rwkv_token_to_str(token)
-
-        // thread::sleep(std::time::Duration::from_millis(10000));
     }
 }
 
