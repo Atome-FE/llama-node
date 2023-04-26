@@ -1,3 +1,7 @@
-[submodule "packages/llama-cpp/llama-sys/llama.cpp"]
+[submodule "llama.cpp"]
 	path = packages/llama-cpp/llama-sys/llama.cpp
 	url = https://github.com/ggerganov/llama.cpp.git
+
+[submodule "rwkv.cpp"]
+	path = packages/rwkv-cpp/rwkv-sys/rwkv.cpp
+	url = https://github.com/saharNooby/rwkv.cpp.git
