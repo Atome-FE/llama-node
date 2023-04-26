@@ -30,7 +30,7 @@ pub struct RWKVInternal {
 impl RWKVInternal {
     pub fn tokenize(&self, input: &str, sender: &Sender<TokenizeResult>) {
         let tokenizer = &self.context.tokenizer;
-        let tokens_result = tokenizer.encode(input, true).map(Some).unwrap_or(None);
+        let tokens_result = tokenizer.encode(input, false).map(Some).unwrap_or(None);
         if let Some(result) = tokens_result {
             let tokens = result.get_ids().to_vec();
             sender

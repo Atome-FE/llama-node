@@ -11,17 +11,6 @@ export interface RwkvInvocation {
   seed?: number
   prompt: string
 }
-export interface RwkvContextParams {
-  nCtx: number
-  nParts: number
-  seed: number
-  f16Kv: boolean
-  logitsAll: boolean
-  vocabOnly: boolean
-  useMlock: boolean
-  embedding: boolean
-  useMmap: boolean
-}
 export const enum TokenizeResultType {
   Error = 'Error',
   Data = 'Data'

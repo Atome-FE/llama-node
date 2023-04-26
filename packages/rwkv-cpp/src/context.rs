@@ -19,21 +19,6 @@ pub struct RWKVInvocation {
     pub prompt: String,
 }
 
-// Represents the configuration parameters for a RWKVContext.
-#[napi(object)]
-#[derive(Debug, Clone)]
-pub struct RWKVContextParams {
-    pub n_ctx: i32,
-    pub n_parts: i32,
-    pub seed: i32,
-    pub f16_kv: bool,
-    pub logits_all: bool,
-    pub vocab_only: bool,
-    pub use_mlock: bool,
-    pub embedding: bool,
-    pub use_mmap: bool,
-}
-
 // Represents the RWKVContext which wraps FFI calls to the rwkv.cpp library.
 #[derive(Clone)]
 pub struct RWKVContext {
@@ -42,7 +27,7 @@ pub struct RWKVContext {
     state_buffer_element_count: u32,
     logits_buffer_element_count: u32,
     model_tokens: Vec<u32>,
-    pub model_state: Option<Vec<f32>>,
+    model_state: Option<Vec<f32>>,
     pub logits: Option<Vec<f32>>,
 }
 
