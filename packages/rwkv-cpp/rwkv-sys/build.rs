@@ -65,16 +65,19 @@ fn main() {
         .arg("-DRWKV_ALL_WARNINGS=OFF");
 
     if target_os.contains("darwin") {
-        command
-            .arg("-DAPPLE=ON")
-            .arg("-DRWKV_ACCELERATE=ON")
-            .arg("-DCMAKE_SYSTEM_NAME=Darwin");
-
         if target_arch.contains("aarch64") {
             command
-                .arg("-DCMAKE_SYSTEM_PROCESSOR=aarch64")
+                .arg("-DAPPLE=ON")
+                .arg("-DRWKV_ACCELERATE=ON")
+                .arg("-DCMAKE_SYSTEM_NAME=Darwin")
+                .arg("-DCMAKE_SYSTEM_PROCESSOR=apple-m1")
                 .arg("-DCMAKE_OSX_ARCHITECTURES=arm64")
                 .arg("-DRWKV_NATIVE=OFF");
+        } else {
+            command
+                .arg("-DAPPLE=ON")
+                .arg("-DRWKV_ACCELERATE=ON")
+                .arg("-DCMAKE_SYSTEM_NAME=Darwin");
         }
     } else {
         // os except macOS will enable static linking
