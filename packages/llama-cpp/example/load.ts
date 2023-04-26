@@ -1,4 +1,4 @@
-import { LLama, LlamaContextParams, LlamaInvocation } from "../index";
+import { LLama, LlamaInvocation } from "../index";
 import path from "path";
 
 const llama = LLama.load(
@@ -9,10 +9,9 @@ const llama = LLama.load(
 
 const template = `Who is the president of the United States?`;
 
-const prompt = `
-### Human: ${template}
-
-### Assistant:`;
+const prompt = `A chat between a user and an assistant.
+USER: ${template}
+ASSISTANT:`;
 
 const params: LlamaInvocation = {
     nThreads: 4,
@@ -21,7 +20,6 @@ const params: LlamaInvocation = {
     topP: 0.1,
     temp: 0.2,
     repeatPenalty: 1,
-    stopSequence: "### Human",
     prompt,
 };
 

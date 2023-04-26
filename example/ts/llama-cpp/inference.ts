@@ -24,11 +24,9 @@ llama.load(config);
 
 const template = `How are you?`;
 
-const prompt = `### Human:
-
-${template}
-
-### Assistant:`;
+const prompt = `A chat between a user and an assistant.
+USER: ${template}
+ASSISTANT:`;
 
 llama.createCompletion(
     {
@@ -38,7 +36,6 @@ llama.createCompletion(
         topP: 0.1,
         temp: 0.2,
         repeatPenalty: 1,
-        stopSequence: "### Human",
         prompt,
     },
     (response) => {
