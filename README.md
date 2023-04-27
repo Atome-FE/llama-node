@@ -1,5 +1,4 @@
 # llama-node
-Large Language Model on Node.js
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml)
 ![NPM](https://img.shields.io/npm/l/llama-node)
@@ -7,7 +6,7 @@ Large Language Model on Node.js
 ![npm type definitions](https://img.shields.io/npm/types/llama-node)
 [<img alt="twitter" src="https://img.shields.io/twitter/url?url=https%3A%2F%2Ftwitter.com%2Fhlhr202">](https://twitter.com/hlhr202)
 
-<center><h2>Node.js Library for LLaMA/RWKV</h2></center>
+<center><h2>Node.js Library for Large Language Model</h2></center>
 
 <center><h3><a href="https://llama-node.vercel.app/">Official Documentations</a></h3></center>
 

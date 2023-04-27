@@ -1,7 +1,8 @@
 {
   "name": "llama-node",
   "version": "0.0.31",
-  "description": "",
+  "description": "Node.js Library for Large Language Model LLaMA/RWKV",
+  "keywords": ["llama", "rwkv", "vicuna", "gpt", "chatgpt", "gpt4all", "nlp", "large language model", "llm", "chat"],
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,7 +46,7 @@
     "pnpm": ">=6.0.0"
   },
   "packageManager": "pnpm@6.0.0",
-  "homepage": "https://github.com/Atome-FE/llama-node#readme",
+  "homepage": "https://llama-node.vercel.app/",
   "devDependencies": {
     "@llama-node/cli": "0.0.31",
     "@llama-node/core": "0.0.31",
