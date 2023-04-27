@@ -68,11 +68,23 @@ npm install llama-node
   npm install @llama-node/core
   ```
 
+  - or rwkv.cpp
+  
+  ```bash
+  npm install @llama-node/rwkv-cpp
+  ```
+
 ---
 
 ## Getting Model
 
-The llama-node uses llama-rs/llama.cpp under the hook and uses the model format (GGML/GGMF/GGJT) derived from llama.cpp. Due to the fact that the meta-release model is only used for research purposes, this project does not provide model downloads. If you have obtained the original .pth model, please read the [document](https://github.com/ggerganov/llama.cpp#prepare-data--run) and use the conversion tool provided by llama.cpp for conversion.
+- For llama and its derived models:
+
+  The llama-node uses llama-rs/llama.cpp under the hook and uses the model format (GGML/GGMF/GGJT) derived from llama.cpp. Due to the fact that the meta-release model is only used for research purposes, this project does not provide model downloads. If you have obtained the original .pth model, please read the [document](https://github.com/ggerganov/llama.cpp#prepare-data--run) and use the conversion tool provided by llama.cpp for conversion.
+
+- For RWKV models:
+  
+  RWKV is open source model developed by [PENG Bo](https://github.com/BlinkDL). All the model weights and training code has been open sourced. Our backend rwkv backend uses rwkv.cpp native bindings which also utilized the GGML tensor formats. You can download the GGML quantized model from [here](https://huggingface.co/Malan/ggml-rwkv-4-raven-Q4_1_0) or convert it by following the [document](https://github.com/saharNooby/rwkv.cpp)
 
 ---
 
@@ -82,12 +94,12 @@ This is your first example that uses llama.cpp as inference backend, make sure y
 
 ```js
 // index.mjs
-import { LLama } from "llama-node";
+import { LLM } from "llama-node";
 import { LLamaCpp } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
-const llama = new LLama(LLamaCpp);
+const llama = new LLM(LLamaCpp);
 const config = {
     path: model,
     enableLogging: true,
@@ -104,9 +116,9 @@ const config = {
 llama.load(config);
 
 const template = `How are you?`;
-const prompt = `### Human:
-${template}
-### Assistant:`;
+const prompt = `A chat between a user and an assistant.
+USER: ${template}
+ASSISTANT:`;
 
 llama.createCompletion({
     nThreads: 4,
@@ -115,7 +127,6 @@ llama.createCompletion({
     topP: 0.1,
     temp: 0.2,
     repeatPenalty: 1,
-    stopSequence: "### Human",
     prompt,
 }, (response) => {
     process.stdout.write(response.token);
@@ -131,3 +142,20 @@ node index.mjs
 ## More examples
 
 Visit our example folder [here](https://github.com/Atome-FE/llama-node/tree/main/example)
+
+## Acknowledgments
+
+This library was published under MIT/Apache-2.0 license. However, we stronly recommend you to cite our work/our dependencies work if you wish to reuse the code from this library.
+
+### Models/Inferencing tools dependencies:
+
+- LLaMA models: [facebookresearch/llama](https://github.com/facebookresearch/llama)
+- RWKV models:  [BlinkDL/RWKV-LM](https://github.com/BlinkDL/RWKV-LM)
+- llama.cpp:    [ggreganov/llama.cpp](https://github.com/ggerganov/llama.cpp)
+- llama-rs:     [rustformers/llama-rs](https://github.com/rustformers/llama-rs)
+- rwkv.cpp:     [saharNooby/rwkv.cpp](https://github.com/saharNooby/rwkv.cpp)
+
+### Some source code comes from:
+
+- cpp-rust bindings build scripts:  [sobelio/llm-chain](https://github.com/sobelio/llm-chain)
+- rwkv logits sampling:             [KerfuffleV2/smolrsrwkv](https://github.com/KerfuffleV2/smolrsrwkv)

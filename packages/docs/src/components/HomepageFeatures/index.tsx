@@ -19,8 +19,7 @@ const FeatureList = [
         Svg: require("@site/static/img/llama.svg").default,
         description: (
             <Translate>
-                Load Meta's large language model LLaMA. Support quantized model
-                for less RAM consumption.
+                Load large language model LLaMA, RWKV and LLaMA's derived models.
             </Translate>
         ),
     },
@@ -30,7 +29,7 @@ const FeatureList = [
         description: (
             <Translate>
                 Supports Windows, Linux, and macOS. Allow full accelerations on
-                CPU inference (SIMD powered by llama.cpp/llama-rs).
+                CPU inference (SIMD powered by llama.cpp/llama-rs/rwkv.cpp).
             </Translate>
         ),
     },

@@ -8,7 +8,7 @@ llama.cpp community has developed several versions of model. Please be careful t
 
 ## llama.cpp
 
-For llama.cpp, supported model types can check from ggml.h source:
+For llama.cpp, you can check supported model types from ggml.h source:
 
 ```c
 enum ggml_type {
@@ -29,7 +29,7 @@ enum ggml_type {
 
 ## llama-rs
 
-For llama-rs, supported model types can check from llama-rs ggml bindings:
+For llama-rs, you can check supported model types from llama-rs ggml bindings:
 
 ```rust
 pub enum Type {
@@ -48,3 +48,19 @@ pub enum Type {
 ```
 
 llama-rs also supports legacy llama.cpp models
+
+## rwkv.cpp
+
+For rwkv.cpp, you can check supported model types from rwkv.cpp source:
+
+```c++
+static const ggml_type FORMAT_TYPE_TO_GGML_TYPE[7] = {
+    GGML_TYPE_F32,
+    GGML_TYPE_F16,
+    GGML_TYPE_Q4_0,
+    GGML_TYPE_Q4_1,
+    GGML_TYPE_Q4_1_O,
+    GGML_TYPE_Q4_2,
+    GGML_TYPE_Q4_3
+};
+```

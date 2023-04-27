@@ -16,7 +16,7 @@ function HomepageHeader() {
             <div className="container">
                 <h1 className="hero__title">{siteConfig.title}</h1>
                 <p className="hero__subtitle">
-                    <Translate id="tagline">Node.js library for large language model LLaMA</Translate>
+                    <Translate id="tagline">Node.js library for large language model</Translate>
                 </p>
                 <div className={styles.buttons}>
                     <Link
