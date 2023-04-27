@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Get Started
 
-Large Language Model LLaMA on node.js.
+Large Language Model on node.js.
 
 This project is in an early stage, the API for nodejs may change in the future, use it with caution.
 
