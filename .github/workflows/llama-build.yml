@@ -69,7 +69,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - run: sudo apt install -y musl-tools
+      - run: sudo apt install -y musl-tools && sudo ln -s /bin/g++ /bin/musl-g++
         if: matrix.os == 'ubuntu-20.04'
       - run: git submodule update --init --recursive
       - run: pnpm install
