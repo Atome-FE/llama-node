@@ -34,15 +34,26 @@ This project is in an early stage, the API for nodejs may change in the future, 
 
 ---
 
-## Platforms
+## Compatibility
 
-Currently supported platforms:
+Currently supported models (All of these should be converted to [GGML](https://github.com/ggerganov/ggml) format):
+- [LLaMA](https://github.com/facebookresearch/llama)
+- [RWKV](https://github.com/BlinkDL/RWKV-LM)
+- [Alpaca](https://github.com/ggerganov/llama.cpp#instruction-mode-with-alpaca)
+- [GPT4All](https://github.com/ggerganov/llama.cpp#using-gpt4all)
+- [Chinese LLaMA / Alpaca](https://github.com/ymcui/Chinese-LLaMA-Alpaca)
+- [Vigogne (French)](https://github.com/bofenghuang/vigogne)
+- [Vicuna](https://github.com/ggerganov/llama.cpp/discussions/643#discussioncomment-5533894)
+- [Koala](https://bair.berkeley.edu/blog/2023/04/03/koala/)
 
+Supported platforms:
 - darwin-x64
 - darwin-arm64
 - linux-x64-gnu (glibc >= 2.31)
 - linux-x64-musl
 - win32-x64-msvc
+
+Node.js version: >= 16
 
 ---
 
@@ -84,7 +95,7 @@ npm install llama-node
 
 - For RWKV models:
   
-  RWKV is open source model developed by [PENG Bo](https://github.com/BlinkDL). All the model weights and training code has been open sourced. Our backend rwkv backend uses rwkv.cpp native bindings which also utilized the GGML tensor formats. You can download the GGML quantized model from [here](https://huggingface.co/Malan/ggml-rwkv-4-raven-Q4_1_0) or convert it by following the [document](https://github.com/saharNooby/rwkv.cpp)
+  RWKV is open source model developed by [PENG Bo](https://github.com/BlinkDL). All the model weights and training codes are open source. Our rwkv backend uses rwkv.cpp native bindings which also utilized the GGML tensor formats. You can download the GGML quantized model from [here](https://huggingface.co/Malan/ggml-rwkv-4-raven-Q4_1_0) or convert it by following the [document](https://github.com/saharNooby/rwkv.cpp)
 
 ---
 

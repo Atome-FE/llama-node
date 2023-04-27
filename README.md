@@ -32,7 +32,7 @@ This project is in an early stage, the API for nodejs may change in the future, 
 
 This is a nodejs library for inferencing llama, rwkv or llama derived models. It was built on top of [llama-rs](https://github.com/rustformers/llama-rs), [llama.cpp](https://github.com/ggerganov/llama.cpp) and [rwkv.cpp](https://github.com/saharNooby/rwkv.cpp). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
 
-Currently supported models (All of these are in [GGML](https://github.com/ggerganov/ggml) format):
+Currently supported models (All of these should be converted to [GGML](https://github.com/ggerganov/ggml) format):
 - [LLaMA](https://github.com/facebookresearch/llama)
 - [RWKV](https://github.com/BlinkDL/RWKV-LM)
 - [Alpaca](https://github.com/ggerganov/llama.cpp#instruction-mode-with-alpaca)
