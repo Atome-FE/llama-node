@@ -29,5 +29,6 @@ ${fileContent}`;
     );
 };
 
-writeExample("llama-cpp");
 writeExample("llama-rs");
+writeExample("llama-cpp");
+writeExample("rwkv-cpp");

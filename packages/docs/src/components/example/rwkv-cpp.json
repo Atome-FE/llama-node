@@ -1,0 +1,10 @@
+[
+  {
+    "name": "tokenize",
+    "markdown": "// tokenize.js\nimport { LLM } from \"llama-node\";\nimport { RwkvCpp } from \"llama-node/dist/llm/rwkv-cpp.js\";\nimport path from \"path\";\nconst modelPath = path.resolve(process.cwd(), \"../ggml-rwkv-4_raven-7b-v9-Eng99%-20230412-ctx8192-Q4_1_0.bin\");\nconst tokenizerPath = path.resolve(process.cwd(), \"../20B_tokenizer.json\");\nconst rwkv = new LLM(RwkvCpp);\nconst config = {\n    modelPath,\n    tokenizerPath,\n    nThreads: 4,\n    enableLogging: true,\n};\nrwkv.load(config);\nrwkv.tokenize({ content: \"hello world\" }).then(console.log);\n"
+  },
+  {
+    "name": "inference",
+    "markdown": "// inference.js\nimport { LLM } from \"llama-node\";\nimport { RwkvCpp } from \"llama-node/dist/llm/rwkv-cpp.js\";\nimport path from \"path\";\nconst modelPath = path.resolve(process.cwd(), \"../ggml-rwkv-4_raven-7b-v9-Eng99%-20230412-ctx8192-Q4_1_0.bin\");\nconst tokenizerPath = path.resolve(process.cwd(), \"../20B_tokenizer.json\");\nconst rwkv = new LLM(RwkvCpp);\nconst config = {\n    modelPath,\n    tokenizerPath,\n    nThreads: 4,\n    enableLogging: true,\n};\nrwkv.load(config);\nconst template = `Who is the president of the United States?`;\nconst prompt = `Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction: ${template}\n\n### Response:`;\nrwkv.createCompletion({\n    maxPredictLength: 2048,\n    topP: 0.1,\n    temp: 0.1,\n    prompt,\n}, (response) => {\n    process.stdout.write(response.token);\n});\n"
+  }
+]

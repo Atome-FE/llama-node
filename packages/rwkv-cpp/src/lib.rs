@@ -35,7 +35,7 @@ impl RWKV {
     pub fn load(
         model_path: String,
         tokenizer_path: String,
-        params: u32,
+        n_threads: u32,
         enable_logger: bool,
     ) -> Result<RWKV> {
         if enable_logger {
@@ -49,7 +49,7 @@ impl RWKV {
         let rwkv_channel = RWKVChannel::new(
             model_path,
             tokenizer_path,
-            params,
+            n_threads,
             load_result_sender,
             enable_logger,
         );

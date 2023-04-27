@@ -1,12 +1,21 @@
+---
+sidebar_position: 4
+---
+
+# LangChain.js extension
+
+We provide a LangChain.js compatible LLamaEmbeddings support since v0.0.28! We are not sure if it is accurate but it works :)
+
+```typescript
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { LLamaEmbeddings } from "llama-node/dist/extensions/langchain.js";
-import { LLM } from "llama-node";
+import { LLama } from "llama-node";
 import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
 
-const llama = new LLM(LLamaCpp);
+const llama = new LLama(LLamaCpp);
 
 const config: LoadConfig = {
     path: model,
@@ -39,3 +48,5 @@ const run = async () => {
 };
 
 run();
+
+```

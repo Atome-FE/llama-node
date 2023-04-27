@@ -142,7 +142,7 @@ impl RWKVChannel {
     pub fn new(
         model_path: String,
         tokenizer_path: String,
-        params: u32,
+        n_threads: u32,
         load_result_sender: Sender<bool>,
         enable_logger: bool,
     ) -> Arc<Self> {
@@ -156,7 +156,7 @@ impl RWKVChannel {
         channel.spawn(
             model_path,
             tokenizer_path,
-            params,
+            n_threads,
             load_result_sender,
             enable_logger,
         );
@@ -187,7 +187,7 @@ impl RWKVChannel {
         &self,
         mode_path: String,
         tokenizer_path: String,
-        params: u32,
+        n_threads: u32,
         load_result_sender: Sender<bool>,
         enable_logger: bool,
     ) {
@@ -195,7 +195,7 @@ impl RWKVChannel {
 
         thread::spawn(move || {
             let mut rwkv = RWKVInternal {
-                context: RWKVContext::from_file_and_params(&mode_path, &tokenizer_path, params),
+                context: RWKVContext::from_file_and_params(&mode_path, &tokenizer_path, n_threads),
             };
 
             if enable_logger {

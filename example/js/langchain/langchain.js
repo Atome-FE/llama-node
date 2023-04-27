@@ -1,10 +1,10 @@
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { LLamaEmbeddings } from "llama-node/dist/extensions/langchain.js";
-import { LLama } from "llama-node";
+import { LLM } from "llama-node";
 import { LLamaCpp } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
-const llama = new LLama(LLamaCpp);
+const llama = new LLM(LLamaCpp);
 const config = {
     path: model,
     enableLogging: true,

@@ -1,30 +1,42 @@
 import {
-    EmbeddingResultType,
+    // EmbeddingResultType,
     InferenceResultType,
-    LLama,
-    LLamaConfig,
-    LLamaInferenceArguments,
-} from "@llama-node/core";
+    Rwkv,
+    RwkvInvocation,
+    TokenizeResultType,
+} from "@llama-node/rwkv-cpp";
+
 import type { ILLM } from "../llm";
 
-export class LLamaRS
-    implements
-        ILLM<
-            LLama,
-            LLamaConfig,
-            LLamaInferenceArguments,
-            LLamaInferenceArguments,
-            string
-        >
-{
-    instance!: LLama;
+export interface LoadConfig {
+    modelPath: string;
+    tokenizerPath: string;
+    nThreads: number;
+    enableLogging: boolean;
+}
 
-    load(config: LLamaConfig) {
-        this.instance = LLama.create(config);
+export interface TokenizeArguments {
+    content: string;
+}
+
+export class RwkvCpp
+    implements
+        ILLM<Rwkv, LoadConfig, RwkvInvocation, unknown, TokenizeArguments>
+{
+    instance!: Rwkv;
+
+    load(config: LoadConfig) {
+        const { modelPath, tokenizerPath, nThreads, enableLogging } = config;
+        this.instance = Rwkv.load(
+            modelPath,
+            tokenizerPath,
+            nThreads,
+            enableLogging
+        );
     }
 
     async createCompletion(
-        params: LLamaInferenceArguments,
+        params: RwkvInvocation,
         callback: (data: { token: string; completed: boolean }) => void
     ): Promise<boolean> {
         let completed = false;
@@ -43,7 +55,7 @@ export class LLamaRS
                         callback(data);
                         break;
                     }
-                    case InferenceResultType.Error: {
+                    case InferenceResultType.End: {
                         if (errors.length) {
                             rej(new Error(errors.join("\n")));
                         } else {
@@ -51,8 +63,8 @@ export class LLamaRS
                         }
                         break;
                     }
-                    case InferenceResultType.End: {
-                        errors.push(response.message ?? "Unknown error");
+                    case InferenceResultType.Error: {
+                        errors.push(response.message ?? "Unknown Error");
                         break;
                     }
                 }
@@ -60,15 +72,17 @@ export class LLamaRS
         });
     }
 
-    async getEmbedding(params: LLamaInferenceArguments): Promise<number[]> {
+    // embedding not implemented yet
+
+    /* async getEmbedding(params: RwkvInvocation): Promise<number[]> {
         return new Promise<number[]>((res, rej) => {
-            this.instance.getWordEmbeddings(params, (response) => {
+            this.instance.getWordEmbedding(params, (response) => {
                 switch (response.type) {
                     case EmbeddingResultType.Data:
                         res(response.data ?? []);
                         break;
                     case EmbeddingResultType.Error:
-                        rej(response.message);
+                        rej(new Error("Unknown Error"));
                         break;
                 }
             });
@@ -77,20 +91,21 @@ export class LLamaRS
 
     async getDefaultEmbedding(text: string): Promise<number[]> {
         return this.getEmbedding({
-            nThreads: 4,
-            numPredict: 1024,
-            topK: 40,
             topP: 0.1,
             temp: 0.1,
-            repeatPenalty: 1,
             prompt: text,
+            maxPredictLength: 2048,
         });
-    }
+    } */
 
-    async tokenize(params: string): Promise<number[]> {
-        return new Promise<number[]>((res) => {
-            this.instance.tokenize(params, (response) => {
-                res(response.data);
+    async tokenize(params: TokenizeArguments): Promise<number[]> {
+        return new Promise<number[]>((res, rej) => {
+            this.instance.tokenize(params.content, (response) => {
+                if (response.type === TokenizeResultType.Data) {
+                    res(response.data);
+                } else {
+                    rej(new Error("Unknown Error"));
+                }
             });
         });
     }

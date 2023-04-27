@@ -43,7 +43,7 @@ export interface EmbeddingResult {
 }
 export type RWKV = Rwkv
 export class Rwkv {
-  static load(modelPath: string, tokenizerPath: string, params: number, enableLogger: boolean): Rwkv
+  static load(modelPath: string, tokenizerPath: string, nThreads: number, enableLogger: boolean): Rwkv
   getWordEmbedding(input: RwkvInvocation, callback: (result: EmbeddingResult) => void): void
   tokenize(params: string, callback: (result: TokenizeResult) => void): void
   inference(input: RwkvInvocation, callback: (result: InferenceResult) => void): void

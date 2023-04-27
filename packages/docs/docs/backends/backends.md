@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Backends
 
-llama-node currently supports llama-rs and llama.cpp backends.
+llama-node currently supports llama-rs, llama.cpp and rwkv.cpp backends.
 
 The current version supports only one inference session on one LLama instance at the same time
 
@@ -22,4 +22,10 @@ npm install @llama-node/llama-cpp
 
 ```bash
 npm install @llama-node/core
+```
+
+- To use rwkv.cpp backend, run
+
+```bash
+npm install @llama-node/rwkv-cpp
 ```

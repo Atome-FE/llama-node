@@ -1,14 +1,14 @@
 import { CompletionCallback } from "./llm";
-import type { LLM } from "./llm";
+import type { ILLM } from "./llm";
 
-export class LLama<
+class LLM<
     Instance = any,
     LoadConfig = any,
     LLMInferenceArguments = any,
     LLMEmbeddingArguments = any,
     TokenizeArguments = any
 > {
-    llm: LLM<
+    llm: ILLM<
         Instance,
         LoadConfig,
         LLMInferenceArguments,
@@ -17,7 +17,7 @@ export class LLama<
     >;
 
     constructor(
-        llm: new () => LLM<
+        llm: new () => ILLM<
             Instance,
             LoadConfig,
             LLMInferenceArguments,
@@ -66,3 +66,8 @@ export class LLama<
         }
     }
 }
+
+// deprecated LLama naming in the future
+export { LLM as LLama };
+
+export { LLM };

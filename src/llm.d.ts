@@ -2,7 +2,7 @@ export interface CompletionCallback {
     (data: { token: string; completed: boolean }): void;
 }
 
-export interface LLM<
+export interface ILLM<
     Instance,
     LoadConfig,
     LLMInferenceArguments,

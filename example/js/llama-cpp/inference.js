@@ -1,8 +1,8 @@
-import { LLama } from "llama-node";
+import { LLM } from "llama-node";
 import { LLamaCpp } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
-const llama = new LLama(LLamaCpp);
+const llama = new LLM(LLamaCpp);
 const config = {
     path: model,
     enableLogging: true,
@@ -18,11 +18,9 @@ const config = {
 };
 llama.load(config);
 const template = `How are you?`;
-const prompt = `### Human:
-
-${template}
-
-### Assistant:`;
+const prompt = `A chat between a user and an assistant.
+USER: ${template}
+ASSISTANT:`;
 llama.createCompletion({
     nThreads: 4,
     nTokPredict: 2048,
@@ -30,7 +28,6 @@ llama.createCompletion({
     topP: 0.1,
     temp: 0.2,
     repeatPenalty: 1,
-    stopSequence: "### Human",
     prompt,
 }, (response) => {
     process.stdout.write(response.token);
