@@ -16,7 +16,7 @@ num_cpus = "1.15.0"
 num-traits = "0.2.15"
 rand = "0.8.5"
 rwkv-sys = { path = "./rwkv-sys" }
-tokenizers = "0.13.3"
+tokenizers = { version = "0.13.3", default-features = false, features = ["progressbar", "cli", "onig", "esaxx_fast"] }
 ndarray = { version = "0.15.6" }
 napi = { version = "2.12.2", default-features = false, features = ["napi6", "async"] }
 napi-derive = "2.12.2"
