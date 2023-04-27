@@ -11,4 +11,4 @@ __test__
 renovate.json
 *.bin
 tmp/
-llama-sys/llama.cpp/
+rwkv-sys/rwkv.cpp/
