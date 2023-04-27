@@ -1,12 +1,13 @@
 # llama-node
+Large Language Model on Node.js
 
-<img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml">
-<img alt="MIT" src="https://img.shields.io/github/license/Atome-FE/llama-node">
-<a href="https://www.npmjs.com/package/llama-node"><img alt="npm" src="https://img.shields.io/npm/v/llama-node"></a>
-<a href="https://www.npmjs.com/package/llama-node"><img alt="npm type definitions" src="https://img.shields.io/npm/types/llama-node"></a>
-<a href="https://twitter.com/hlhr202"><img alt="twitter" src="https://img.shields.io/twitter/url?url=https%3A%2F%2Ftwitter.com%2Fhlhr202"></a>
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml)
+![NPM](https://img.shields.io/npm/l/llama-node)
+[<img alt="npm" src="https://img.shields.io/npm/v/llama-node">](https://www.npmjs.com/package/llama-node)
+![npm type definitions](https://img.shields.io/npm/types/llama-node)
+[<img alt="twitter" src="https://img.shields.io/twitter/url?url=https%3A%2F%2Ftwitter.com%2Fhlhr202">](https://twitter.com/hlhr202)
 
-<center><h2>Large Language Model LLaMA on node.js</h2></center>
+<center><h2>Node.js Library for LLaMA/RWKV</h2></center>
 
 <center><h3><a href="https://llama-node.vercel.app/">Official Documentations</a></h3></center>
 
