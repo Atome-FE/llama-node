@@ -5,7 +5,6 @@ extern crate napi_derive;
 
 mod context;
 mod llama;
-mod output;
 mod tokenizer;
 mod types;
 
