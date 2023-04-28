@@ -1,4 +1,4 @@
-use crate::output::Output;
+// use crate::output::Output;
 use anyhow::Result;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
@@ -91,10 +91,10 @@ fn llama_tokenize_helper(context: &LLamaContext, text: &str, add_bos: bool) -> V
     res
 }
 
-/// Converts an embedding represented as a slice into the Output string.
-pub(crate) fn _embedding_to_output(context: &LLamaContext, embd: &[i32]) -> Output {
-    embd.iter()
-        .map(|token| _to_output(context, *token))
-        .fold("".to_string(), |cur, nxt| cur + &nxt)
-        .into()
-}
+// Converts an embedding represented as a slice into the Output string.
+// pub(crate) fn _embedding_to_output(context: &LLamaContext, embd: &[i32]) -> Output {
+//     embd.iter()
+//         .map(|token| _to_output(context, *token))
+//         .fold("".to_string(), |cur, nxt| cur + &nxt)
+//         .into()
+// }

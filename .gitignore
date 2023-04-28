@@ -3,6 +3,7 @@ node_modules/
 *.bin
 dist/
 miscellaneous/models/7B
+.vscode/
 
 # Added by cargo
 
