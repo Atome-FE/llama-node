@@ -76,6 +76,11 @@ const config = {
                     },
                     // { to: "/blog", label: "Blog", position: "left" },
                     {
+                        to: '/contribution',
+                        label: 'Contribution',
+                        position: 'left',
+                    },
+                    {
                         type: 'localeDropdown',
                         position: 'right',
                     },
@@ -95,6 +100,10 @@ const config = {
                             {
                                 label: "Get started",
                                 to: "/docs/start",
+                            },
+                            {
+                                label: "Contribution",
+                                to: "/contribution",
                             },
                         ],
                     },
