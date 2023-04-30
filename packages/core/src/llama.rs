@@ -1,5 +1,8 @@
 use std::{
   convert::Infallible,
+  fs::File,
+  io::{BufReader, BufWriter},
+  path::Path,
   sync::{
     mpsc::{channel, Receiver, Sender, TryRecvError},
     Arc, Mutex,
@@ -12,11 +15,15 @@ use crate::types::{
   LLamaCommand, LLamaConfig, LLamaInferenceArguments, LoadModelResult, TokenizeResult,
   TokenizeResultType,
 };
+use anyhow::{Error, Result};
 use llama_rs::{
   EvaluateOutputRequest, InferenceError, InferenceParameters, InferenceSession,
   InferenceSessionParameters, Model, ModelKVMemoryType, TokenBias, EOT_TOKEN_ID,
 };
 use rand::SeedableRng;
+use zstd::{Decoder, Encoder, zstd_safe::CompressionLevel};
+
+const CACHE_COMPRESSION_LEVEL: CompressionLevel = 1;
 
 #[derive(Clone)]
 pub struct LLamaChannel {
@@ -187,10 +194,50 @@ impl LLamaInternal {
     inference_params
   }
 
+  pub fn write_session(&self, mut session: InferenceSession, path: &String) -> Result<(), Error> {
+    let path = Path::new(path);
+    let snap_shot = unsafe { session.get_snapshot() };
+    let file = File::create(path)?;
+    let encoder = Encoder::new(BufWriter::new(file), CACHE_COMPRESSION_LEVEL)?;
+    bincode::serialize_into(encoder.auto_finish(), &snap_shot)?;
+    log::info!("Successfully wrote inference session to {path:?}");
+    Ok(())
+  }
+
+  pub fn read_or_create_session(
+    &self,
+    persist_session: Option<&Path>,
+    inference_session_params: InferenceSessionParameters,
+  ) -> Result<InferenceSession, Error> {
+    let model = self.model.as_ref().ok_or(Error::msg("Model not loaded"))?;
+
+    fn load(model: &Model, path: &Path) -> Result<InferenceSession> {
+      let file = File::open(path)?;
+      let decoder = Decoder::new(BufReader::new(file))?;
+      let snapshot = bincode::deserialize_from(decoder)?;
+      let session = InferenceSession::from_snapshot(snapshot, model)?;
+      log::info!("Loaded inference session from {path:?}");
+      Ok(session)
+    }
+
+    if let Some(path) = persist_session {
+      if path.exists() {
+        let session = load(model, path)?;
+        Ok(session)
+      } else {
+        let session = model.start_session(inference_session_params);
+        Ok(session)
+      }
+    } else {
+      let session = model.start_session(inference_session_params);
+      Ok(session)
+    }
+  }
+
   fn start_new_session(&self, params: &LLamaInferenceArguments) -> InferenceSession {
-    let model = self.model.as_ref().unwrap();
     let repeat_last_n = params.repeat_last_n.unwrap_or(512) as usize;
     let float16 = params.float16.unwrap_or(false);
+    let persist_session = params.persist_session.as_ref().map(Path::new);
 
     let inference_session_params = {
       let mem_typ = if float16 {
@@ -205,7 +252,10 @@ impl LLamaInternal {
       }
     };
 
-    model.start_session(inference_session_params)
+    // TODO: no unwrap
+    self
+      .read_or_create_session(persist_session, inference_session_params)
+      .unwrap()
   }
 
   pub fn get_word_embedding(
@@ -344,6 +394,11 @@ impl LLamaInternal {
           .unwrap();
       }
     }
+
+    if let Some(session_path) = params.persist_session.as_ref() {
+      self.write_session(session, session_path).unwrap();
+    }
+
     sender
       .send(InferenceResult {
         r#type: InferenceResultType::End,

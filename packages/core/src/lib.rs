@@ -30,27 +30,38 @@ use napi::{
 
 #[napi]
 pub enum ElementType {
-  /// Quantized 4-bit (type 0).
-  Q4_0,
-  /// Quantized 4-bit (type 1); used by GPTQ.
-  Q4_1,
-  /// Float 16-bit.
-  F16,
-  /// Float 32-bit.
+  /// All tensors are stored as f32.
   F32,
+  /// All tensors are mostly stored as `f16`, except for the 1D tensors (32-bit).
+  MostlyF16,
+  /// All tensors are mostly stored as `Q4_0`, except for the 1D tensors (32-bit).
+  MostlyQ4_0,
+  /// All tensors are mostly stored as `Q4_1`, except for the 1D tensors (32-bit)
+  MostlyQ4_1,
+  /// All tensors are mostly stored as `Q4_1`, except for the 1D tensors (32-bit)
+  /// and the `tok_embeddings.weight` (f16) and `output.weight` tensors (f16).
+  MostlyQ4_1SomeF16,
+  /// All tensors are mostly stored as `Q4_2`, except for the 1D tensors (32-bit).
+  MostlyQ4_2,
+  /// All tensors are mostly stored as `Q4_3`, except for the 1D tensors (32-bit).
+  MostlyQ4_3,
 }
 
-impl From<ElementType> for llama_rs::ElementType {
+impl From<ElementType> for llama_rs::FileType {
   fn from(element_type: ElementType) -> Self {
     match element_type {
-      ElementType::Q4_0 => llama_rs::ElementType::Q4_0,
-      ElementType::Q4_1 => llama_rs::ElementType::Q4_1,
-      ElementType::F16 => llama_rs::ElementType::F16,
-      ElementType::F32 => llama_rs::ElementType::F32,
+      ElementType::F32 => llama_rs::FileType::F32,
+      ElementType::MostlyF16 => llama_rs::FileType::MostlyF16,
+      ElementType::MostlyQ4_0 => llama_rs::FileType::MostlyQ4_0,
+      ElementType::MostlyQ4_1 => llama_rs::FileType::MostlyQ4_1,
+      ElementType::MostlyQ4_1SomeF16 => llama_rs::FileType::MostlyQ4_1SomeF16,
+      ElementType::MostlyQ4_2 => llama_rs::FileType::MostlyQ4_2,
+      ElementType::MostlyQ4_3 => llama_rs::FileType::MostlyQ4_3,
     }
   }
 }
 
+/// Not implemented yet.
 #[napi(js_name = "convert")]
 pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
   let handle = tokio::task::spawn_blocking(move || {
@@ -74,8 +85,10 @@ pub struct LLama {
   llama_channel: Arc<LLamaChannel>,
 }
 
+/// LLama class is a Rust wrapper for llama-rs.
 #[napi]
 impl LLama {
+  /// Enable logger.
   #[napi]
   pub fn enable_logger() {
     env_logger::builder()
@@ -84,6 +97,7 @@ impl LLama {
       .init();
   }
 
+  /// Create a new LLama instance.
   #[napi]
   pub fn create(config: LLamaConfig) -> Result<LLama> {
     let (load_result_sender, load_result_receiver) = channel::<LoadModelResult>();
@@ -114,6 +128,7 @@ impl LLama {
     Ok(LLama { llama_channel })
   }
 
+  /// Get the tokenized result as number array, the result will be passed to the callback function.
   #[napi]
   pub fn tokenize(
     &self,
@@ -151,6 +166,7 @@ impl LLama {
     Ok(())
   }
 
+  /// Get the embedding result as number array, the result will be passed to the callback function.
   #[napi]
   pub fn get_word_embeddings(
     &self,
@@ -188,6 +204,7 @@ impl LLama {
     Ok(())
   }
 
+  /// Streaming the inference result as string, the result will be passed to the callback function.
   #[napi]
   pub fn inference(
     &self,

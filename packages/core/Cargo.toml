@@ -19,6 +19,9 @@ napi = { version = "2.12.4", default-features = false, features = ["napi6", "asy
 napi-derive = "2.12.3"
 tokio = { version = "1.26.0", features = ["full"] }
 futures = "0.3"
+zstd = {version = "0.12", default-features = false}
+anyhow = "1.0.70"
+bincode = "1.3.3"
 
 
 [build-dependencies]
