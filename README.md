@@ -91,7 +91,7 @@ npm install llama-node
 
 ## Manual compilation
 
-WIP, will be published on our official websites soon.
+Please see how to start with manual compilation on our [contribution guide](https://llama-node.vercel.app/contribution)
 
 ---
 
