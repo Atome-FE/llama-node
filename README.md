@@ -1,8 +1,8 @@
-# llama-node
-
 <div align="center">
 
-  <h2>Node.js Library for Large Language Model</h2>
+# LLaMA Node
+
+llama-node: Node.js Library for Large Language Model
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml)
 ![NPM](https://img.shields.io/npm/l/llama-node)
@@ -20,7 +20,7 @@
 
 ---
 
-- [llama-node](#llama-node)
+- [LLaMA Node](#llama-node)
   - [Introduction](#introduction)
   - [Installation](#installation)
   - [Manual compilation](#manual-compilation)
