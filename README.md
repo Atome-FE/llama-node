@@ -1,6 +1,6 @@
 # llama-node
 
-<div style="text-align: center;">
+<div align="center">
 
   <h2>Node.js Library for Large Language Model</h2>
 
