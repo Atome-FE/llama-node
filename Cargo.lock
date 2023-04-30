@@ -76,6 +76,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "bincode"
+version = "1.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "bindgen"
 version = "0.64.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -126,6 +135,9 @@ name = "cc"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50d30906286121d95be3d479533b458f87493b30a4b5f79a607db8f5d11aa91f"
+dependencies = [
+ "jobserver",
+]
 
 [[package]]
 name = "cexpr"
@@ -536,15 +548,15 @@ dependencies = [
 [[package]]
 name = "ggml"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#1b20306da5356dc8eba598e0887aad04240413c6"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#b9fa17450ad47a18cd50ae7ba1ba29f0fc339210"
 dependencies = [
  "ggml-sys",
 ]
 
 [[package]]
-name = "ggml-loader"
+name = "ggml-format"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#1b20306da5356dc8eba598e0887aad04240413c6"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#b9fa17450ad47a18cd50ae7ba1ba29f0fc339210"
 dependencies = [
  "ggml",
  "thiserror",
@@ -553,7 +565,7 @@ dependencies = [
 [[package]]
 name = "ggml-sys"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#1b20306da5356dc8eba598e0887aad04240413c6"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#b9fa17450ad47a18cd50ae7ba1ba29f0fc339210"
 dependencies = [
  "cc",
 ]
@@ -667,6 +679,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "453ad9f582a441959e5f0d088b02ce04cfe8d51a8eaf077f12ac6d3e94164ca6"
 
 [[package]]
+name = "jobserver"
+version = "0.1.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "936cfd212a0155903bcbc060e316fb6cc7cbf2e1907329391ebadc1fe0ce77c2"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -704,6 +725,8 @@ checksum = "d59d8c75012853d2e872fb56bc8a2e53718e2cafe1a4c823143141c6d90c322f"
 name = "llama-node"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
+ "bincode",
  "clap",
  "env_logger",
  "futures",
@@ -716,6 +739,7 @@ dependencies = [
  "once_cell",
  "rand",
  "tokio",
+ "zstd",
 ]
 
 [[package]]
@@ -739,11 +763,11 @@ dependencies = [
 [[package]]
 name = "llama-rs"
 version = "0.1.0"
-source = "git+https://github.com/rustformers/llama-rs.git?branch=main#1b20306da5356dc8eba598e0887aad04240413c6"
+source = "git+https://github.com/rustformers/llama-rs.git?branch=main#b9fa17450ad47a18cd50ae7ba1ba29f0fc339210"
 dependencies = [
  "bytemuck",
  "ggml",
- "ggml-loader",
+ "ggml-format",
  "memmap2",
  "partial_sort",
  "protobuf",
@@ -1766,3 +1790,33 @@ name = "windows_x86_64_msvc"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
+
+[[package]]
+name = "zstd"
+version = "0.12.3+zstd.1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76eea132fb024e0e13fd9c2f5d5d595d8a967aa72382ac2f9d39fcc95afd0806"
+dependencies = [
+ "zstd-safe",
+]
+
+[[package]]
+name = "zstd-safe"
+version = "6.0.5+zstd.1.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d56d9e60b4b1758206c238a10165fbcae3ca37b01744e394c463463f6529d23b"
+dependencies = [
+ "libc",
+ "zstd-sys",
+]
+
+[[package]]
+name = "zstd-sys"
+version = "2.0.8+zstd.1.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5556e6ee25d32df2586c098bbfa278803692a20d0ab9565e049480d52707ec8c"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+]

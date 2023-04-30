@@ -2,6 +2,7 @@ import { InferenceResultType, LLama } from "../index";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
+// const persistSession = path.resolve(process.cwd(), "./tmp/session.bin");
 
 LLama.enableLogger();
 
@@ -31,6 +32,7 @@ llama.inference(
         repeatLastN: 64,
         seed: 0,
         feedPrompt: true,
+        // persistSession,
     },
     (response) => {
         switch (response.type) {
