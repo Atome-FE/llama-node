@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/examples",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -18,9 +18,9 @@
     "langchain": "^0.0.56"
   },
   "dependencies": {
-    "@llama-node/core": "0.0.33",
-    "@llama-node/llama-cpp": "0.0.33",
-    "@llama-node/rwkv-cpp": "0.0.33",
-    "llama-node": "0.0.33"
+    "@llama-node/core": "0.0.34",
+    "@llama-node/llama-cpp": "0.0.34",
+    "@llama-node/rwkv-cpp": "0.0.34",
+    "llama-node": "0.0.34"
   }
 }

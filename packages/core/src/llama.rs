@@ -21,7 +21,7 @@ use llama_rs::{
   InferenceSessionParameters, Model, ModelKVMemoryType, TokenBias, EOT_TOKEN_ID,
 };
 use rand::SeedableRng;
-use zstd::{Decoder, Encoder, zstd_safe::CompressionLevel};
+use zstd::{zstd_safe::CompressionLevel, Decoder, Encoder};
 
 const CACHE_COMPRESSION_LEVEL: CompressionLevel = 1;
 
@@ -194,7 +194,7 @@ impl LLamaInternal {
     inference_params
   }
 
-  pub fn write_session(&self, mut session: InferenceSession, path: &String) -> Result<(), Error> {
+  fn write_session(&self, mut session: InferenceSession, path: &String) -> Result<(), Error> {
     let path = Path::new(path);
     let snap_shot = unsafe { session.get_snapshot() };
     let file = File::create(path)?;
@@ -204,7 +204,7 @@ impl LLamaInternal {
     Ok(())
   }
 
-  pub fn read_or_create_session(
+  fn read_or_create_session(
     &self,
     persist_session: Option<&Path>,
     inference_session_params: InferenceSessionParameters,
@@ -237,7 +237,7 @@ impl LLamaInternal {
   fn start_new_session(&self, params: &LLamaInferenceArguments) -> InferenceSession {
     let repeat_last_n = params.repeat_last_n.unwrap_or(512) as usize;
     let float16 = params.float16.unwrap_or(false);
-    let persist_session = params.persist_session.as_ref().map(Path::new);
+    let load_session = params.load_session.as_ref().map(Path::new);
 
     let inference_session_params = {
       let mem_typ = if float16 {
@@ -254,7 +254,7 @@ impl LLamaInternal {
 
     // TODO: no unwrap
     self
-      .read_or_create_session(persist_session, inference_session_params)
+      .read_or_create_session(load_session, inference_session_params)
       .unwrap()
   }
 
@@ -312,7 +312,12 @@ impl LLamaInternal {
     let model = self.model.as_ref().unwrap();
 
     let prompt = &params.prompt;
-    let feed_prompt = params.feed_prompt.unwrap_or(false);
+    let feed_prompt_only = params.feed_prompt_only.unwrap_or(false);
+    let feed_prompt = if feed_prompt_only {
+      true
+    } else {
+      params.feed_prompt.unwrap_or(false)
+    };
     let seed = params.seed.map(|seed| seed as u64);
 
     let mut session = self.start_new_session(params);
@@ -336,66 +341,68 @@ impl LLamaInternal {
         .unwrap();
     }
 
-    let inference_input = if feed_prompt { "" } else { prompt };
+    if !feed_prompt_only {
+      let inference_input = if feed_prompt { "" } else { prompt };
 
-    let res = session.inference_with_prompt::<Infallible>(
-      model,
-      &inference_params,
-      inference_input,
-      Some(num_predict),
-      &mut rng,
-      |t| {
-        // need stop prompt to handle the model like vicuna
-        // https://github.com/rustformers/llama-rs/issues/151
-        let to_send = InferenceResult {
-          r#type: InferenceResultType::Data,
-          message: None,
-          data: Some(InferenceToken {
-            token: t.to_string(),
-            completed: false,
-          }),
-        };
+      let res = session.inference_with_prompt::<Infallible>(
+        model,
+        &inference_params,
+        inference_input,
+        Some(num_predict),
+        &mut rng,
+        |t| {
+          // need stop prompt to handle the model like vicuna
+          // https://github.com/rustformers/llama-rs/issues/151
+          let to_send = InferenceResult {
+            r#type: InferenceResultType::Data,
+            message: None,
+            data: Some(InferenceToken {
+              token: t.to_string(),
+              completed: false,
+            }),
+          };
 
-        sender.send(to_send).unwrap();
+          sender.send(to_send).unwrap();
 
-        Ok(())
-      },
-    );
+          Ok(())
+        },
+      );
 
-    match res {
-      Ok(_) => {
-        let to_send = InferenceResult {
-          r#type: InferenceResultType::Data,
-          message: None,
-          data: Some(InferenceToken {
-            token: "\n\n<end>\n".to_string(),
-            completed: true,
-          }),
-        };
+      match res {
+        Ok(_) => {
+          let to_send = InferenceResult {
+            r#type: InferenceResultType::Data,
+            message: None,
+            data: Some(InferenceToken {
+              token: "\n\n<end>\n".to_string(),
+              completed: true,
+            }),
+          };
 
-        sender.send(to_send).unwrap();
-      }
-      Err(error) => {
-        sender
-          .send(InferenceResult {
-            r#type: InferenceResultType::Error,
-            message: match error {
-              llama_rs::InferenceError::EndOfText => Some("End of text.".to_string()),
-              llama_rs::InferenceError::ContextFull => {
-                Some("Context window full, stopping inference.".to_string())
-              }
-              llama_rs::InferenceError::TokenizationFailed => {
-                Some("Tokenization failed.".to_string())
-              }
-              llama_rs::InferenceError::UserCallback(_) => Some("Inference failed.".to_string()),
-            },
-            data: None,
-          })
-          .unwrap();
+          sender.send(to_send).unwrap();
+        }
+        Err(error) => {
+          sender
+            .send(InferenceResult {
+              r#type: InferenceResultType::Error,
+              message: match error {
+                llama_rs::InferenceError::EndOfText => Some("End of text.".to_string()),
+                llama_rs::InferenceError::ContextFull => {
+                  Some("Context window full, stopping inference.".to_string())
+                }
+                llama_rs::InferenceError::TokenizationFailed => {
+                  Some("Tokenization failed.".to_string())
+                }
+                llama_rs::InferenceError::UserCallback(_) => Some("Inference failed.".to_string()),
+              },
+              data: None,
+            })
+            .unwrap();
+        }
       }
     }
 
-    if let Some(session_path) = params.persist_session.as_ref() {
+    if let Some(session_path) = params.save_session.as_ref() {
       self.write_session(session, session_path).unwrap();
     }
 
