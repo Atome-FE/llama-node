@@ -128,7 +128,12 @@ impl LLamaInternal {
         let mut stop_sequence_i = 0;
         let mut completed = false;
         while n_remaining > 0 {
-            let tok = input_ctx.llama_sample(embd.as_slice(), n_used as i32, input);
+            let tok = input_ctx.llama_sample(
+                embd.as_mut_slice(),
+                n_used as i32,
+                input,
+                &context_params_c,
+            );
             n_used += 1;
             n_remaining -= 1;
             embd[n_used] = tok;

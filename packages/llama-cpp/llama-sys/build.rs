@@ -11,7 +11,7 @@ use std::path::PathBuf;
 fn main() {
     let target = env::var("TARGET").unwrap();
     let platform = Platform::find(&target).unwrap();
-    env::set_var("RUSTFLAGS", "-C target-feature=+crt-static");
+    // env::set_var("RUSTFLAGS", "-C target-feature=+crt-static");
     env::set_var("CXXFLAGS", "-fPIC");
     env::set_var("CFLAGS", "-fPIC");
 
@@ -27,6 +27,8 @@ fn main() {
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
         .clang_arg("-I./llama.cpp")
+        .clang_arg("-xc++")
+        .clang_arg("-std=c++11")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .generate();
 
@@ -63,6 +65,7 @@ fn main() {
     let command = command
         .arg("..")
         .arg("-DCMAKE_BUILD_TYPE=Release")
+        // .arg("-DLLAMA_CUBLAS=ON")
         .arg("-DLLAMA_STATIC=ON")
         .arg("-DLLAMA_ALL_WARNINGS=OFF")
         .arg("-DLLAMA_ALL_WARNINGS_3RD_PARTY=OFF")

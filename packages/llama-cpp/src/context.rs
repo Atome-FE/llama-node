@@ -1,10 +1,12 @@
-use std::{ffi::CStr, ptr::null_mut, slice};
+use std::{ffi::CStr, ptr::null_mut, slice, borrow::BorrowMut};
 
 use anyhow::Result;
 use llama_sys::{
     llama_context, llama_context_default_params, llama_context_params, llama_eval, llama_free,
-    llama_get_embeddings, llama_init_from_file, llama_n_embd, llama_print_system_info,
-    llama_sample_top_p_top_k, llama_token, llama_token_to_str,
+    llama_get_embeddings, llama_get_logits, llama_init_from_file, llama_n_embd, llama_n_vocab,
+    llama_print_system_info, llama_sample_frequency_and_presence_penalties,
+    llama_sample_repetition_penalty, llama_sample_top_k, llama_token, llama_token_data,
+    llama_token_data_array, llama_token_nl, llama_token_to_str,
 };
 
 #[napi(object)]
@@ -17,6 +19,10 @@ pub struct LlamaInvocation {
     pub temp: f64,
     pub repeat_penalty: f64,
     pub stop_sequence: Option<String>,
+    pub repeat_last_n: Option<i32>,
+    pub frequency_penalty: Option<f64>,
+    pub presence_penalty: Option<f64>,
+    pub penalize_nl: Option<bool>,
     pub prompt: String,
 }
 
@@ -88,23 +94,94 @@ impl LLamaContext {
     // Executes the LLama sampling process with the specified configuration.
     pub fn llama_sample(
         &self,
-        last_n_tokens_data: &[llama_token],
+        last_n_tokens_data: &mut [llama_token],
         last_n_tokens_size: i32,
         input: &LlamaInvocation,
+        context_params: &llama_context_params,
     ) -> i32 {
         let top_p = input.top_p as f32;
         let temp = input.temp as f32;
         let repeat_penalty = input.repeat_penalty as f32;
+        let repeat_last_n = input.repeat_last_n.unwrap_or(-1);
+        let alpha_frequency = input.frequency_penalty.unwrap_or(0.0) as f32;
+        let alpha_presence = input.presence_penalty.unwrap_or(0.0) as f32;
+        let penalize_nl = input.penalize_nl.unwrap_or(true);
+
+        let n_vocab = unsafe { llama_n_vocab(self.ctx) };
+        let logits_ptr = unsafe { llama_get_logits(self.ctx) };
+        let mut logits = unsafe { slice::from_raw_parts(logits_ptr, n_vocab as usize) };
+        let logits = logits.borrow_mut();
+        
+        // TODO: apply logit bias
+
+        let mut candidates: Vec<llama_token_data> = Vec::with_capacity(n_vocab as usize);
+
+        for i in 0..n_vocab {
+            candidates.push(llama_token_data {
+                id: i,
+                logit: logits[i as usize],
+                p: 0.0_f32,
+            })
+        }
+
+        let candidates_p = &mut llama_token_data_array {
+            data: candidates.as_mut_ptr(),
+            size: candidates.len(),
+            sorted: false,
+        };
+
+        let nl_logit = logits[unsafe { llama_token_nl() } as usize];
+
+        let last_n_repeat = std::cmp::min(
+            std::cmp::min(last_n_tokens_data.len() as i32, repeat_last_n),
+            context_params.n_ctx,
+        );
+
+        unsafe fn get_last_n_ptr(
+            last_n_tokens_data: &mut [llama_token],
+            last_n_repeat: i32,
+        ) -> *mut llama_token {
+            let last_n_tokens_ptr = last_n_tokens_data.as_ptr();
+            let last_n_tokens_size = last_n_tokens_data.len();
+            let end_ptr = last_n_tokens_ptr.add(last_n_tokens_size);
+            end_ptr.sub(last_n_repeat as usize).cast_mut()
+        }
+
         unsafe {
-            llama_sample_top_p_top_k(
+            llama_sample_repetition_penalty(
                 self.ctx,
-                last_n_tokens_data.as_ptr(),
-                last_n_tokens_size,
-                input.top_k,
-                top_p,
-                temp,
+                candidates_p,
+                get_last_n_ptr(last_n_tokens_data, last_n_repeat),
+                last_n_repeat as usize,
                 repeat_penalty,
+            );
+
+            llama_sample_frequency_and_presence_penalties(
+                self.ctx,
+                candidates_p,
+                get_last_n_ptr(last_n_tokens_data, last_n_repeat),
+                last_n_repeat as usize,
+                alpha_frequency,
+                alpha_presence,
             )
+        }
+
+        if !penalize_nl {
+            let nl = unsafe { llama_token_nl() } as usize;
+            logits[nl] = nl_logit;
+        }
+
+        unsafe {
+            // llama_sample_top_k(
+            //     self.ctx,
+            //     last_n_tokens_data.as_ptr(),
+            //     last_n_tokens_size,
+            //     input.top_k,
+            //     top_p,
+            //     temp,
+            //     repeat_penalty,
+            // )
+            1
         }
     }
 
