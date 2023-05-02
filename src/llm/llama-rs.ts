@@ -5,7 +5,8 @@ import {
     LLamaConfig,
     LLamaInferenceArguments,
 } from "@llama-node/core";
-import type { ILLM } from "../llm";
+
+import { type ILLM, type LLMResult, LLMError } from "./type";
 
 export class LLamaRS
     implements
@@ -26,38 +27,47 @@ export class LLamaRS
     async createCompletion(
         params: LLamaInferenceArguments,
         callback: (data: { token: string; completed: boolean }) => void
-    ): Promise<boolean> {
+    ): Promise<LLMResult> {
         let completed = false;
+        const tokens: string[] = [];
         const errors: string[] = [];
-        return new Promise<boolean>((res, rej) => {
-            this.instance.inference(params, (response) => {
-                switch (response.type) {
-                    case InferenceResultType.Data: {
-                        const data = {
-                            token: response.data!.token,
-                            completed: !!response.data!.completed,
-                        };
-                        if (data.completed) {
-                            completed = true;
+        return new Promise<LLMResult>(
+            (res, rej: (reason: LLMError) => void) => {
+                this.instance.inference(params, (response) => {
+                    switch (response.type) {
+                        case InferenceResultType.Data: {
+                            const data = {
+                                token: response.data!.token,
+                                completed: !!response.data!.completed,
+                            };
+                            if (data.completed) {
+                                completed = true;
+                            }
+                            callback(data);
+                            break;
                         }
-                        callback(data);
-                        break;
-                    }
-                    case InferenceResultType.Error: {
-                        if (errors.length) {
-                            rej(new Error(errors.join("\n")));
-                        } else {
-                            res(completed);
+                        case InferenceResultType.Error: {
+                            if (errors.length) {
+                                rej(
+                                    new LLMError({
+                                        message: errors.join("\n"),
+                                        tokens,
+                                        completed,
+                                    })
+                                );
+                            } else {
+                                res({ tokens, completed });
+                            }
+                            break;
                         }
-                        break;
+                        case InferenceResultType.End: {
+                            errors.push(response.message ?? "Unknown error");
+                            break;
+                        }
                     }
-                    case InferenceResultType.End: {
-                        errors.push(response.message ?? "Unknown error");
-                        break;
-                    }
-                }
-            });
-        });
+                });
+            }
+        );
     }
 
     async getEmbedding(params: LLamaInferenceArguments): Promise<number[]> {

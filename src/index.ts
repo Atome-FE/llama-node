@@ -1,5 +1,5 @@
-import { CompletionCallback } from "./llm";
-import type { ILLM } from "./llm";
+import type { ILLM, CompletionCallback, LLMResult } from "./llm/type";
+export type * from "./llm/type";
 
 class LLM<
     Instance = any,
@@ -35,7 +35,7 @@ class LLM<
     async createCompletion(
         params: LLMInferenceArguments,
         callback: CompletionCallback
-    ): Promise<boolean> {
+    ): Promise<LLMResult> {
         return this.llm.createCompletion(params, callback);
     }
 
