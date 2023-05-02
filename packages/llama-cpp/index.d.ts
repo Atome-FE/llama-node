@@ -7,10 +7,16 @@ export interface LlamaInvocation {
   nThreads: number
   nTokPredict: number
   topK: number
-  topP: number
-  temp: number
-  repeatPenalty: number
+  topP?: number
+  tfsZ?: number
+  temp?: number
+  typicalP?: number
+  repeatPenalty?: number
+  repeatLastN?: number
+  frequencyPenalty?: number
+  presencePenalty?: number
   stopSequence?: string
+  penalizeNl?: boolean
   prompt: string
 }
 export interface LlamaContextParams {
