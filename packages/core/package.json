@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/core",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -28,6 +28,8 @@
     "build:debug": "napi build --platform",
     "test": "vitest",
     "start": "tsx example/inference.ts",
+    "cachesession": "tsx example/cachesession.ts",
+    "loadsession": "tsx example/loadsession.ts",
     "embedding": "tsx example/embedding.ts",
     "inference": "tsx example/inference.ts",
     "tokenize": "tsx example/tokenize.ts",

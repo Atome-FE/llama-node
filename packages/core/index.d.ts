@@ -153,10 +153,21 @@ export interface LLamaInferenceArguments {
    */
   feedPrompt?: boolean
   /**
+   * Only feed prompt, will not execute inference
+   * When feed_prompt_only is true, feed_prompt will always be true
+   * Default is false
+   */
+  feedPromptOnly?: boolean
+  /**
+   * Load session path
+   * Default is None
+   */
+  loadSession?: string
+  /**
    * Persist session path
    * Default is None
    */
-  persistSession?: string
+  saveSession?: string
 }
 export const enum ElementType {
   /** All tensors are stored as f32. */
