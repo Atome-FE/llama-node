@@ -186,6 +186,7 @@ impl LLamaContext {
             logits[nl] = nl_logit;
         }
 
+        #[allow(unused_assignments)]
         let mut id = 0;
 
         if temp <= 0.0_f32 {

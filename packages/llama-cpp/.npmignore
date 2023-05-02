@@ -12,3 +12,4 @@ renovate.json
 *.bin
 tmp/
 llama-sys/llama.cpp/
+*.so
