@@ -165,9 +165,18 @@ pub struct LLamaInferenceArguments {
   /// Default is false
   pub feed_prompt: Option<bool>,
 
+  /// Only feed prompt, will not execute inference
+  /// When feed_prompt_only is true, feed_prompt will always be true
+  /// Default is false
+  pub feed_prompt_only: Option<bool>,
+
+  /// Load session path
+  /// Default is None
+  pub load_session: Option<String>,
+
   /// Persist session path
   /// Default is None
-  pub persist_session: Option<String>,
+  pub save_session: Option<String>,
 }
 
 #[derive(Clone, Debug)]
