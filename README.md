@@ -97,7 +97,7 @@ Please see how to start with manual compilation on our [contribution guide](http
 
 ## Acknowledgments
 
-This library was published under MIT/Apache-2.0 license. However, we stronly recommend you to cite our work/our dependencies work if you wish to reuse the code from this library.
+This library was published under MIT/Apache-2.0 license. However, we strongly recommend you to cite our work/our dependencies work if you wish to reuse the code from this library.
 
 ### Models/Inferencing tools dependencies
 
