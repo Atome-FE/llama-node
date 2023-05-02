@@ -6,7 +6,7 @@ import {
     TokenizeResultType,
 } from "@llama-node/rwkv-cpp";
 
-import type { ILLM } from "../llm";
+import { type ILLM, type LLMResult, LLMError } from "./type";
 
 export interface LoadConfig {
     modelPath: string;
@@ -38,38 +38,47 @@ export class RwkvCpp
     async createCompletion(
         params: RwkvInvocation,
         callback: (data: { token: string; completed: boolean }) => void
-    ): Promise<boolean> {
+    ): Promise<LLMResult> {
         let completed = false;
+        const tokens: string[] = [];
         const errors: string[] = [];
-        return new Promise<boolean>((res, rej) => {
-            this.instance.inference(params, (response) => {
-                switch (response.type) {
-                    case InferenceResultType.Data: {
-                        const data = {
-                            token: response.data!.token,
-                            completed: !!response.data!.completed,
-                        };
-                        if (data.completed) {
-                            completed = true;
+        return new Promise<LLMResult>(
+            (res, rej: (reason: LLMError) => void) => {
+                this.instance.inference(params, (response) => {
+                    switch (response.type) {
+                        case InferenceResultType.Data: {
+                            const data = {
+                                token: response.data!.token,
+                                completed: !!response.data!.completed,
+                            };
+                            if (data.completed) {
+                                completed = true;
+                            }
+                            callback(data);
+                            break;
                         }
-                        callback(data);
-                        break;
-                    }
-                    case InferenceResultType.End: {
-                        if (errors.length) {
-                            rej(new Error(errors.join("\n")));
-                        } else {
-                            res(completed);
+                        case InferenceResultType.End: {
+                            if (errors.length) {
+                                rej(
+                                    new LLMError({
+                                        message: errors.join("\n"),
+                                        tokens,
+                                        completed,
+                                    })
+                                );
+                            } else {
+                                res({ tokens, completed });
+                            }
+                            break;
                         }
-                        break;
+                        case InferenceResultType.Error: {
+                            errors.push(response.message ?? "Unknown Error");
+                            break;
+                        }
                     }
-                    case InferenceResultType.Error: {
-                        errors.push(response.message ?? "Unknown Error");
-                        break;
-                    }
-                }
-            });
-        });
+                });
+            }
+        );
     }
 
     // embedding not implemented yet

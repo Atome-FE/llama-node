@@ -16,11 +16,35 @@ export interface ILLM<
     createCompletion(
         params: LLMInferenceArguments,
         callback: CompletionCallback
-    ): Promise<boolean>;
+    ): Promise<LLMResult>;
 
     getEmbedding?(params: LLMEmbeddingArguments): Promise<number[]>;
 
     getDefaultEmbedding?(text: string): Promise<number[]>;
 
     tokenize?(content: LLMTokenizeArguments): Promise<number[]>;
+}
+
+export interface LLMResult {
+    tokens: string[];
+    completed: boolean;
+}
+
+export class LLMError extends Error {
+    public readonly tokens: string[];
+    public readonly completed: boolean;
+
+    constructor({
+        message,
+        tokens,
+        completed,
+    }: {
+        message: string;
+        tokens: string[];
+        completed: boolean;
+    }) {
+        super(message);
+        this.tokens = tokens;
+        this.completed = completed;
+    }
 }
