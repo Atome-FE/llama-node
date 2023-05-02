@@ -40,6 +40,7 @@ export class LLamaRS
                                 token: response.data!.token,
                                 completed: !!response.data!.completed,
                             };
+                            tokens.push(data.token);
                             if (data.completed) {
                                 completed = true;
                             }
