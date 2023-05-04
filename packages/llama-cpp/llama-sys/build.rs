@@ -9,9 +9,13 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
+    let initial_dir = env::current_dir().unwrap();
+
+    // warning
+    println!("cargo:warning=working_dir: {}", initial_dir.display());
+
     let target = env::var("TARGET").unwrap();
     let platform = Platform::find(&target).unwrap();
-    // env::set_var("RUSTFLAGS", "-C target-feature=+crt-static");
     env::set_var("CXXFLAGS", "-fPIC");
     env::set_var("CFLAGS", "-fPIC");
 
@@ -20,8 +24,16 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=Accelerate");
     }
 
+    #[allow(unused_mut, unused_assignments)]
+    let mut link_type = "static";
+
+    #[cfg(feature = "dynamic")]
+    {
+        link_type = "dylib";
+    }
+
     println!("cargo:rustc-link-search={}", env::var("OUT_DIR").unwrap());
-    println!("cargo:rustc-link-lib=static=llama");
+    println!("cargo:rustc-link-lib={}=llama", link_type);
     println!("cargo:rerun-if-changed=wrapper.h");
 
     let bindings = bindgen::Builder::default()
@@ -65,12 +77,25 @@ fn main() {
     let command = command
         .arg("..")
         .arg("-DCMAKE_BUILD_TYPE=Release")
-        // .arg("-DLLAMA_CUBLAS=ON")
-        .arg("-DLLAMA_STATIC=ON")
         .arg("-DLLAMA_ALL_WARNINGS=OFF")
         .arg("-DLLAMA_ALL_WARNINGS_3RD_PARTY=OFF")
         .arg("-DLLAMA_BUILD_TESTS=OFF")
         .arg("-DLLAMA_BUILD_EXAMPLES=OFF");
+
+    #[cfg(feature = "cublas")]
+    {
+        command.arg("-DLLAMA_CUBLAS=ON");
+    }
+
+    #[allow(unused_mut, unused_assignments)]
+    let mut link_type = "-DLLAMA_STATIC=ON";
+    #[cfg(feature = "dynamic")]
+    {
+        command.arg("-DBUILD_SHARED_LIBS=ON");
+        link_type = "-DLLAMA_STATIC=OFF";
+    }
+
+    command.arg(link_type);
 
     if platform.target_os == OS::MacOS {
         if platform.target_arch == Arch::AArch64 {
@@ -105,12 +130,26 @@ fn main() {
         panic!("Failed to build lib");
     }
 
+    #[allow(unused_mut, unused_assignments)]
+    let mut link_ext = ("lib", "a");
+
+    #[allow(unused_mut, unused_assignments)]
+    let mut out_dir = env::var("OUT_DIR").unwrap();
+    #[cfg(feature = "dynamic")]
+    {
+        link_ext = ("dll", "so");
+        out_dir = initial_dir.parent().unwrap().to_str().unwrap().to_owned();
+        out_dir.push_str("/@llama-node");
+    }
+
+    println!("cargo:warning=out_dir: {:?}", out_dir);
+
     // move libllama.a to where Cargo expects it (OUT_DIR)
     #[cfg(target_os = "windows")]
     {
         std::fs::copy(
-            "Release/llama.lib",
-            format!("{}/llama.lib", env::var("OUT_DIR").unwrap()),
+            format!("Release/llama.{}", link_ext.0),
+            format!("{}/llama.{}", out_dir, link_ext.0),
         )
         .expect("Failed to copy lib");
     }
@@ -118,8 +157,8 @@ fn main() {
     #[cfg(not(target_os = "windows"))]
     {
         std::fs::copy(
-            "libllama.a",
-            format!("{}/libllama.a", env::var("OUT_DIR").unwrap()),
+            format!("libllama.{}", link_ext.1),
+            format!("{}/libllama.{}", out_dir, link_ext.1),
         )
         .expect("Failed to copy lib");
     }
