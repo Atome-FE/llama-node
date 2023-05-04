@@ -400,6 +400,17 @@ impl LLamaInternal {
             .unwrap();
         }
       }
+    } else {
+      let to_send = InferenceResult {
+        r#type: InferenceResultType::Data,
+        message: None,
+        data: Some(InferenceToken {
+          token: "".to_string(),
+          completed: true,
+        }),
+      };
+
+      sender.send(to_send).unwrap();
     }
 
     if let Some(session_path) = params.save_session.as_ref() {

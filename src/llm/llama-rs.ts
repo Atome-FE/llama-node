@@ -47,7 +47,7 @@ export class LLamaRS
                             callback(data);
                             break;
                         }
-                        case InferenceResultType.Error: {
+                        case InferenceResultType.End: {
                             if (errors.length) {
                                 rej(
                                     new LLMError({
@@ -61,7 +61,7 @@ export class LLamaRS
                             }
                             break;
                         }
-                        case InferenceResultType.End: {
+                        case InferenceResultType.Error: {
                             errors.push(response.message ?? "Unknown error");
                             break;
                         }
