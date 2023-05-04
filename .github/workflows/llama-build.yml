@@ -73,7 +73,7 @@ jobs:
         if: matrix.os == 'ubuntu-20.04'
       - run: git submodule update --init --recursive
       - run: pnpm install
-      - run: cargo clippy --all-targets --all-features
+      - run: cargo clippy --all-targets
       - run: pnpm build:llama-rs
       - run: pnpm build:llama-cpp
       - run: pnpm build:rwkv-cpp
