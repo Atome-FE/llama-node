@@ -138,8 +138,13 @@ fn main() {
     #[cfg(feature = "dynamic")]
     {
         link_ext = ("dll", "so");
-        out_dir = initial_dir.parent().unwrap().to_str().unwrap().to_owned();
-        out_dir.push_str("/@llama-node");
+        let bin_dir = initial_dir.parent().unwrap();
+        let bin_dir = bin_dir.join("./@llama-node");
+        println!("cargo:warning=bin_dir: {:?}", bin_dir.display());
+        if !bin_dir.exists() {
+            std::fs::create_dir(bin_dir.clone()).unwrap();
+        }
+        out_dir = bin_dir.to_str().unwrap().to_string();
     }
 
     println!("cargo:warning=out_dir: {:?}", out_dir);
