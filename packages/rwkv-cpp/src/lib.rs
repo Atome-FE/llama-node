@@ -12,6 +12,9 @@ use std::{
     sync::{mpsc::channel, Arc},
     thread, time,
 };
+use std::thread::sleep;
+use std::time::Duration;
+use log::log;
 
 use context::RWKVInvocation;
 use napi::{
@@ -143,10 +146,10 @@ impl RWKV {
     pub fn inference(
         &self,
         input: RWKVInvocation,
-        #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
+        //#[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
     ) -> Result<()> {
-        let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> =
-            callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
+        // let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> =
+        //     callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
         let (inference_sender, inference_receiver) = channel();
         let rwkv_channel = self.rwkv_channel.clone();
 
@@ -157,7 +160,9 @@ impl RWKV {
                 let result = inference_receiver.recv();
                 match result {
                     Ok(result) => {
-                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                        //log!("{}", "{}", 1);
+                        println!("{}", result.message.unwrap_or(String::from("")));
+                        //tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
                     }
                     Err(_) => {
                         break;
@@ -165,9 +170,37 @@ impl RWKV {
                 }
             }
             thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-            tsfn.abort().unwrap();
+            //tsfn.abort().unwrap();
         });
 
         Ok(())
     }
+}
+
+
+#[test]
+fn test1() {
+    let a = RWKV::load(
+        String::from("H:/AI/rwkv-4-raven/RWKV-4-Raven-7B-v11-Q4_1.bin"),
+        String::from("H:/AI/rwkv.cpp/rwkv/20B_tokenizer.json"),
+        24,
+        true,
+    )
+        .unwrap();
+
+    let input = RWKVInvocation {
+        max_predict_length: 4000,
+        top_p: 0.1,
+        temp: 0.1,
+        end_token: None,
+        seed: None,
+        prompt: String::from("hello")
+    };
+
+    sleep(Duration::from_secs(1));
+    println!("{}", 1);
+
+    let aa = a.inference(input).expect("TODO: panic message");
+
+    sleep(Duration::from_secs(1000));
 }
