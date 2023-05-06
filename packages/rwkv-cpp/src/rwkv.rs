@@ -88,7 +88,7 @@ impl RWKVInternal {
     } */
 
     pub fn inference(&mut self, input: &RWKVInvocation, sender: &Sender<InferenceResult>) {
-        let end_token = input.end_token.unwrap_or(0) as usize;
+        let end_token = input.end_token.unwrap_or(187) as usize;
         let temp = input.temp as f32;
         let top_p = input.top_p as f32;
         let seed = input.seed.map(|x| x as u64);
@@ -102,8 +102,10 @@ impl RWKVInternal {
         context.process_tokens(tokens);
 
         for _i in 0..input.max_predict_length {
-            let logits = context.logits.as_mut().unwrap();
+            let logits = context.logits.as_mut();
             let token = sample_logits(logits, temp, top_p, &seed);
+
+            println!("token: {}", token);
 
             if token >= 50276 || token == end_token {
                 sender
@@ -120,6 +122,7 @@ impl RWKVInternal {
             }
 
             let decoded = context.rwkv_token_to_str(&(token as i32)).unwrap();
+            println!("{}", decoded);
             std::io::stdout().flush().unwrap();
 
             sender
