@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 use std::ffi::CStr;
-use std::ptr::null_mut;
 use tokenizers::tokenizer::Tokenizer;
 
 use anyhow::Result;
@@ -40,32 +39,27 @@ impl RWKVContext {
         let state_buffer_element_count = unsafe { rwkv_get_state_buffer_element_count(ctx) };
         let logits_buffer_element_count = unsafe { rwkv_get_logits_buffer_element_count(ctx) };
         let tokenizer = Tokenizer::from_file(tokenizer_path).unwrap();
-        let _state = {
-            let mut zero_state_out: Vec<f32> =
-                Vec::with_capacity(state_buffer_element_count as usize);
 
-            for _i in 0..state_buffer_element_count {
-                zero_state_out.push(0.0_f32);
-            }
-            zero_state_out
-        };
-        let _logits = {
-            let mut zero_state_out: Vec<f32> =
-                Vec::with_capacity(logits_buffer_element_count as usize);
+        // no need to fill state
+        let mut state: Vec<f32> =
+            Vec::with_capacity(state_buffer_element_count as usize);
 
-            for _i in 0..logits_buffer_element_count {
-                zero_state_out.push(0.0_f32);
-            }
-            zero_state_out
-        };
+        // has to fill logit
+        let mut zero_logits_out: Vec<f32> =
+            Vec::with_capacity(logits_buffer_element_count as usize);
+
+        for _i in 0..logits_buffer_element_count {
+            zero_logits_out.push(0.0_f32);
+        }
+
         Self {
             ctx,
             tokenizer,
             state_buffer_element_count,
             logits_buffer_element_count,
             model_tokens: vec![],
-            model_state:  _state,
-            logits: _logits,
+            model_state:  state,
+            logits: zero_logits_out,
             is_first: true
         }
     }
