@@ -171,14 +171,3 @@ impl RWKV {
         Ok(())
     }
 }
-
-#[test]
-fn test1() {
-    let a = RWKV::load(
-        String::from("H:/AI/rwkv-4-raven/RWKV-4-Raven-7B-v11-Q4_1.bin"),
-        String::from("H:/AI/rwkv.cpp/rwkv/20B_tokenizer.json"),
-        24,
-        true,
-    )
-        .unwrap();
-}
