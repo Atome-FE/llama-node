@@ -1,5 +1,4 @@
 use std::{
-    io::Write,
     sync::{
         mpsc::{channel, Receiver, Sender, TryRecvError},
         Arc, Mutex,
@@ -88,7 +87,7 @@ impl RWKVInternal {
     } */
 
     pub fn inference(&mut self, input: &RWKVInvocation, sender: &Sender<InferenceResult>) {
-        let end_token = input.end_token.unwrap_or(187) as usize;
+        let end_token = input.end_token.unwrap_or(0) as usize;
         let temp = input.temp as f32;
         let top_p = input.top_p as f32;
         let seed = input.seed.map(|x| x as u64);
@@ -97,15 +96,15 @@ impl RWKVInternal {
         let tokenizer = &context.tokenizer;
         let prompt = &input.prompt;
         let binding = tokenizer.encode(prompt.as_str(), false).unwrap();
-        let tokens = binding.get_ids();
+        let tokens = binding.get_ids().iter().map(|x| *x as i32).collect::<Vec<i32>>();
 
-        context.process_tokens(tokens);
+        let mut session = context.create_new_session();
+
+        session.process_tokens(&tokens);
 
         for _i in 0..input.max_predict_length {
-            let logits = context.logits.as_mut();
+            let logits = session.logits.as_mut();
             let token = sample_logits(logits, temp, top_p, &seed);
-
-            println!("token: {}", token);
 
             if token >= 50276 || token == end_token {
                 sender
@@ -118,12 +117,10 @@ impl RWKVInternal {
                         }),
                     })
                     .unwrap();
-                break;
+                return;
             }
 
             let decoded = context.rwkv_token_to_str(&(token as i32)).unwrap();
-            println!("{}", decoded);
-            std::io::stdout().flush().unwrap();
 
             sender
                 .send(InferenceResult {
@@ -136,7 +133,7 @@ impl RWKVInternal {
                 })
                 .unwrap();
 
-            context.process_tokens(&[token.try_into().unwrap()]);
+            session.process_tokens(&[token.try_into().unwrap()]);
         }
     }
 }
@@ -198,7 +195,7 @@ impl RWKVChannel {
 
         thread::spawn(move || {
             let mut rwkv = RWKVInternal {
-                context: RWKVContext::from_file_and_params(&mode_path, &tokenizer_path, n_threads),
+                context: RWKVContext::new(&mode_path, &tokenizer_path, n_threads),
             };
 
             if enable_logger {
