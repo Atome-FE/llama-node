@@ -1,16 +1,10 @@
 name: LLama for nodejs
+
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: ["main"]
   pull_request:
-    branches:
-      - master
-      - main
-    types: 
-      - ready_for_review
-      - review_requested
+    branches: ["main"]
 
 env:
   DEBUG: 'napi:*'

@@ -8,6 +8,8 @@ title: Contribution guide
 
 ## Prepare environments
 
+### For all platforms
+
 These are the build tools you need to install in your local dev environment
 
 -   [Node.js](https://nodejs.org/) >= 16, for running Node.js
@@ -37,6 +39,12 @@ Here we use Ubuntu as an example. For users of other Linux distributions, please
 ### For Windows
 
 -   [Visual Studio with C/C++ Component](https://visualstudio.microsoft.com/vs/features/cplusplus/), for compiling C/C++ code
+
+-   [LLVM](https://llvm.org/), for rust linking C/C++ code
+
+    You can install with `winget install LLVM`
+
+-   You are required to add CMake path for for windows
 
 ---
 
