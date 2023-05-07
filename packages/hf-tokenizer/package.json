@@ -1,0 +1,15 @@
+{
+  "name": "@llama-node/hf-tokenizer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "nodejs/tokenizer-node.js",
+  "scripts": {
+    "dev:web": "vite",
+    "dev:node": "tsx tests/node.ts",
+    "build": "make",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
