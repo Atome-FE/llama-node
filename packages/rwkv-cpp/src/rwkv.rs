@@ -102,6 +102,8 @@ impl RWKVInternal {
 
         session.process_tokens(&tokens);
 
+        let mut accumulated_token: Vec<u32> = Vec::new();
+
         for _i in 0..input.max_predict_length {
             let logits = session.logits.as_mut();
             let token = sample_logits(logits, temp, top_p, &seed);
@@ -120,18 +122,23 @@ impl RWKVInternal {
                 return;
             }
 
-            let decoded = context.rwkv_token_to_str(&(token as i32)).unwrap();
+            accumulated_token.push(token as u32);
 
-            sender
-                .send(InferenceResult {
-                    r#type: InferenceResultType::Data,
-                    message: None,
-                    data: Some(InferenceToken {
-                        token: decoded,
-                        completed: false,
-                    }),
-                })
-                .unwrap();
+            let decoded = context.rwkv_tokens_to_str(&accumulated_token).unwrap();
+
+            if !decoded.contains("\u{FFFD}") {
+                accumulated_token.clear();
+                sender
+                    .send(InferenceResult {
+                        r#type: InferenceResultType::Data,
+                        message: None,
+                        data: Some(InferenceToken {
+                            token: decoded,
+                            completed: false,
+                        }),
+                    })
+                    .unwrap();
+            }
 
             session.process_tokens(&[token.try_into().unwrap()]);
         }
