@@ -104,7 +104,7 @@ impl RWKVContext {
         log::info!("{}", sys_info);
     }
 
-    pub fn rwkv_tokens_to_str(&self, tokens: &Vec<u32>) -> Option<String> {
+    pub fn rwkv_tokens_to_str(&self, tokens: &[u32]) -> Option<String> {
         let tokenizer = &self.tokenizer;
         tokenizer
             .decode(tokens.to_vec(), false)

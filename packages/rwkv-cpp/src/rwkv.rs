@@ -126,7 +126,7 @@ impl RWKVInternal {
 
             let decoded = context.rwkv_tokens_to_str(&accumulated_token).unwrap();
 
-            if !decoded.contains("\u{FFFD}") {
+            if !decoded.contains('\u{FFFD}') {
                 accumulated_token.clear();
                 sender
                     .send(InferenceResult {
