@@ -52,7 +52,7 @@ const moveForPackages = async (packageName: string) => {
     );
 
     const sourceBinaries = await glob(
-        `${process.cwd()}/tmp/artifacts/**/${packageName}/**/*.node`
+        `${process.cwd()}/tmp/artifacts/*/${packageName}/**/*.node`
     );
 
     execSync(`rimraf ${targetBinaryDir}`);
@@ -60,6 +60,8 @@ const moveForPackages = async (packageName: string) => {
 
     sourceBinaries.forEach((file) => {
         execSync(`cp ${file} ${targetBinaryDir}`);
+        const fileName = path.basename(file);
+        console.log(`Copied ${fileName} to ${targetBinaryDir}`);
     });
 };
 

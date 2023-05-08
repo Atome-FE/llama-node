@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use std::ffi::CStr;
 use tokenizers::tokenizer::Tokenizer;
 

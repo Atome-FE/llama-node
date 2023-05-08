@@ -1,5 +1,5 @@
 [workspace.package]
-name = "llama-node-workspace"
+# name = "llama-node-workspace"
 version = "0.1.0"
 edition = "2021"
 

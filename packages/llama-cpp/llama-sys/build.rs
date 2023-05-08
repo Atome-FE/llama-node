@@ -11,7 +11,6 @@ use std::path::PathBuf;
 fn main() {
     let initial_dir = env::current_dir().unwrap();
 
-    // warning
     println!("cargo:warning=working_dir: {}", initial_dir.display());
 
     let target = env::var("TARGET").unwrap();
@@ -123,7 +122,7 @@ fn main() {
     let code = std::process::Command::new("cmake")
         .arg("--build")
         .arg(".")
-        .arg("--config Release")
+        .args(["--config", "Release"])
         .status()
         .expect("Failed to build lib");
     if code.code() != Some(0) {
