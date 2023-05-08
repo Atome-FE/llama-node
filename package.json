@@ -68,6 +68,7 @@
     "@types/node": "^18.15.5",
     "@types/semver": "^7.3.13",
     "axios": "*",
+    "cross-env": "^7.0.3",
     "glob": "^9.3.4",
     "langchain": "^0.0.56",
     "p-all": "^5.0.0",

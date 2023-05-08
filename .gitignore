@@ -1,6 +1,7 @@
 target/
 node_modules/
 *.bin
+*.onnx
 dist/
 miscellaneous/models/7B
 .vscode/

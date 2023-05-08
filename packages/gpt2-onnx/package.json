@@ -1,0 +1,18 @@
+{
+  "name": "@llama-node/gpt2-onnx",
+  "version": "0.0.37",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "cross-env TF_CPP_MIN_LOG_LEVEL=2 tsx example/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@llama-node/hf-tokenizer": "0.0.37",
+    "@tensorflow/tfjs-node": "^4.2.0",
+    "onnxruntime-node": "^1.14.0",
+    "onnxruntime-web": "^1.14.0"
+  }
+}
