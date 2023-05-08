@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/hf-tokenizer",
-  "version": "1.0.0",
+  "version": "0.0.37",
   "description": "",
   "main": "nodejs/tokenizer-node.js",
   "scripts": {
