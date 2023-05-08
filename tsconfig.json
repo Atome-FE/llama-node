@@ -110,6 +110,7 @@
         "packages/llama-cpp/llama-sys",
         "packages/docs",
         "packages/rwkv-cpp/rwkv-sys",
-        "packages/hf-tokenizer"
+        "packages/hf-tokenizer",
+        "packages/gpt2-onnx"
     ]
 }
