@@ -10,5 +10,8 @@ const config = {
     nThreads: 4,
     enableLogging: true,
 };
-rwkv.load(config);
-rwkv.tokenize({ content: "hello world" }).then(console.log);
+const run = async () => {
+    await rwkv.load(config);
+    await rwkv.tokenize({ content: "hello world" }).then(console.log);
+};
+run();

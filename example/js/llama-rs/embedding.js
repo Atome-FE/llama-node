@@ -4,7 +4,6 @@ import path from "path";
 import fs from "fs";
 const model = path.resolve(process.cwd(), "../ggml-alpaca-7b-q4.bin");
 const llama = new LLM(LLamaRS);
-llama.load({ path: model });
 const getWordEmbeddings = async (prompt, file) => {
     const data = await llama.getEmbedding({
         prompt,
@@ -20,6 +19,7 @@ const getWordEmbeddings = async (prompt, file) => {
     await fs.promises.writeFile(path.resolve(process.cwd(), file), JSON.stringify(data));
 };
 const run = async () => {
+    await llama.load({ path: model });
     const dog1 = `My favourite animal is the dog`;
     await getWordEmbeddings(dog1, "./example/semantic-compare/dog1.json");
     const dog2 = `I have just adopted a cute dog`;

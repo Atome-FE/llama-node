@@ -6,9 +6,9 @@ sidebar_position: 3
 
 llama-node currently supports llama-rs, llama.cpp and rwkv.cpp backends.
 
-The current version supports only one inference session on one LLama instance at the same time
+llama-rs can supported multiple inference at same time.
 
-If you wish to have multiple inference sessions concurrently, you need to create multiple LLama instances
+llama.cpp and rwkv.cpp will treat async inference (in concurrent) as sequential requests.
 
 ---
 

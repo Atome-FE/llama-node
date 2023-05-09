@@ -10,18 +10,22 @@ const config = {
     nThreads: 4,
     enableLogging: true,
 };
-rwkv.load(config);
 const template = `Who is the president of the United States?`;
 const prompt = `Below is an instruction that describes a task. Write a response that appropriately completes the request.
 
 ### Instruction: ${template}
 
 ### Response:`;
-rwkv.createCompletion({
+const params = {
     maxPredictLength: 2048,
     topP: 0.1,
     temp: 0.1,
     prompt,
-}, (response) => {
-    process.stdout.write(response.token);
-});
+};
+const run = async () => {
+    await rwkv.load(config);
+    await rwkv.createCompletion(params, (response) => {
+        process.stdout.write(response.token);
+    });
+};
+run();

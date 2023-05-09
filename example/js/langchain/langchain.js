@@ -18,8 +18,8 @@ const config = {
     embedding: true,
     useMmap: true,
 };
-llama.load(config);
 const run = async () => {
+    await llama.load(config);
     // Load the docs into the vector store
     const vectorStore = await MemoryVectorStore.fromTexts(["Hello world", "Bye bye", "hello nice world"], [{ id: 2 }, { id: 1 }, { id: 3 }], new LLamaEmbeddings({ maxConcurrency: 1 }, llama));
     // Search for the most similar document

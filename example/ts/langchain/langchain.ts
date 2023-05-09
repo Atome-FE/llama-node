@@ -1,7 +1,7 @@
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { LLamaEmbeddings } from "llama-node/dist/extensions/langchain.js";
 import { LLM } from "llama-node";
-import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
+import { LLamaCpp, type LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
@@ -22,9 +22,8 @@ const config: LoadConfig = {
     useMmap: true,
 };
 
-llama.load(config);
-
 const run = async () => {
+    await llama.load(config);
     // Load the docs into the vector store
     const vectorStore = await MemoryVectorStore.fromTexts(
         ["Hello world", "Bye bye", "hello nice world"],

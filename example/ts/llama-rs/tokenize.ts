@@ -6,8 +6,11 @@ const model = path.resolve(process.cwd(), "../ggml-alpaca-7b-q4.bin");
 
 const llama = new LLM(LLamaRS);
 
-llama.load({ path: model });
-
 const content = "how are you?";
 
-llama.tokenize(content).then(console.log);
+const run = async () => {
+    await llama.load({ path: model });
+    await llama.tokenize(content).then(console.log);
+};
+
+run();

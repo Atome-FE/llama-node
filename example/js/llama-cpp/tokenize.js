@@ -16,6 +16,9 @@ const config = {
     embedding: false,
     useMmap: true,
 };
-llama.load(config);
 const content = "how are you?";
-llama.tokenize({ content, nCtx: 2048 }).then(console.log);
+const run = async () => {
+    await llama.load(config);
+    await llama.tokenize({ content, nCtx: 2048 }).then(console.log);
+};
+run();

@@ -1,5 +1,6 @@
+import type { LlamaInvocation } from "@llama-node/llama-cpp";
 import { LLM } from "llama-node";
-import { LLamaCpp, LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
+import { LLamaCpp, type LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../ggml-vicuna-7b-1.1-q4_1.bin");
@@ -20,25 +21,28 @@ const config: LoadConfig = {
     useMmap: true,
 };
 
-llama.load(config);
-
 const template = `How are you?`;
 
 const prompt = `A chat between a user and an assistant.
 USER: ${template}
 ASSISTANT:`;
 
-llama.createCompletion(
-    {
-        nThreads: 4,
-        nTokPredict: 2048,
-        topK: 40,
-        topP: 0.1,
-        temp: 0.2,
-        repeatPenalty: 1,
-        prompt,
-    },
-    (response) => {
+const params: LlamaInvocation = {
+    nThreads: 4,
+    nTokPredict: 2048,
+    topK: 40,
+    topP: 0.1,
+    temp: 0.2,
+    repeatPenalty: 1,
+    prompt,
+};
+
+const run = async () => {
+    await llama.load(config);
+
+    await llama.createCompletion(params, (response) => {
         process.stdout.write(response.token);
-    }
-);
+    });
+};
+
+run();

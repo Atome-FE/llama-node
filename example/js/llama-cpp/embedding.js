@@ -16,7 +16,6 @@ const config = {
     embedding: true,
     useMmap: true,
 };
-llama.load(config);
 const prompt = `Who is the president of the United States?`;
 const params = {
     nThreads: 4,
@@ -27,4 +26,8 @@ const params = {
     repeatPenalty: 1,
     prompt,
 };
-llama.getEmbedding(params).then(console.log);
+const run = async () => {
+    await llama.load(config);
+    await llama.getEmbedding(params).then(console.log);
+};
+run();

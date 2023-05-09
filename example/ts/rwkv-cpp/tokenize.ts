@@ -1,5 +1,5 @@
 import { LLM } from "llama-node";
-import { RwkvCpp, LoadConfig } from "llama-node/dist/llm/rwkv-cpp.js";
+import { RwkvCpp, type LoadConfig } from "llama-node/dist/llm/rwkv-cpp.js";
 import path from "path";
 
 const modelPath = path.resolve(
@@ -17,6 +17,10 @@ const config: LoadConfig = {
     enableLogging: true,
 };
 
-rwkv.load(config);
+const run = async () => {
+    await rwkv.load(config);
 
-rwkv.tokenize({ content: "hello world" }).then(console.log);
+    await rwkv.tokenize({ content: "hello world" }).then(console.log);
+};
+
+run();

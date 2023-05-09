@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/rwkv-cpp",
-  "version": "0.0.37",
+  "version": "0.1.0",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
