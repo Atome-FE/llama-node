@@ -6,7 +6,7 @@ test(
     async () => {
         LLama.enableLogger();
 
-        const llama = LLama.create({
+        const llama = await LLama.create({
             path: process.env.model?.toString()!,
             numCtxTokens: 128,
         });

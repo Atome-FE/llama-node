@@ -8,13 +8,9 @@ mod llama;
 mod tokenizer;
 mod types;
 
-use std::{
-    sync::{mpsc::channel, Arc},
-    thread, time,
-};
+use std::sync::Arc;
 
-use context::{LlamaContextParams, LlamaInvocation};
-use llama::LLamaChannel;
+use llama::LLamaInternal;
 use napi::{
     bindgen_prelude::*,
     threadsafe_function::{
@@ -22,17 +18,18 @@ use napi::{
     },
     JsFunction,
 };
-use types::{EmbeddingResult, InferenceResult, TokenizeResult};
+use tokio::sync::Mutex;
+use types::{InferenceResult, LlamaContextParams, LlamaInvocation};
 
 #[napi]
 pub struct LLama {
-    llama_channel: Arc<LLamaChannel>,
+    llama: Arc<Mutex<LLamaInternal>>,
 }
 
 #[napi]
 impl LLama {
     #[napi]
-    pub fn load(
+    pub async fn load(
         path: String,
         params: Option<LlamaContextParams>,
         enable_logger: bool,
@@ -44,122 +41,43 @@ impl LLama {
                 .init();
         }
 
-        let (load_result_sender, load_result_receiver) = channel::<bool>();
-        let llama_channel = LLamaChannel::new(path, params, load_result_sender, enable_logger);
-        'waiting_load: loop {
-            let recv = load_result_receiver.recv();
-            match recv {
-                Ok(r) => {
-                    if !r {
-                        return Err(Error::new(Status::InvalidArg, "Load error".to_string()));
-                    }
-                    break 'waiting_load;
-                }
-                _ => {
-                    thread::yield_now();
-                }
-            }
-        }
-        Ok(Self { llama_channel })
+        Ok(Self {
+            llama: LLamaInternal::load(path, params, enable_logger).await,
+        })
     }
 
     #[napi]
-    pub fn get_word_embedding(
-        &self,
-        input: LlamaInvocation,
-        #[napi(ts_arg_type = "(result: EmbeddingResult) => void")] callback: JsFunction,
-    ) -> Result<()> {
-        let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> =
-            callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
-        let (embeddings_sender, embeddings_receiver) = channel();
-        let llama_channel = self.llama_channel.clone();
-
-        llama_channel.embedding(input, embeddings_sender);
-
-        thread::spawn(move || {
-            loop {
-                let result = embeddings_receiver.recv();
-                match result {
-                    Ok(result) => {
-                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                    }
-                    Err(_) => {
-                        break;
-                    }
-                }
-            }
-            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-            tsfn.abort().unwrap();
-        });
-
-        Ok(())
+    pub async fn get_word_embedding(&self, params: LlamaInvocation) -> Result<Vec<f64>> {
+        let llama = self.llama.lock().await;
+        llama.embedding(&params).await
     }
 
     #[napi]
-    pub fn tokenize(
-        &self,
-        params: String,
-        n_ctx: i32,
-        #[napi(ts_arg_type = "(result: TokenizeResult) => void")] callback: JsFunction,
-    ) -> Result<()> {
-        let (tokenize_sender, tokenize_receiver) = channel::<TokenizeResult>();
-
-        let tsfn: ThreadsafeFunction<TokenizeResult, ErrorStrategy::Fatal> = callback
-            .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<TokenizeResult>| {
-                Ok(vec![ctx.value])
-            })?;
-
-        let llama_channel = self.llama_channel.clone();
-
-        llama_channel.tokenize(params, n_ctx as usize, tokenize_sender);
-
-        thread::spawn(move || {
-            'waiting_tokenize: loop {
-                let recv = tokenize_receiver.recv();
-                match recv {
-                    Ok(callback) => {
-                        tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
-                        break 'waiting_tokenize;
-                    }
-                    _ => {
-                        thread::yield_now();
-                    }
-                }
-            }
-            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-            tsfn.abort().unwrap();
-        });
-
-        Ok(())
+    pub async fn tokenize(&self, params: String, n_ctx: i32) -> Result<Vec<i32>> {
+        let llama = self.llama.lock().await;
+        llama.tokenize(&params, n_ctx as usize).await
     }
 
     #[napi]
     pub fn inference(
         &self,
-        input: LlamaInvocation,
+        params: LlamaInvocation,
         #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
     ) -> Result<()> {
-        let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> =
-            callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
-        let (inference_sender, inference_receiver) = channel();
-        let llama_channel = self.llama_channel.clone();
+        let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
+            .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
+                Ok(vec![ctx.value])
+            })?;
 
-        llama_channel.inference(input, inference_sender);
+        let llama = self.llama.clone();
 
-        thread::spawn(move || {
-            loop {
-                let result = inference_receiver.recv();
-                match result {
-                    Ok(result) => {
-                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                    }
-                    Err(_) => {
-                        break;
-                    }
-                }
-            }
-            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-            tsfn.abort().unwrap();
+        tokio::spawn(async move {
+            let llama = llama.lock().await;
+            llama
+                .inference(&params, |result| {
+                    tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                })
+                .await;
         });
 
         Ok(())

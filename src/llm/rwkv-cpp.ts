@@ -3,7 +3,6 @@ import {
     InferenceResultType,
     Rwkv,
     RwkvInvocation,
-    TokenizeResultType,
 } from "@llama-node/rwkv-cpp";
 
 import { type ILLM, type LLMResult, LLMError } from "./type";
@@ -25,9 +24,9 @@ export class RwkvCpp
 {
     instance!: Rwkv;
 
-    load(config: LoadConfig) {
+    async load(config: LoadConfig) {
         const { modelPath, tokenizerPath, nThreads, enableLogging } = config;
-        this.instance = Rwkv.load(
+        this.instance = await Rwkv.load(
             modelPath,
             tokenizerPath,
             nThreads,
@@ -109,14 +108,6 @@ export class RwkvCpp
     } */
 
     async tokenize(params: TokenizeArguments): Promise<number[]> {
-        return new Promise<number[]>((res, rej) => {
-            this.instance.tokenize(params.content, (response) => {
-                if (response.type === TokenizeResultType.Data) {
-                    res(response.data);
-                } else {
-                    rej(new Error("Unknown Error"));
-                }
-            });
-        });
+        return await this.instance.tokenize(params.content);
     }
 }

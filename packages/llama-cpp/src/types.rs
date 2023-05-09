@@ -1,25 +1,4 @@
-use crate::context::LlamaInvocation;
 use napi::bindgen_prelude::*;
-use std::sync::mpsc::Sender;
-
-#[derive(Clone, Debug)]
-pub enum LLamaCommand {
-    Inference(LlamaInvocation, Sender<InferenceResult>),
-    Tokenize(String, usize, Sender<TokenizeResult>),
-    Embedding(LlamaInvocation, Sender<EmbeddingResult>),
-}
-
-#[napi(string_enum)]
-pub enum TokenizeResultType {
-    Error,
-    Data,
-}
-
-#[napi(object)]
-pub struct TokenizeResult {
-    pub r#type: TokenizeResultType,
-    pub data: Vec<i32>,
-}
 
 #[napi(object)]
 #[derive(Clone, Debug)]
@@ -42,14 +21,36 @@ pub struct InferenceResult {
     pub message: Option<String>,
 }
 
-#[napi(string_enum)]
-pub enum EmbeddingResultType {
-    Error,
-    Data,
+#[napi(object)]
+#[derive(Debug, Clone)]
+pub struct LlamaInvocation {
+    pub n_threads: i32,
+    pub n_tok_predict: i32,
+    pub top_k: i32,                     // 40
+    pub top_p: Option<f64>,             // default 0.95f, 1.0 = disabled
+    pub tfs_z: Option<f64>,             // default 1.00f, 1.0 = disabled
+    pub temp: Option<f64>,              // default 0.80f, 1.0 = disabled
+    pub typical_p: Option<f64>,         // default 1.00f, 1.0 = disabled
+    pub repeat_penalty: Option<f64>,    // default 1.10f, 1.0 = disabled
+    pub repeat_last_n: Option<i32>, // default 64, last n tokens to penalize (0 = disable penalty, -1 = context size)
+    pub frequency_penalty: Option<f64>, // default 0.00f, 1.0 = disabled
+    pub presence_penalty: Option<f64>, // default 0.00f, 1.0 = disabled
+    pub stop_sequence: Option<String>,
+    pub penalize_nl: Option<bool>,
+    pub prompt: String,
 }
 
+// Represents the configuration parameters for a LLamaContext.
 #[napi(object)]
-pub struct EmbeddingResult {
-    pub r#type: EmbeddingResultType,
-    pub data: Vec<f64>,
+#[derive(Debug, Clone)]
+pub struct LlamaContextParams {
+    pub n_ctx: i32,
+    pub n_parts: i32,
+    pub seed: i32,
+    pub f16_kv: bool,
+    pub logits_all: bool,
+    pub vocab_only: bool,
+    pub use_mlock: bool,
+    pub embedding: bool,
+    pub use_mmap: bool,
 }

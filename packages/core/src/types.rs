@@ -1,5 +1,4 @@
 use napi::bindgen_prelude::*;
-use std::sync::mpsc::Sender;
 
 #[napi(object)]
 #[derive(Clone, Debug)]
@@ -22,40 +21,6 @@ pub struct InferenceResult {
   pub r#type: InferenceResultType,
   pub message: Option<String>,
   pub data: Option<InferenceToken>,
-}
-
-/**
- * Embedding result
- */
-#[napi(string_enum)]
-#[derive(Debug)]
-pub enum EmbeddingResultType {
-  Data,
-  Error,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct EmbeddingResult {
-  pub r#type: EmbeddingResultType,
-  pub message: Option<String>,
-  pub data: Option<Vec<f64>>,
-}
-
-/**
- * Tokenize result
- */
-#[napi(string_enum)]
-#[derive(Debug)]
-pub enum TokenizeResultType {
-  Data,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct TokenizeResult {
-  pub r#type: TokenizeResultType,
-  pub data: Vec<i32>,
 }
 
 /**
@@ -84,13 +49,6 @@ pub struct LLamaConfig {
   /// MMapped files are faster, but may not work on all systems.
   /// Default is true
   pub use_mmap: Option<bool>,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct LoadModelResult {
-  pub error: bool,
-  pub message: Option<String>,
 }
 
 #[napi(object)]
@@ -177,12 +135,4 @@ pub struct LLamaInferenceArguments {
   /// Persist session path
   /// Default is None
   pub save_session: Option<String>,
-}
-
-#[derive(Clone, Debug)]
-pub enum LLamaCommand {
-  LoadModel(LLamaConfig, Sender<LoadModelResult>),
-  Inference(LLamaInferenceArguments, Sender<InferenceResult>),
-  Embedding(LLamaInferenceArguments, Sender<EmbeddingResult>),
-  Tokenize(String, Sender<TokenizeResult>),
 }

@@ -8,10 +8,7 @@ mod rwkv;
 mod sampling;
 mod types;
 
-use std::{
-    sync::{mpsc::channel, Arc},
-    thread, time,
-};
+use std::sync::Arc;
 
 use context::RWKVInvocation;
 use napi::{
@@ -21,18 +18,19 @@ use napi::{
     },
     JsFunction,
 };
-use rwkv::RWKVChannel;
-use types::{EmbeddingResult, InferenceResult, TokenizeResult};
+use rwkv::RWKVInternal;
+use tokio::sync::Mutex;
+use types::InferenceResult;
 
 #[napi]
 pub struct RWKV {
-    rwkv_channel: Arc<RWKVChannel>,
+    rwkv: Arc<Mutex<RWKVInternal>>,
 }
 
 #[napi]
 impl RWKV {
     #[napi]
-    pub fn load(
+    pub async fn load(
         model_path: String,
         tokenizer_path: String,
         n_threads: u32,
@@ -45,127 +43,35 @@ impl RWKV {
                 .init();
         }
 
-        let (load_result_sender, load_result_receiver) = channel::<bool>();
-        let rwkv_channel = RWKVChannel::new(
-            model_path,
-            tokenizer_path,
-            n_threads,
-            load_result_sender,
-            enable_logger,
-        );
-        'waiting_load: loop {
-            let recv = load_result_receiver.recv();
-            match recv {
-                Ok(r) => {
-                    if !r {
-                        return Err(Error::new(Status::InvalidArg, "Load error".to_string()));
-                    }
-                    break 'waiting_load;
-                }
-                _ => {
-                    thread::yield_now();
-                }
-            }
-        }
-        Ok(Self { rwkv_channel })
+        Ok(Self {
+            rwkv: RWKVInternal::load(model_path, tokenizer_path, n_threads, enable_logger).await,
+        })
     }
 
     #[napi]
-    pub fn get_word_embedding(
-        &self,
-        input: RWKVInvocation,
-        #[napi(ts_arg_type = "(result: EmbeddingResult) => void")] callback: JsFunction,
-    ) -> Result<()> {
-        let tsfn: ThreadsafeFunction<EmbeddingResult, ErrorStrategy::Fatal> =
-            callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
-        let (embeddings_sender, embeddings_receiver) = channel();
-        let rwkv_channel = self.rwkv_channel.clone();
-
-        rwkv_channel.embedding(input, embeddings_sender);
-
-        thread::spawn(move || {
-            loop {
-                let result = embeddings_receiver.recv();
-                match result {
-                    Ok(result) => {
-                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                    }
-                    Err(_) => {
-                        break;
-                    }
-                }
-            }
-            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-            tsfn.abort().unwrap();
-        });
-
-        Ok(())
-    }
-
-    #[napi]
-    pub fn tokenize(
-        &self,
-        params: String,
-        #[napi(ts_arg_type = "(result: TokenizeResult) => void")] callback: JsFunction,
-    ) -> Result<()> {
-        let (tokenize_sender, tokenize_receiver) = channel::<TokenizeResult>();
-
-        let tsfn: ThreadsafeFunction<TokenizeResult, ErrorStrategy::Fatal> = callback
-            .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<TokenizeResult>| {
-                Ok(vec![ctx.value])
-            })?;
-
-        let rwkv_channel = self.rwkv_channel.clone();
-
-        rwkv_channel.tokenize(params, tokenize_sender);
-
-        thread::spawn(move || {
-            'waiting_tokenize: loop {
-                let recv = tokenize_receiver.recv();
-                match recv {
-                    Ok(callback) => {
-                        tsfn.call(callback, ThreadsafeFunctionCallMode::Blocking);
-                        break 'waiting_tokenize;
-                    }
-                    _ => {
-                        thread::yield_now();
-                    }
-                }
-            }
-            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-            tsfn.abort().unwrap();
-        });
-
-        Ok(())
+    pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
+        let rwkv = self.rwkv.lock().await;
+        rwkv.tokenize(&params).await
     }
 
     #[napi]
     pub fn inference(
         &self,
-        input: RWKVInvocation,
+        params: RWKVInvocation,
         #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
     ) -> Result<()> {
-        let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> =
-            callback.create_threadsafe_function(0, |ctx| Ok(vec![ctx.value]))?;
-        let (inference_sender, inference_receiver) = channel();
-        let rwkv_channel = self.rwkv_channel.clone();
+        let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
+            .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
+                Ok(vec![ctx.value])
+            })?;
 
-        rwkv_channel.inference(input, inference_sender);
-
-        thread::spawn(move || {
-            loop {
-                let result = inference_receiver.recv();
-                match result {
-                    Ok(result) => {
-                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                    }
-                    Err(_) => {
-                        break;
-                    }
-                }
-            }
-            thread::sleep(time::Duration::from_millis(300)); // wait for end signal
-            tsfn.abort().unwrap();
+        let rwkv = self.rwkv.clone();
+        tokio::spawn(async move {
+            let mut rwkv = rwkv.lock().await;
+            rwkv.inference(&params, |result| {
+                tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+            })
+            .await;
         });
 
         Ok(())

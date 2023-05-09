@@ -1,5 +1,4 @@
 import {
-    EmbeddingResultType,
     InferenceResultType,
     LLama,
     LLamaConfig,
@@ -20,8 +19,8 @@ export class LLamaRS
 {
     instance!: LLama;
 
-    load(config: LLamaConfig) {
-        this.instance = LLama.create(config);
+    async load(config: LLamaConfig) {
+        this.instance = await LLama.create(config);
     }
 
     async createCompletion(
@@ -72,18 +71,7 @@ export class LLamaRS
     }
 
     async getEmbedding(params: LLamaInferenceArguments): Promise<number[]> {
-        return new Promise<number[]>((res, rej) => {
-            this.instance.getWordEmbeddings(params, (response) => {
-                switch (response.type) {
-                    case EmbeddingResultType.Data:
-                        res(response.data ?? []);
-                        break;
-                    case EmbeddingResultType.Error:
-                        rej(response.message);
-                        break;
-                }
-            });
-        });
+        return await this.instance.getWordEmbeddings(params);
     }
 
     async getDefaultEmbedding(text: string): Promise<number[]> {
@@ -99,10 +87,6 @@ export class LLamaRS
     }
 
     async tokenize(params: string): Promise<number[]> {
-        return new Promise<number[]>((res) => {
-            this.instance.tokenize(params, (response) => {
-                res(response.data);
-            });
-        });
+        return await this.instance.tokenize(params);
     }
 }

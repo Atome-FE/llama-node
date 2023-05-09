@@ -12,7 +12,7 @@ import { existsSync } from "fs";
 
 const convertType = ["q4_0", "q4_1", "f16", "f32"] as const;
 
-type ConvertType = typeof convertType[number];
+type ConvertType = (typeof convertType)[number];
 
 interface CLIInferenceArguments extends LLamaInferenceArguments, LLamaConfig {
     logger?: boolean;
@@ -75,7 +75,7 @@ class InferenceCommand implements yargs.CommandModule {
         if (logger) {
             LLama.enableLogger();
         }
-        const llama = LLama.create({ path: absolutePath, numCtxTokens });
+        const llama = await LLama.create({ path: absolutePath, numCtxTokens });
         llama.inference(rest, (result) => {
             switch (result.type) {
                 case InferenceResultType.Data:
