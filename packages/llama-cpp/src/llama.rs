@@ -1,51 +1,43 @@
-use std::{
-    sync::{
-        mpsc::{channel, Receiver, Sender, TryRecvError},
-        Arc, Mutex,
-    },
-    thread,
-};
+use std::sync::Arc;
 
 use crate::{
-    context::{LLamaContext, LlamaContextParams, LlamaInvocation},
+    context::{LLamaContext},
     tokenizer::{llama_token_eos, tokenize},
-    types::{
-        EmbeddingResult, EmbeddingResultType, InferenceResult, InferenceResultType, InferenceToken,
-        LLamaCommand, TokenizeResult, TokenizeResultType,
-    },
+    types::{InferenceResult, InferenceResultType, InferenceToken, LlamaContextParams, LlamaInvocation},
 };
 
 #[derive(Clone)]
-pub struct LLamaChannel {
-    command_sender: Sender<LLamaCommand>,
-    command_receiver: Arc<Mutex<Receiver<LLamaCommand>>>,
-}
-
 pub struct LLamaInternal {
     context: LLamaContext,
     context_params: Option<LlamaContextParams>,
 }
 
 impl LLamaInternal {
-    pub fn tokenize(&self, input: &str, n_ctx: usize, sender: &Sender<TokenizeResult>) {
+    pub async fn load(
+        path: String,
+        params: Option<LlamaContextParams>,
+        enable_logger: bool,
+    ) -> Arc<Self> {
+        let llama = LLamaInternal {
+            context: LLamaContext::from_file_and_params(&path, &params).await,
+            context_params: params,
+        };
+
+        if enable_logger {
+            llama.context.llama_print_system_info();
+        }
+
+        Arc::new(llama)
+    }
+    pub async fn tokenize(&self, input: &str, n_ctx: usize) -> Result<Vec<i32>, napi::Error> {
         if let Ok(data) = tokenize(&self.context, input, n_ctx, false) {
-            sender
-                .send(TokenizeResult {
-                    data,
-                    r#type: TokenizeResultType::Data,
-                })
-                .unwrap();
+            Ok(data)
         } else {
-            sender
-                .send(TokenizeResult {
-                    data: vec![],
-                    r#type: TokenizeResultType::Error,
-                })
-                .unwrap();
+            Err(napi::Error::from_reason("Failed to tokenize"))
         }
     }
 
-    pub fn embedding(&self, input: &LlamaInvocation, sender: &Sender<EmbeddingResult>) {
+    pub async fn embedding(&self, input: &LlamaInvocation) -> Result<Vec<f64>, napi::Error> {
         let context_params_c = LlamaContextParams::or_default(&self.context_params);
         let input_ctx = &self.context;
         let embd_inp = tokenize(
@@ -67,23 +59,13 @@ impl LLamaInternal {
         let embeddings = input_ctx.llama_get_embeddings();
 
         if let Ok(embeddings) = embeddings {
-            sender
-                .send(EmbeddingResult {
-                    r#type: EmbeddingResultType::Data,
-                    data: embeddings.iter().map(|&x| x as f64).collect(),
-                })
-                .unwrap();
+            Ok(embeddings.iter().map(|&x| x as f64).collect())
         } else {
-            sender
-                .send(EmbeddingResult {
-                    r#type: EmbeddingResultType::Error,
-                    data: vec![],
-                })
-                .unwrap();
+            Err(napi::Error::from_reason("Failed to get embeddings"))
         }
     }
 
-    pub fn inference(&self, input: &LlamaInvocation, sender: &Sender<InferenceResult>) {
+    pub async fn inference(&self, input: &LlamaInvocation, callback: impl Fn(InferenceResult)) {
         let context_params_c = LlamaContextParams::or_default(&self.context_params);
         let input_ctx = &self.context;
         // Tokenize the stop sequence and input prompt.
@@ -139,13 +121,11 @@ impl LLamaInternal {
             if input.n_tok_predict != 0
                 && n_used > (input.n_tok_predict as usize) + tokenized_input.len() - 1
             {
-                sender
-                    .send(InferenceResult {
-                        r#type: InferenceResultType::Error,
-                        data: None,
-                        message: Some("Too many tokens predicted".to_string()),
-                    })
-                    .unwrap();
+                callback(InferenceResult {
+                    r#type: InferenceResultType::Error,
+                    data: None,
+                    message: Some("Too many tokens predicted".to_string()),
+                });
                 break;
             }
 
@@ -169,128 +149,33 @@ impl LLamaInternal {
 
             if let Some(output) = output {
                 if stop_sequence_i == 0 {
-                    sender
-                        .send(InferenceResult {
-                            r#type: InferenceResultType::Data,
-                            data: Some(InferenceToken {
-                                token: output,
-                                completed: false,
-                            }),
-                            message: None,
-                        })
-                        .unwrap();
+                    callback(InferenceResult {
+                        r#type: InferenceResultType::Data,
+                        data: Some(InferenceToken {
+                            token: output,
+                            completed: false,
+                        }),
+                        message: None,
+                    });
                 }
             }
         }
 
         if completed {
-            sender
-                .send(InferenceResult {
-                    r#type: InferenceResultType::Data,
-                    data: Some(InferenceToken {
-                        token: "\n\n<end>\n".to_string(),
-                        completed: true,
-                    }),
-                    message: None,
-                })
-                .unwrap();
+            callback(InferenceResult {
+                r#type: InferenceResultType::Data,
+                data: Some(InferenceToken {
+                    token: "\n\n<end>\n".to_string(),
+                    completed: true,
+                }),
+                message: None,
+            });
         }
 
-        sender
-            .send(InferenceResult {
-                r#type: InferenceResultType::End,
-                data: None,
-                message: None,
-            })
-            .unwrap();
-        // embedding_to_output(
-        //     input_ctx,
-        //     &embd[tokenized_input.len()..n_used + 1 - stop_sequence_i],
-        // );
-    }
-}
-
-impl LLamaChannel {
-    pub fn new(
-        path: String,
-        params: Option<LlamaContextParams>,
-        load_result_sender: Sender<bool>,
-        enable_logger: bool,
-    ) -> Arc<Self> {
-        let (command_sender, command_receiver) = channel::<LLamaCommand>();
-
-        let channel = LLamaChannel {
-            command_receiver: Arc::new(Mutex::new(command_receiver)),
-            command_sender,
-        };
-
-        channel.spawn(path, params, load_result_sender, enable_logger);
-
-        Arc::new(channel)
-    }
-
-    pub fn tokenize(&self, input: String, n_ctx: usize, sender: Sender<TokenizeResult>) {
-        self.command_sender
-            .send(LLamaCommand::Tokenize(input, n_ctx, sender))
-            .unwrap();
-    }
-
-    pub fn embedding(&self, params: LlamaInvocation, sender: Sender<EmbeddingResult>) {
-        self.command_sender
-            .send(LLamaCommand::Embedding(params, sender))
-            .unwrap();
-    }
-
-    pub fn inference(&self, params: LlamaInvocation, sender: Sender<InferenceResult>) {
-        self.command_sender
-            .send(LLamaCommand::Inference(params, sender))
-            .unwrap();
-    }
-
-    // llama instance main loop
-    pub fn spawn(
-        &self,
-        path: String,
-        params: Option<LlamaContextParams>,
-        load_result_sender: Sender<bool>,
-        enable_logger: bool,
-    ) {
-        let rv = self.command_receiver.clone();
-
-        thread::spawn(move || {
-            let llama = LLamaInternal {
-                context: LLamaContext::from_file_and_params(&path, &params),
-                context_params: params,
-            };
-
-            if enable_logger {
-                llama.context.llama_print_system_info();
-            }
-
-            load_result_sender.send(true).unwrap();
-
-            let rv = rv.lock().unwrap();
-
-            'llama_loop: loop {
-                let command = rv.try_recv();
-                match command {
-                    Ok(LLamaCommand::Inference(params, sender)) => {
-                        llama.inference(&params, &sender);
-                    }
-                    Ok(LLamaCommand::Embedding(params, sender)) => {
-                        llama.embedding(&params, &sender);
-                    }
-                    Ok(LLamaCommand::Tokenize(text, n_ctx, sender)) => {
-                        llama.tokenize(&text, n_ctx, &sender);
-                    }
-                    Err(TryRecvError::Disconnected) => {
-                        break 'llama_loop;
-                    }
-                    _ => {
-                        thread::yield_now();
-                    }
-                }
-            }
+        callback(InferenceResult {
+            r#type: InferenceResultType::End,
+            data: None,
+            message: None,
         });
     }
 }

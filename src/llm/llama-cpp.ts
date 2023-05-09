@@ -1,10 +1,8 @@
 import {
-    EmbeddingResultType,
     InferenceResultType,
     LLama,
     LlamaContextParams,
     LlamaInvocation,
-    TokenizeResultType,
 } from "@llama-node/llama-cpp";
 
 import { type ILLM, type LLMResult, LLMError } from "./type";
@@ -33,7 +31,7 @@ export class LLamaCpp
 
     async load(config: LoadConfig) {
         const { path, enableLogging, ...rest } = config;
-        this.instance = LLama.load(path, rest, enableLogging);
+        this.instance = await LLama.load(path, rest, enableLogging);
     }
 
     async createCompletion(
@@ -84,18 +82,7 @@ export class LLamaCpp
     }
 
     async getEmbedding(params: LlamaInvocation): Promise<number[]> {
-        return new Promise<number[]>((res, rej) => {
-            this.instance.getWordEmbedding(params, (response) => {
-                switch (response.type) {
-                    case EmbeddingResultType.Data:
-                        res(response.data ?? []);
-                        break;
-                    case EmbeddingResultType.Error:
-                        rej(new Error("Unknown Error"));
-                        break;
-                }
-            });
-        });
+        return await this.instance.getWordEmbedding(params);
     }
 
     async getDefaultEmbedding(text: string): Promise<number[]> {
@@ -111,14 +98,6 @@ export class LLamaCpp
     }
 
     async tokenize(params: TokenizeArguments): Promise<number[]> {
-        return new Promise<number[]>((res, rej) => {
-            this.instance.tokenize(params.content, params.nCtx, (response) => {
-                if (response.type === TokenizeResultType.Data) {
-                    res(response.data);
-                } else {
-                    rej(new Error("Unknown Error"));
-                }
-            });
-        });
+        return await this.instance.tokenize(params.content, params.nCtx);
     }
 }
