@@ -252,9 +252,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { TokenizeResultType, InferenceResultType, EmbeddingResultType, Rwkv } = nativeBinding
+const { InferenceResultType, Rwkv } = nativeBinding
 
-module.exports.TokenizeResultType = TokenizeResultType
 module.exports.InferenceResultType = InferenceResultType
-module.exports.EmbeddingResultType = EmbeddingResultType
 module.exports.Rwkv = Rwkv

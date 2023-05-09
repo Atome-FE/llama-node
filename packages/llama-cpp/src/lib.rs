@@ -18,11 +18,12 @@ use napi::{
     },
     JsFunction,
 };
+use tokio::sync::Mutex;
 use types::{InferenceResult, LlamaContextParams, LlamaInvocation};
 
 #[napi]
 pub struct LLama {
-    llama: Arc<llama::LLamaInternal>,
+    llama: Arc<Mutex<LLamaInternal>>,
 }
 
 #[napi]
@@ -47,12 +48,14 @@ impl LLama {
 
     #[napi]
     pub async fn get_word_embedding(&self, params: LlamaInvocation) -> Result<Vec<f64>> {
-        self.llama.embedding(&params).await
+        let llama = self.llama.lock().await;
+        llama.embedding(&params).await
     }
 
     #[napi]
     pub async fn tokenize(&self, params: String, n_ctx: i32) -> Result<Vec<i32>> {
-        self.llama.tokenize(&params, n_ctx as usize).await
+        let llama = self.llama.lock().await;
+        llama.tokenize(&params, n_ctx as usize).await
     }
 
     #[napi]
@@ -69,6 +72,7 @@ impl LLama {
         let llama = self.llama.clone();
 
         tokio::spawn(async move {
+            let llama = llama.lock().await;
             llama
                 .inference(&params, |result| {
                     tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);

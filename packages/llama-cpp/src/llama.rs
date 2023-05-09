@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use tokio::sync::Mutex;
+
 use crate::{
     context::{LLamaContext},
     tokenizer::{llama_token_eos, tokenize},
@@ -17,7 +19,7 @@ impl LLamaInternal {
         path: String,
         params: Option<LlamaContextParams>,
         enable_logger: bool,
-    ) -> Arc<Self> {
+    ) -> Arc<Mutex<Self>> {
         let llama = LLamaInternal {
             context: LLamaContext::from_file_and_params(&path, &params).await,
             context_params: params,
@@ -27,7 +29,7 @@ impl LLamaInternal {
             llama.context.llama_print_system_info();
         }
 
-        Arc::new(llama)
+        Arc::new(Mutex::new(llama))
     }
     pub async fn tokenize(&self, input: &str, n_ctx: usize) -> Result<Vec<i32>, napi::Error> {
         if let Ok(data) = tokenize(&self.context, input, n_ctx, false) {
