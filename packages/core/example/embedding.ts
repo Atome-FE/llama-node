@@ -1,4 +1,4 @@
-import { EmbeddingResultType, LLama } from "../index";
+import { LLama } from "../index";
 import path from "path";
 import fs from "fs";
 
@@ -22,19 +22,10 @@ const getWordEmbeddings = async (
         seed: 0,
     });
 
-    switch (response.type) {
-        case EmbeddingResultType.Data: {
-            fs.writeFileSync(
-                path.resolve(process.cwd(), file),
-                JSON.stringify(response.data)
-            );
-            break;
-        }
-        case EmbeddingResultType.Error: {
-            console.log(response);
-            break;
-        }
-    }
+    fs.writeFileSync(
+        path.resolve(process.cwd(), file),
+        JSON.stringify(response)
+    );
 };
 
 const run = async () => {

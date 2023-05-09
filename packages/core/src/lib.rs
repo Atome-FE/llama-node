@@ -11,7 +11,7 @@ use std::{path::Path, sync::Arc};
 
 use llama::LLamaInternal;
 use llama_rs::convert::convert_pth_to_ggml;
-use types::{EmbeddingResult, InferenceResult, LLamaConfig, LLamaInferenceArguments};
+use types::{InferenceResult, LLamaConfig, LLamaInferenceArguments};
 
 use napi::{
   bindgen_prelude::*,
@@ -92,12 +92,10 @@ impl LLama {
   /// Create a new LLama instance.
   #[napi]
   pub async fn create(config: LLamaConfig) -> Result<LLama> {
-    let mut async_llama = LLamaInternal { model: None };
-
-    async_llama.load_model(&config).await?;
+    let llama = LLamaInternal::load_model(&config).await?;
 
     Ok(LLama {
-      llama: Arc::new(async_llama),
+      llama: Arc::new(llama),
     })
   }
 
@@ -109,10 +107,7 @@ impl LLama {
 
   /// Get the embedding result as number array, the result will be passed to the callback function.
   #[napi]
-  pub async fn get_word_embeddings(
-    &self,
-    params: LLamaInferenceArguments,
-  ) -> Result<EmbeddingResult> {
+  pub async fn get_word_embeddings(&self, params: LLamaInferenceArguments) -> Result<Vec<f64>> {
     self.llama.get_word_embedding(&params).await
   }
 
@@ -128,12 +123,12 @@ impl LLama {
         Ok(vec![ctx.value])
       })?;
 
-    let async_llama = self.llama.clone();
+    let llama = self.llama.clone();
 
     tokio::spawn(async move {
-      async_llama
-        .inference(&params, |r| {
-          tsfn.call(r, ThreadsafeFunctionCallMode::NonBlocking);
+      llama
+        .inference(&params, |result| {
+          tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
         })
         .await;
     });

@@ -18,28 +18,6 @@ export interface InferenceResult {
   data?: InferenceToken
 }
 /**
- * Embedding result
-*/
-export const enum EmbeddingResultType {
-  Data = 'Data',
-  Error = 'Error'
-}
-export interface EmbeddingResult {
-  type: EmbeddingResultType
-  message?: string
-  data?: Array<number>
-}
-/**
- * Tokenize result
-*/
-export const enum TokenizeResultType {
-  Data = 'Data'
-}
-export interface TokenizeResult {
-  type: TokenizeResultType
-  data: Array<number>
-}
-/**
  * LLama model load config
 */
 export interface LLamaConfig {
@@ -65,10 +43,6 @@ export interface LLamaConfig {
    * Default is true
    */
   useMmap?: boolean
-}
-export interface LoadModelResult {
-  error: boolean
-  message?: string
 }
 export interface LLamaInferenceArguments {
   /**
@@ -198,7 +172,7 @@ export class LLama {
   /** Get the tokenized result as number array, the result will be passed to the callback function. */
   tokenize(params: string): Promise<Array<number>>
   /** Get the embedding result as number array, the result will be passed to the callback function. */
-  getWordEmbeddings(params: LLamaInferenceArguments): Promise<EmbeddingResult>
+  getWordEmbeddings(params: LLamaInferenceArguments): Promise<Array<number>>
   /** Streaming the inference result as string, the result will be passed to the callback function. */
   inference(params: LLamaInferenceArguments, callback: (result: InferenceResult) => void): void
 }

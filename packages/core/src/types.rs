@@ -24,40 +24,6 @@ pub struct InferenceResult {
 }
 
 /**
- * Embedding result
- */
-#[napi(string_enum)]
-#[derive(Debug)]
-pub enum EmbeddingResultType {
-  Data,
-  Error,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct EmbeddingResult {
-  pub r#type: EmbeddingResultType,
-  pub message: Option<String>,
-  pub data: Option<Vec<f64>>,
-}
-
-/**
- * Tokenize result
- */
-#[napi(string_enum)]
-#[derive(Debug)]
-pub enum TokenizeResultType {
-  Data,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct TokenizeResult {
-  pub r#type: TokenizeResultType,
-  pub data: Vec<i32>,
-}
-
-/**
  * LLama model load config
  */
 #[napi(object)]
@@ -83,13 +49,6 @@ pub struct LLamaConfig {
   /// MMapped files are faster, but may not work on all systems.
   /// Default is true
   pub use_mmap: Option<bool>,
-}
-
-#[napi(object)]
-#[derive(Clone, Debug)]
-pub struct LoadModelResult {
-  pub error: bool,
-  pub message: Option<String>,
 }
 
 #[napi(object)]

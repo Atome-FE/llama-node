@@ -14,14 +14,13 @@ use rand::SeedableRng;
 use zstd::{zstd_safe::CompressionLevel, Decoder, Encoder};
 
 use crate::types::{
-  EmbeddingResult, EmbeddingResultType, InferenceResult, InferenceResultType, InferenceToken,
-  LLamaConfig, LLamaInferenceArguments, LoadModelResult,
+  InferenceResult, InferenceResultType, InferenceToken, LLamaConfig, LLamaInferenceArguments,
 };
 
 const CACHE_COMPRESSION_LEVEL: CompressionLevel = 1;
 
 pub struct LLamaInternal {
-  pub model: Option<Model>,
+  pub model: Model,
 }
 
 fn parse_bias(s: &str) -> Result<TokenBias, String> {
@@ -29,7 +28,7 @@ fn parse_bias(s: &str) -> Result<TokenBias, String> {
 }
 
 impl LLamaInternal {
-  pub async fn load_model(&mut self, params: &LLamaConfig) -> Result<LoadModelResult, napi::Error> {
+  pub async fn load_model(params: &LLamaConfig) -> Result<LLamaInternal, napi::Error> {
     let num_ctx_tokens = params.num_ctx_tokens.unwrap_or(512);
     let use_mmap = params.use_mmap.unwrap_or(true);
     log::info!("num_ctx_tokens: {}", num_ctx_tokens);
@@ -91,21 +90,17 @@ impl LLamaInternal {
         }
       },
     ) {
-      self.model = Some(model);
-
       log::info!("Model fully loaded!");
 
-      Ok(LoadModelResult {
-        error: false,
-        message: None,
-      })
+      Ok(LLamaInternal { model })
     } else {
+      // TODO: optimiza error handling
       Err(napi::Error::from_reason("Could not load model"))
     }
   }
 
   pub async fn tokenize(&self, text: &str) -> Result<Vec<i32>, napi::Error> {
-    let vocab = self.model.as_ref().unwrap().vocabulary();
+    let vocab = self.model.vocabulary();
     let tokens = vocab
       .tokenize(text, false)
       .unwrap()
@@ -184,7 +179,7 @@ impl LLamaInternal {
     persist_session: Option<&Path>,
     inference_session_params: InferenceSessionParameters,
   ) -> Result<InferenceSession, Error> {
-    let model = self.model.as_ref().ok_or(Error::msg("Model not loaded"))?;
+    let model = &self.model;
 
     fn load(model: &Model, path: &Path) -> Result<InferenceSession> {
       let file = File::open(path)?;
@@ -236,10 +231,10 @@ impl LLamaInternal {
   pub async fn get_word_embedding(
     &self,
     params: &LLamaInferenceArguments,
-  ) -> Result<EmbeddingResult, napi::Error> {
+  ) -> Result<Vec<f64>, napi::Error> {
     let mut session = self.start_new_session(params);
     let inference_params = self.get_inference_params(params);
-    let model = self.model.as_ref().unwrap();
+    let model = &self.model;
     let prompt_for_feed = format!(" {}", params.prompt);
 
     if let Err(InferenceError::ContextFull) =
@@ -264,23 +259,20 @@ impl LLamaInternal {
       &mut output_request,
     );
 
-    Ok(EmbeddingResult {
-      r#type: EmbeddingResultType::Data,
-      message: None,
-      data: output_request
-        .embeddings
-        .map(|embd| embd.into_iter().map(|data| data.into()).collect()),
-    })
+    let output: Option<Vec<f64>> = output_request
+      .embeddings
+      .map(|embd| embd.into_iter().map(|data| data.into()).collect());
+
+    Ok(output.unwrap_or(Vec::new()))
   }
 
   pub async fn inference(
     &self,
     params: &LLamaInferenceArguments,
-    // sender: &Sender<InferenceResult>,
     callback: impl Fn(InferenceResult),
   ) {
     let num_predict = params.num_predict.unwrap_or(512) as usize;
-    let model = self.model.as_ref().unwrap();
+    let model = &self.model;
 
     let prompt = &params.prompt;
     let feed_prompt_only = params.feed_prompt_only.unwrap_or(false);
@@ -332,7 +324,7 @@ impl LLamaInternal {
           };
 
           callback(to_send);
-          
+
           Ok(())
         },
       );

@@ -71,7 +71,7 @@ export class LLamaRS
     }
 
     async getEmbedding(params: LLamaInferenceArguments): Promise<number[]> {
-        return (await this.instance.getWordEmbeddings(params)).data ?? [];
+        return await this.instance.getWordEmbeddings(params);
     }
 
     async getDefaultEmbedding(text: string): Promise<number[]> {
