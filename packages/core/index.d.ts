@@ -196,7 +196,9 @@ export class LLama {
   /** Create a new LLama instance. */
   static create(config: LLamaConfig): Promise<LLama>
   /** Get the tokenized result as number array, the result will be passed to the callback function. */
-  tokenize(params: string): Promise<TokenizeResult>
+  tokenize(params: string): Promise<Array<number>>
+  /** Get the embedding result as number array, the result will be passed to the callback function. */
+  getWordEmbeddings(params: LLamaInferenceArguments): Promise<EmbeddingResult>
   /** Streaming the inference result as string, the result will be passed to the callback function. */
   inference(params: LLamaInferenceArguments, callback: (result: InferenceResult) => void): void
 }

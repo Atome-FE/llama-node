@@ -74,7 +74,7 @@ pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
 
 #[napi(js_name = "LLama")]
 pub struct LLama {
-  async_llama: Arc<llama::LLamaInternal>,
+  llama: Arc<llama::LLamaInternal>,
 }
 
 /// LLama class is a Rust wrapper for llama-rs.
@@ -97,14 +97,14 @@ impl LLama {
     async_llama.load_model(&config).await?;
 
     Ok(LLama {
-      async_llama: Arc::new(async_llama),
+      llama: Arc::new(async_llama),
     })
   }
 
   /// Get the tokenized result as number array, the result will be passed to the callback function.
   #[napi]
   pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
-    self.async_llama.tokenize(&params).await
+    self.llama.tokenize(&params).await
   }
 
   /// Get the embedding result as number array, the result will be passed to the callback function.
@@ -113,7 +113,7 @@ impl LLama {
     &self,
     params: LLamaInferenceArguments,
   ) -> Result<EmbeddingResult> {
-    self.async_llama.get_word_embedding(&params).await
+    self.llama.get_word_embedding(&params).await
   }
 
   /// Streaming the inference result as string, the result will be passed to the callback function.
@@ -128,7 +128,7 @@ impl LLama {
         Ok(vec![ctx.value])
       })?;
 
-    let async_llama = self.async_llama.clone();
+    let async_llama = self.llama.clone();
 
     tokio::spawn(async move {
       async_llama

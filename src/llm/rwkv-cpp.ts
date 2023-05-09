@@ -25,7 +25,7 @@ export class RwkvCpp
 {
     instance!: Rwkv;
 
-    load(config: LoadConfig) {
+    async load(config: LoadConfig) {
         const { modelPath, tokenizerPath, nThreads, enableLogging } = config;
         this.instance = Rwkv.load(
             modelPath,

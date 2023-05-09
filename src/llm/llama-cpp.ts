@@ -31,7 +31,7 @@ export class LLamaCpp
 {
     instance!: LLama;
 
-    load(config: LoadConfig) {
+    async load(config: LoadConfig) {
         const { path, enableLogging, ...rest } = config;
         this.instance = LLama.load(path, rest, enableLogging);
     }

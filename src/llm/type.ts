@@ -11,7 +11,7 @@ export interface ILLM<
 > {
     readonly instance: Instance;
 
-    load(config: LoadConfig): void;
+    load(config: LoadConfig): Promise<void>;
 
     createCompletion(
         params: LLMInferenceArguments,
