@@ -1,5 +1,4 @@
 use napi::bindgen_prelude::*;
-use std::sync::mpsc::Sender;
 
 #[napi(object)]
 #[derive(Clone, Debug)]
@@ -177,12 +176,4 @@ pub struct LLamaInferenceArguments {
   /// Persist session path
   /// Default is None
   pub save_session: Option<String>,
-}
-
-#[derive(Clone, Debug)]
-pub enum LLamaCommand {
-  LoadModel(LLamaConfig, Sender<LoadModelResult>),
-  Inference(LLamaInferenceArguments, Sender<InferenceResult>),
-  Embedding(LLamaInferenceArguments, Sender<EmbeddingResult>),
-  Tokenize(String, Sender<TokenizeResult>),
 }

@@ -194,11 +194,9 @@ export class LLama {
   /** Enable logger. */
   static enableLogger(): void
   /** Create a new LLama instance. */
-  static create(config: LLamaConfig): LLama
+  static create(config: LLamaConfig): Promise<LLama>
   /** Get the tokenized result as number array, the result will be passed to the callback function. */
-  tokenize(params: string, callback: (result: TokenizeResult) => void): void
-  /** Get the embedding result as number array, the result will be passed to the callback function. */
-  getWordEmbeddings(params: LLamaInferenceArguments, callback: (result: EmbeddingResult) => void): void
+  tokenize(params: string): Promise<TokenizeResult>
   /** Streaming the inference result as string, the result will be passed to the callback function. */
   inference(params: LLamaInferenceArguments, callback: (result: InferenceResult) => void): void
 }
