@@ -219,6 +219,7 @@ impl LLamaContext {
 
 // Provides thread-safe behavior for LLamaContext.
 unsafe impl Send for LLamaContext {}
+// TODO: this is not Sync-able
 unsafe impl Sync for LLamaContext {}
 
 // Enables dereferencing LLamaContext to access the underlying *mut llama_context.

@@ -134,6 +134,7 @@ impl RWKVContext {
 
 // Provides thread-safe behavior for RWKVContext.
 unsafe impl Send for RWKVContext {}
+// TODO: this is not Sync-able
 unsafe impl Sync for RWKVContext {}
 
 // Enables dereferencing RWKVContext to access the underlying *mut rwkv_context.
