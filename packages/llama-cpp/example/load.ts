@@ -27,6 +27,9 @@ ASSISTANT:`;
     llama.inference(params, (data) => {
         process.stdout.write(data.data?.token ?? "");
     });
+    llama.inference(params, (data) => {
+        process.stdout.write(data.data?.token ?? "");
+    });
 };
 
 run();

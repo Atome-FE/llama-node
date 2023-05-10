@@ -42,7 +42,6 @@ impl From<LlamaContextParams> for llama_context_params {
 }
 
 // Represents the LLamaContext which wraps FFI calls to the llama.cpp library.
-#[derive(Clone)]
 pub struct LLamaContext {
     ctx: *mut llama_context,
 }
@@ -67,7 +66,7 @@ impl LLamaContext {
     // Executes the LLama sampling process with the specified configuration.
     pub fn llama_sample(
         &self,
-        last_n_tokens_data: &mut [llama_token],
+        last_n_tokens: &mut [llama_token],
         input: &LlamaInvocation,
         context_params: &llama_context_params,
     ) -> i32 {
@@ -117,16 +116,16 @@ impl LLamaContext {
         let nl_logit = logits[unsafe { llama_token_nl() } as usize];
 
         let last_n_repeat = std::cmp::min(
-            std::cmp::min(last_n_tokens_data.len() as i32, repeat_last_n),
+            std::cmp::min(last_n_tokens.len() as i32, repeat_last_n),
             n_ctx,
         );
 
         fn get_last_n_ptr(
-            last_n_tokens_data: &mut [llama_token],
+            last_n_tokens: &mut [llama_token],
             last_n_repeat: i32,
         ) -> *mut llama_token {
-            let last_n_tokens_ptr = last_n_tokens_data.as_ptr();
-            let last_n_tokens_size = last_n_tokens_data.len();
+            let last_n_tokens_ptr = last_n_tokens.as_ptr();
+            let last_n_tokens_size = last_n_tokens.len();
             let end_ptr = unsafe { last_n_tokens_ptr.add(last_n_tokens_size) };
             unsafe { end_ptr.sub(last_n_repeat as usize) }.cast_mut()
         }
@@ -135,7 +134,7 @@ impl LLamaContext {
             llama_sample_repetition_penalty(
                 self.ctx,
                 candidates_p,
-                get_last_n_ptr(last_n_tokens_data, last_n_repeat),
+                get_last_n_ptr(last_n_tokens, last_n_repeat),
                 last_n_repeat as usize,
                 repeat_penalty,
             );
@@ -143,7 +142,7 @@ impl LLamaContext {
             llama_sample_frequency_and_presence_penalties(
                 self.ctx,
                 candidates_p,
-                get_last_n_ptr(last_n_tokens_data, last_n_repeat),
+                get_last_n_ptr(last_n_tokens, last_n_repeat),
                 last_n_repeat as usize,
                 alpha_frequency,
                 alpha_presence,

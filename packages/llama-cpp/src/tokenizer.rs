@@ -1,36 +1,15 @@
 // use crate::output::Output;
 use anyhow::Result;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::os::raw::c_char;
 
-use llama_sys::{
-    llama_token, llama_token_eos as inner_eos, llama_token_to_str, llama_tokenize,
-};
+use llama_sys::{llama_token, llama_token_eos as inner_eos, llama_tokenize};
 
 use crate::context::LLamaContext;
 
 // Helper function to convert a Rust string to a C string.
 fn to_cstring(s: &str) -> CString {
     CString::new(s).expect("CString::new failed")
-}
-
-/// Converts a llama_token to a Rust String.
-///
-/// # Arguments
-///
-/// * `ctx` - A pointer to the llama_context.
-/// * `token` - The llama_token to convert to a string.
-///
-/// # Returns
-///
-/// A Rust String representation of the given llama_token.
-fn _to_output(context: &LLamaContext, token: i32) -> String {
-    let c_ptr = unsafe { llama_token_to_str(**context, token) };
-    let native_string = unsafe { CStr::from_ptr(c_ptr) }
-        .to_str()
-        .unwrap()
-        .to_owned();
-    native_string
 }
 
 pub fn llama_token_eos() -> i32 {
@@ -90,11 +69,3 @@ fn llama_tokenize_helper(context: &LLamaContext, text: &str, add_bos: bool) -> V
     unsafe { res.set_len(n as usize) };
     res
 }
-
-// Converts an embedding represented as a slice into the Output string.
-// pub(crate) fn _embedding_to_output(context: &LLamaContext, embd: &[i32]) -> Output {
-//     embd.iter()
-//         .map(|token| _to_output(context, *token))
-//         .fold("".to_string(), |cur, nxt| cur + &nxt)
-//         .into()
-// }
