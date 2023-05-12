@@ -4,10 +4,10 @@ importers:
 
   .:
     specifiers:
-      '@llama-node/cli': 0.1.0
-      '@llama-node/core': 0.1.0
-      '@llama-node/llama-cpp': 0.1.0
-      '@llama-node/rwkv-cpp': 0.1.0
+      '@llama-node/cli': 0.1.1
+      '@llama-node/core': 0.1.1
+      '@llama-node/llama-cpp': 0.1.1
+      '@llama-node/rwkv-cpp': 0.1.1
       '@napi-rs/cli': ^2.15.2
       '@tensorflow/tfjs-node': ^4.2.0
       '@types/node': ^18.15.5
@@ -50,12 +50,12 @@ importers:
 
   example:
     specifiers:
-      '@llama-node/core': 0.1.0
-      '@llama-node/llama-cpp': 0.1.0
-      '@llama-node/rwkv-cpp': 0.1.0
+      '@llama-node/core': 0.1.1
+      '@llama-node/llama-cpp': 0.1.1
+      '@llama-node/rwkv-cpp': 0.1.1
       '@types/node': ^18.15.11
       langchain: ^0.0.56
-      llama-node: 0.1.0
+      llama-node: 0.1.1
       typescript: ^5.0.4
     dependencies:
       '@llama-node/core': link:../packages/core
@@ -69,7 +69,7 @@ importers:
 
   packages/cli:
     specifiers:
-      '@llama-node/core': 0.1.0
+      '@llama-node/core': 0.1.1
       '@types/yargs': ^17.0.24
       yargs: ^17.7.1
     dependencies:
