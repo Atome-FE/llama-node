@@ -1,6 +1,6 @@
 {
   "name": "llama-node",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node.js Library for Large Language Model LLaMA/RWKV",
   "keywords": [
     "llama",
@@ -59,10 +59,10 @@
   "packageManager": "pnpm@6.0.0",
   "homepage": "https://llama-node.vercel.app/",
   "devDependencies": {
-    "@llama-node/cli": "0.1.1",
-    "@llama-node/core": "0.1.1",
-    "@llama-node/llama-cpp": "0.1.1",
-    "@llama-node/rwkv-cpp": "0.1.1",
+    "@llama-node/cli": "0.1.2",
+    "@llama-node/core": "0.1.2",
+    "@llama-node/llama-cpp": "0.1.2",
+    "@llama-node/rwkv-cpp": "0.1.2",
     "@napi-rs/cli": "^2.15.2",
     "@tensorflow/tfjs-node": "^4.2.0",
     "@types/node": "^18.15.5",
@@ -81,17 +81,17 @@
     "vitest": "^0.30.1"
   },
   "dependencies": {
-    "@llama-node/cli": "0.1.1"
+    "@llama-node/cli": "0.1.2"
   },
   "optionalDependencies": {
-    "@llama-node/core": "0.1.1",
-    "@llama-node/llama-cpp": "0.1.1",
-    "@llama-node/rwkv-cpp": "0.1.1"
+    "@llama-node/core": "0.1.2",
+    "@llama-node/llama-cpp": "0.1.2",
+    "@llama-node/rwkv-cpp": "0.1.2"
   },
   "peerDependencies": {
-    "@llama-node/cli": "0.1.1",
-    "@llama-node/core": "0.1.1",
-    "@llama-node/llama-cpp": "0.1.1",
-    "@llama-node/rwkv-cpp": "0.1.1"
+    "@llama-node/cli": "0.1.2",
+    "@llama-node/core": "0.1.2",
+    "@llama-node/llama-cpp": "0.1.2",
+    "@llama-node/rwkv-cpp": "0.1.2"
   }
 }

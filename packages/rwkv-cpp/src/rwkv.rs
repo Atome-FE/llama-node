@@ -87,7 +87,7 @@ impl RWKVInternal {
                         completed: true,
                     }),
                 });
-                return;
+                break;
             }
 
             accumulated_token.push(token as u32);
@@ -108,5 +108,11 @@ impl RWKVInternal {
 
             session.process_tokens(&[token.try_into().unwrap()]);
         }
+
+        callback(InferenceResult {
+            r#type: InferenceResultType::End,
+            message: None,
+            data: None,
+        });
     }
 }
