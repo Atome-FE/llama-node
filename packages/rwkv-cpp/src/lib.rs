@@ -54,26 +54,36 @@ impl RWKV {
         rwkv.tokenize(&params).await
     }
 
-    #[napi]
+    #[napi(ts_return_type = "() => void")]
     pub fn inference(
         &self,
+        env: Env,
         params: RWKVInvocation,
         #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
-    ) -> Result<()> {
+    ) -> Result<JsFunction> {
         let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
             .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
                 Ok(vec![ctx.value])
             })?;
 
         let rwkv = self.rwkv.clone();
-        tokio::spawn(async move {
-            let mut rwkv = rwkv.lock().await;
-            rwkv.inference(&params, |result| {
-                tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-            })
-            .await;
-        });
 
-        Ok(())
+        let running = Arc::new(Mutex::new(true));
+
+        {
+            let running = running.clone();
+            tokio::task::spawn_blocking(move || {
+                let mut rwkv = rwkv.blocking_lock();
+                rwkv.inference(&params, running, |result| {
+                    tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                });
+            });
+        }
+
+        env.create_function_from_closure("abort_inference", move |_| {
+            let mut running = running.blocking_lock();
+            *running = false;
+            Ok(())
+        })
     }
 }

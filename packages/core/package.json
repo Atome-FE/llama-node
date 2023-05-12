@@ -32,6 +32,7 @@
     "loadsession": "tsx example/loadsession.ts",
     "embedding": "tsx example/embedding.ts",
     "inference": "tsx example/inference.ts",
+    "abortable": "tsx example/abortable.ts",
     "tokenize": "tsx example/tokenize.ts",
     "semantic-compare": "tsx example/semantic-compare/compare.ts",
     "universal": "napi universal",

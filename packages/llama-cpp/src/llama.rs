@@ -69,7 +69,12 @@ impl LLamaInternal {
         }
     }
 
-    pub async fn inference(&self, input: &LlamaInvocation, callback: impl Fn(InferenceResult)) {
+    pub fn inference(
+        &self,
+        input: &LlamaInvocation,
+        running: Arc<Mutex<bool>>,
+        callback: impl Fn(InferenceResult),
+    ) {
         let context = &self.context;
         let context_params_c = LlamaContextParams::or_default(&self.context_params);
         // Tokenize the stop sequence and input prompt.
@@ -115,6 +120,12 @@ impl LLamaInternal {
         let mut completed = false;
 
         while n_remaining > 0 {
+            // Check if we are aborted by caller.
+            let running = *running.blocking_lock();
+            if !running {
+                break;
+            }
+
             n_used += 1;
             n_remaining -= 1;
 

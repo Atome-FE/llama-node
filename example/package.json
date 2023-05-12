@@ -8,7 +8,8 @@
     "build": "tsc -p .",
     "langchain": "node js/langchain/langchain.js",
     "llama-cpp": "node js/llama-cpp/inference.js",
-    "llama-rs": "node js/llama-rs/inference.js"
+    "llama-rs": "node js/llama-rs/inference.js",
+    "rwkv-cpp": "node js/rwkv-cpp/inference.js"
   },
   "author": "",
   "license": "MIT",
