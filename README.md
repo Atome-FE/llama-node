@@ -4,10 +4,11 @@
 
 llama-node: Node.js Library for Large Language Model
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml)
-![NPM](https://img.shields.io/npm/l/llama-node)
+[<img src="https://img.shields.io/github/actions/workflow/status/hlhr202/llama-node/llama-build.yml">](https://github.com/Atome-FE/llama-node/actions)
+[<img src="https://img.shields.io/npm/l/llama-node" alt="NPM License">](https://www.npmjs.com/package/llama-node)
 [<img alt="npm" src="https://img.shields.io/npm/v/llama-node">](https://www.npmjs.com/package/llama-node)
-![npm type definitions](https://img.shields.io/npm/types/llama-node)
+[<img alt="npm" src="https://img.shields.io/npm/types/llama-node">](https://www.npmjs.com/package/llama-node)
+[<img alt="Discord" src="https://img.shields.io/discord/1106423821700960286">](https://discord.gg/dKFeCwfsDk)
 [<img alt="twitter" src="https://img.shields.io/twitter/url?url=https%3A%2F%2Ftwitter.com%2Fhlhr202">](https://twitter.com/hlhr202)
 
   <h3><a href="https://llama-node.vercel.app/">Official Documentations</a></h3>
@@ -27,6 +28,7 @@ llama-node: Node.js Library for Large Language Model
   - [Acknowledgments](#acknowledgments)
     - [Models/Inferencing tools dependencies](#modelsinferencing-tools-dependencies)
     - [Some source code comes from](#some-source-code-comes-from)
+  - [Community](#community)
 
 ---
 
@@ -111,3 +113,9 @@ This library was published under MIT/Apache-2.0 license. However, we strongly re
 
 -   llama-cpp bindings: [sobelio/llm-chain](https://github.com/sobelio/llm-chain)
 -   rwkv logits sampling: [KerfuffleV2/smolrsrwkv](https://github.com/KerfuffleV2/smolrsrwkv)
+
+---
+
+## Community
+
+Join our Discord community now! [Click to join llama-node Discord](https://discord.gg/dKFeCwfsDk)
