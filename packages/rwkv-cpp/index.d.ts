@@ -29,5 +29,5 @@ export type RWKV = Rwkv
 export class Rwkv {
   static load(modelPath: string, tokenizerPath: string, nThreads: number, enableLogger: boolean): Promise<Rwkv>
   tokenize(params: string): Promise<Array<number>>
-  inference(params: RwkvInvocation, callback: (result: InferenceResult) => void): void
+  inference(params: RwkvInvocation, callback: (result: InferenceResult) => void): () => void
 }

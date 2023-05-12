@@ -41,7 +41,12 @@ impl RWKVInternal {
         }
     }
 
-    pub async fn inference(&mut self, input: &RWKVInvocation, callback: impl Fn(InferenceResult)) {
+    pub fn inference(
+        &mut self,
+        input: &RWKVInvocation,
+        running: Arc<Mutex<bool>>,
+        callback: impl Fn(InferenceResult),
+    ) {
         let end_token = input.end_token.unwrap_or(0) as usize;
         let temp = input.temp as f32;
         let top_p = input.top_p as f32;
@@ -64,6 +69,12 @@ impl RWKVInternal {
         let mut accumulated_token: Vec<u32> = Vec::new();
 
         for _i in 0..input.max_predict_length {
+            // Check if we are aborted by caller.
+            let running = *running.blocking_lock();
+            if !running {
+                break;
+            }
+
             let logits = session.logits.as_mut();
             let token = sample_logits(logits, temp, top_p, &seed);
 

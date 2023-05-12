@@ -5,7 +5,7 @@ import {
     LLamaInferenceArguments,
 } from "@llama-node/core";
 
-import { type ILLM, type LLMResult, LLMError } from "./type";
+import { type ILLM, type LLMResult, LLMError, LLMErrorType } from "./type";
 
 export class LLamaRS
     implements
@@ -25,14 +25,15 @@ export class LLamaRS
 
     async createCompletion(
         params: LLamaInferenceArguments,
-        callback: (data: { token: string; completed: boolean }) => void
+        callback: (data: { token: string; completed: boolean }) => void,
+        abortSignal?: AbortSignal
     ): Promise<LLMResult> {
         let completed = false;
         const tokens: string[] = [];
         const errors: string[] = [];
         return new Promise<LLMResult>(
             (res, rej: (reason: LLMError) => void) => {
-                this.instance.inference(params, (response) => {
+                const abort = this.instance.inference(params, (response) => {
                     switch (response.type) {
                         case InferenceResultType.Data: {
                             const data = {
@@ -53,6 +54,7 @@ export class LLamaRS
                                         message: errors.join("\n"),
                                         tokens,
                                         completed,
+                                        type: LLMErrorType.Generic,
                                     })
                                 );
                             } else {
@@ -66,6 +68,24 @@ export class LLamaRS
                         }
                     }
                 });
+
+                const abortSignalHandler = () => {
+                    abort();
+                    rej(
+                        new LLMError({
+                            message: "Aborted",
+                            tokens,
+                            completed,
+                            type: LLMErrorType.Aborted,
+                        })
+                    );
+                    abortSignal?.removeEventListener(
+                        "abort",
+                        abortSignalHandler
+                    );
+                };
+
+                abortSignal?.addEventListener("abort", abortSignalHandler);
             }
         );
     }

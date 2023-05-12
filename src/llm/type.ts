@@ -15,7 +15,8 @@ export interface ILLM<
 
     createCompletion(
         params: LLMInferenceArguments,
-        callback: CompletionCallback
+        callback: CompletionCallback,
+        abortSignal?: AbortSignal
     ): Promise<LLMResult>;
 
     getEmbedding?(params: LLMEmbeddingArguments): Promise<number[]>;
@@ -30,21 +31,30 @@ export interface LLMResult {
     completed: boolean;
 }
 
+export enum LLMErrorType {
+    Aborted = "Aborted",
+    Generic = "Generic",
+}
+
 export class LLMError extends Error {
     public readonly tokens: string[];
     public readonly completed: boolean;
+    public readonly type: LLMErrorType;
 
     constructor({
         message,
         tokens,
         completed,
+        type,
     }: {
         message: string;
         tokens: string[];
         completed: boolean;
+        type: LLMErrorType;
     }) {
         super(message);
         this.tokens = tokens;
         this.completed = completed;
+        this.type = type;
     }
 }

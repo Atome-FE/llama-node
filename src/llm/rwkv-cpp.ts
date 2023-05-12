@@ -5,7 +5,7 @@ import {
     RwkvInvocation,
 } from "@llama-node/rwkv-cpp";
 
-import { type ILLM, type LLMResult, LLMError } from "./type";
+import { type ILLM, type LLMResult, LLMError, LLMErrorType } from "./type";
 
 export interface LoadConfig {
     modelPath: string;
@@ -36,14 +36,15 @@ export class RwkvCpp
 
     async createCompletion(
         params: RwkvInvocation,
-        callback: (data: { token: string; completed: boolean }) => void
+        callback: (data: { token: string; completed: boolean }) => void,
+        abortSignal?: AbortSignal
     ): Promise<LLMResult> {
         let completed = false;
         const tokens: string[] = [];
         const errors: string[] = [];
         return new Promise<LLMResult>(
             (res, rej: (reason: LLMError) => void) => {
-                this.instance.inference(params, (response) => {
+                const abort = this.instance.inference(params, (response) => {
                     switch (response.type) {
                         case InferenceResultType.Data: {
                             const data = {
@@ -64,6 +65,7 @@ export class RwkvCpp
                                         message: errors.join("\n"),
                                         tokens,
                                         completed,
+                                        type: LLMErrorType.Generic,
                                     })
                                 );
                             } else {
@@ -77,6 +79,24 @@ export class RwkvCpp
                         }
                     }
                 });
+
+                const abortSignalHandler = () => {
+                    abort();
+                    rej(
+                        new LLMError({
+                            message: "Aborted",
+                            tokens,
+                            completed,
+                            type: LLMErrorType.Aborted,
+                        })
+                    );
+                    abortSignal?.removeEventListener(
+                        "abort",
+                        abortSignalHandler
+                    );
+                };
+
+                abortSignal?.addEventListener("abort", abortSignalHandler);
             }
         );
     }

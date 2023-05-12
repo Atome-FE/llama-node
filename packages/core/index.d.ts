@@ -169,10 +169,10 @@ export class LLama {
   static enableLogger(): void
   /** Create a new LLama instance. */
   static create(config: LLamaConfig): Promise<LLama>
-  /** Get the tokenized result as number array, the result will be passed to the callback function. */
+  /** Get the tokenized result as number array, the result will be returned as Promise of number array. */
   tokenize(params: string): Promise<Array<number>>
-  /** Get the embedding result as number array, the result will be passed to the callback function. */
+  /** Get the embedding result as number array, the result will be returned as Promise of number array. */
   getWordEmbeddings(params: LLamaInferenceArguments): Promise<Array<number>>
-  /** Streaming the inference result as string, the result will be passed to the callback function. */
-  inference(params: LLamaInferenceArguments, callback: (result: InferenceResult) => void): void
+  /** Streaming the inference result as string, the result will be passed to the callback function. Will return a function to abort the inference. */
+  inference(params: LLamaInferenceArguments, callback: (result: InferenceResult) => void): () => void
 }

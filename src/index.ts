@@ -34,9 +34,10 @@ class LLM<
 
     async createCompletion(
         params: LLMInferenceArguments,
-        callback: CompletionCallback
+        callback: CompletionCallback,
+        abortSignal?: AbortSignal
     ): Promise<LLMResult> {
-        return this.llm.createCompletion(params, callback);
+        return this.llm.createCompletion(params, callback, abortSignal);
     }
 
     async getEmbedding(params: LLMEmbeddingArguments): Promise<number[]> {

@@ -9,130 +9,144 @@ mod types;
 
 use std::{path::Path, sync::Arc};
 
-use llama::LLamaInternal;
+use llama::{LLamaInternal, UserTerminated};
 use llama_rs::convert::convert_pth_to_ggml;
+use tokio::sync::Mutex;
 use types::{InferenceResult, LLamaConfig, LLamaInferenceArguments};
 
 use napi::{
-  bindgen_prelude::*,
-  threadsafe_function::{
-    ErrorStrategy, ThreadSafeCallContext, ThreadsafeFunction, ThreadsafeFunctionCallMode,
-  },
-  JsFunction,
+    bindgen_prelude::*,
+    threadsafe_function::{
+        ErrorStrategy, ThreadSafeCallContext, ThreadsafeFunction, ThreadsafeFunctionCallMode,
+    },
+    JsFunction,
 };
 
 #[napi]
 pub enum ElementType {
-  /// All tensors are stored as f32.
-  F32,
-  /// All tensors are mostly stored as `f16`, except for the 1D tensors (32-bit).
-  MostlyF16,
-  /// All tensors are mostly stored as `Q4_0`, except for the 1D tensors (32-bit).
-  MostlyQ4_0,
-  /// All tensors are mostly stored as `Q4_1`, except for the 1D tensors (32-bit)
-  MostlyQ4_1,
-  /// All tensors are mostly stored as `Q4_1`, except for the 1D tensors (32-bit)
-  /// and the `tok_embeddings.weight` (f16) and `output.weight` tensors (f16).
-  MostlyQ4_1SomeF16,
-  /// All tensors are mostly stored as `Q4_2`, except for the 1D tensors (32-bit).
-  MostlyQ4_2,
-  /// All tensors are mostly stored as `Q4_3`, except for the 1D tensors (32-bit).
-  MostlyQ4_3,
+    /// All tensors are stored as f32.
+    F32,
+    /// All tensors are mostly stored as `f16`, except for the 1D tensors (32-bit).
+    MostlyF16,
+    /// All tensors are mostly stored as `Q4_0`, except for the 1D tensors (32-bit).
+    MostlyQ4_0,
+    /// All tensors are mostly stored as `Q4_1`, except for the 1D tensors (32-bit)
+    MostlyQ4_1,
+    /// All tensors are mostly stored as `Q4_1`, except for the 1D tensors (32-bit)
+    /// and the `tok_embeddings.weight` (f16) and `output.weight` tensors (f16).
+    MostlyQ4_1SomeF16,
+    /// All tensors are mostly stored as `Q4_2`, except for the 1D tensors (32-bit).
+    MostlyQ4_2,
+    /// All tensors are mostly stored as `Q4_3`, except for the 1D tensors (32-bit).
+    MostlyQ4_3,
 }
 
 impl From<ElementType> for llama_rs::FileType {
-  fn from(element_type: ElementType) -> Self {
-    match element_type {
-      ElementType::F32 => llama_rs::FileType::F32,
-      ElementType::MostlyF16 => llama_rs::FileType::MostlyF16,
-      ElementType::MostlyQ4_0 => llama_rs::FileType::MostlyQ4_0,
-      ElementType::MostlyQ4_1 => llama_rs::FileType::MostlyQ4_1,
-      ElementType::MostlyQ4_1SomeF16 => llama_rs::FileType::MostlyQ4_1SomeF16,
-      ElementType::MostlyQ4_2 => llama_rs::FileType::MostlyQ4_2,
-      ElementType::MostlyQ4_3 => llama_rs::FileType::MostlyQ4_3,
+    fn from(element_type: ElementType) -> Self {
+        match element_type {
+            ElementType::F32 => llama_rs::FileType::F32,
+            ElementType::MostlyF16 => llama_rs::FileType::MostlyF16,
+            ElementType::MostlyQ4_0 => llama_rs::FileType::MostlyQ4_0,
+            ElementType::MostlyQ4_1 => llama_rs::FileType::MostlyQ4_1,
+            ElementType::MostlyQ4_1SomeF16 => llama_rs::FileType::MostlyQ4_1SomeF16,
+            ElementType::MostlyQ4_2 => llama_rs::FileType::MostlyQ4_2,
+            ElementType::MostlyQ4_3 => llama_rs::FileType::MostlyQ4_3,
+        }
     }
-  }
 }
 
 /// Not implemented yet.
 #[napi(js_name = "convert")]
 pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
-  let handle = tokio::task::spawn_blocking(move || {
-    let path = Path::new(path.as_str());
-    println!("path: {:?}", path);
-    convert_pth_to_ggml(path, element_type.into());
-  })
-  .await;
-  match handle {
-    Ok(_) => Ok(()),
-    Err(_) => Err(napi::Error::new(
-      napi::Status::GenericFailure,
-      "Failed to convert model".to_string(),
-    )),
-  }
+    let handle = tokio::task::spawn_blocking(move || {
+        let path = Path::new(path.as_str());
+        println!("path: {:?}", path);
+        convert_pth_to_ggml(path, element_type.into());
+    })
+    .await;
+    match handle {
+        Ok(_) => Ok(()),
+        Err(_) => Err(napi::Error::new(
+            napi::Status::GenericFailure,
+            "Failed to convert model".to_string(),
+        )),
+    }
 }
 
 #[napi(js_name = "LLama")]
 pub struct LLama {
-  llama: Arc<llama::LLamaInternal>,
+    llama: Arc<llama::LLamaInternal>,
 }
 
 /// LLama class is a Rust wrapper for llama-rs.
 #[napi]
 impl LLama {
-  /// Enable logger.
-  #[napi]
-  pub fn enable_logger() {
-    env_logger::builder()
-      .filter_level(log::LevelFilter::Info)
-      .parse_default_env()
-      .init();
-  }
+    /// Enable logger.
+    #[napi]
+    pub fn enable_logger() {
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .parse_default_env()
+            .init();
+    }
 
-  /// Create a new LLama instance.
-  #[napi]
-  pub async fn create(config: LLamaConfig) -> Result<LLama> {
-    let llama = LLamaInternal::load_model(&config).await?;
+    /// Create a new LLama instance.
+    #[napi]
+    pub async fn create(config: LLamaConfig) -> Result<LLama> {
+        let llama = LLamaInternal::load_model(&config).await?;
 
-    Ok(LLama {
-      llama: Arc::new(llama),
-    })
-  }
-
-  /// Get the tokenized result as number array, the result will be passed to the callback function.
-  #[napi]
-  pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
-    self.llama.tokenize(&params).await
-  }
-
-  /// Get the embedding result as number array, the result will be passed to the callback function.
-  #[napi]
-  pub async fn get_word_embeddings(&self, params: LLamaInferenceArguments) -> Result<Vec<f64>> {
-    self.llama.get_word_embedding(&params).await
-  }
-
-  /// Streaming the inference result as string, the result will be passed to the callback function.
-  #[napi]
-  pub fn inference(
-    &self,
-    params: LLamaInferenceArguments,
-    #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
-  ) -> Result<()> {
-    let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
-      .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
-        Ok(vec![ctx.value])
-      })?;
-
-    let llama = self.llama.clone();
-
-    tokio::spawn(async move {
-      llama
-        .inference(&params, |result| {
-          tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+        Ok(LLama {
+            llama: Arc::new(llama),
         })
-        .await;
-    });
+    }
 
-    Ok(())
-  }
+    /// Get the tokenized result as number array, the result will be returned as Promise of number array.
+    #[napi]
+    pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
+        self.llama.tokenize(&params).await
+    }
+
+    /// Get the embedding result as number array, the result will be returned as Promise of number array.
+    #[napi]
+    pub async fn get_word_embeddings(&self, params: LLamaInferenceArguments) -> Result<Vec<f64>> {
+        self.llama.get_word_embedding(&params).await
+    }
+
+    /// Streaming the inference result as string, the result will be passed to the callback function. Will return a function to abort the inference.
+    #[napi(ts_return_type = "() => void")]
+    pub fn inference(
+        &self,
+        env: Env,
+        params: LLamaInferenceArguments,
+        #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
+    ) -> Result<JsFunction> {
+        let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
+            .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
+                Ok(vec![ctx.value])
+            })?;
+
+        let llama = self.llama.clone();
+
+        let running = Arc::new(Mutex::new(true));
+        {
+            let running = running.clone();
+            tokio::task::spawn_blocking(move || {
+                llama.inference(&params, |result| {
+                    let running = running.blocking_lock();
+                    tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                    if *running {
+                        Ok(())
+                    } else {
+                        Err(UserTerminated::Error)
+                    }
+                });
+            });
+        }
+
+        env.create_function_from_closure("abort_inference", move |_| {
+            let mut running = running.blocking_lock();
+            *running = false;
+            Ok(())
+        })
+    }
 }

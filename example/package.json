@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc -p .",
     "langchain": "node js/langchain/langchain.js",
-    "llama-cpp": "node js/llama-cpp/inference.js",
+    "llama-cpp": "node js/llama-cpp/abortable.js",
     "llama-rs": "node js/llama-rs/inference.js"
   },
   "author": "",
