@@ -2,20 +2,20 @@ use std::{ffi::CStr, ptr::null_mut, slice};
 
 use anyhow::Result;
 use llama_sys::{
-    llama_context, llama_context_default_params, llama_context_params, llama_eval, llama_free,
-    llama_get_embeddings, llama_get_logits, llama_init_from_file, llama_n_embd, llama_n_vocab,
-    llama_print_system_info, llama_sample_frequency_and_presence_penalties,
-    llama_sample_repetition_penalty, llama_sample_tail_free, llama_sample_temperature,
-    llama_sample_token, llama_sample_token_greedy, llama_sample_top_k, llama_sample_top_p,
-    llama_sample_typical, llama_token, llama_token_data, llama_token_data_array, llama_token_nl,
-    llama_token_to_str,
+    llama_apply_lora_from_file, llama_context, llama_context_default_params, llama_context_params,
+    llama_eval, llama_free, llama_get_embeddings, llama_get_logits, llama_init_from_file,
+    llama_n_embd, llama_n_vocab, llama_print_system_info,
+    llama_sample_frequency_and_presence_penalties, llama_sample_repetition_penalty,
+    llama_sample_tail_free, llama_sample_temperature, llama_sample_token,
+    llama_sample_token_greedy, llama_sample_top_k, llama_sample_top_p, llama_sample_typical,
+    llama_token, llama_token_data, llama_token_data_array, llama_token_nl, llama_token_to_str,
 };
 
-use crate::types::{LlamaContextParams, LlamaInvocation};
+use crate::types::{LlamaContextParams, LlamaInvocation, LlamaLoraAdaptor};
 
 impl LlamaContextParams {
     // Returns the default parameters or the user-specified parameters.
-    pub(crate) fn or_default(params: &Option<LlamaContextParams>) -> llama_context_params {
+    pub fn or_default(params: &Option<LlamaContextParams>) -> llama_context_params {
         match params {
             Some(params) => params.clone().into(),
             None => unsafe { llama_context_default_params() },
@@ -32,11 +32,11 @@ impl From<LlamaContextParams> for llama_context_params {
             f16_kv: params.f16_kv,
             logits_all: params.logits_all,
             vocab_only: params.vocab_only,
+            use_mmap: params.use_mmap,
             use_mlock: params.use_mlock,
             embedding: params.embedding,
             progress_callback: None,
             progress_callback_user_data: null_mut(),
-            use_mmap: params.use_mmap,
         }
     }
 }
@@ -48,9 +48,33 @@ pub struct LLamaContext {
 
 impl LLamaContext {
     // Creates a new LLamaContext from the specified file and configuration parameters.
-    pub async fn from_file_and_params(path: &str, params: &Option<LlamaContextParams>) -> Self {
+    pub async fn from_file_and_params(
+        path: &str,
+        params: &Option<LlamaContextParams>,
+        lora_params: &Option<LlamaLoraAdaptor>,
+    ) -> Self {
         let params = LlamaContextParams::or_default(params);
         let ctx = unsafe { llama_init_from_file(path.as_ptr() as *const i8, params) };
+        if let Some(lora_params) = lora_params {
+            let lora_base_path = lora_params
+                .lora_base
+                .as_ref()
+                .map(|p| p.as_ptr() as *const i8)
+                .unwrap_or(null_mut());
+
+            let err = unsafe {
+                llama_apply_lora_from_file(
+                    ctx,
+                    lora_params.lora_adapter.as_ptr() as *const i8,
+                    lora_base_path,
+                    lora_params.n_threads,
+                )
+            };
+
+            if err != 0 {
+                panic!("Failed to apply LORA adapter");
+            }
+        }
         Self { ctx }
     }
 

@@ -3,7 +3,7 @@ import path from "path";
 
 const run = async () => {
     const llama = await LLama.load(
-        path.resolve(process.cwd(), "../../ggml-vicuna-7b-1.1-q4_1.bin"),
+        path.resolve(process.cwd(), "../../ggml-vic7b-q5_1.bin"),
         {
             nCtx: 512,
             nParts: -1,
