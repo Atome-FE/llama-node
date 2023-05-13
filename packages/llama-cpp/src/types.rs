@@ -54,3 +54,11 @@ pub struct LlamaContextParams {
     pub embedding: bool,
     pub use_mmap: bool,
 }
+
+#[napi(object)]
+#[derive(Debug, Clone)]
+pub struct LlamaLoraAdaptor {
+    pub lora_adapter: String,
+    pub lora_base: Option<String>,
+    pub n_threads: i32,
+}

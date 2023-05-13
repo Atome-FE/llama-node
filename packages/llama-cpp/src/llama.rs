@@ -22,7 +22,7 @@ impl LLamaInternal {
         enable_logger: bool,
     ) -> Arc<Mutex<Self>> {
         let llama = LLamaInternal {
-            context: LLamaContext::from_file_and_params(&path, &params).await,
+            context: LLamaContext::from_file_and_params(&path, &params, &None).await,
             context_params: params,
         };
 
