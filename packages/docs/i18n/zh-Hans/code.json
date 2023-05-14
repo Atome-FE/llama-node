@@ -262,8 +262,8 @@
   "Load Meta's large language model LLaMA. Support quantized model for less RAM consumption.": {
     "message": "能够加载开源的大语言模型LLaMA、RKWV以及LLaMA的衍生模型。"
   },
-  "Supports Windows, Linux, and macOS. Allow full accelerations on CPU inference (SIMD powered by llama.cpp/llama-rs).": {
-    "message": "支持Windows、Linux和macOS。允许在CPU推理上进行完全加速（SIMD由llama.cpp/llama-rs/rwkv.cpp提供）。"
+  "Supports Windows, Linux, and macOS. Allow full accelerations on CPU inference (SIMD powered by llama.cpp/llm-rs).": {
+    "message": "支持Windows、Linux和macOS。允许在CPU推理上进行完全加速（SIMD由llama.cpp/llm-rs/rwkv.cpp提供）。"
   },
   "Easy to Use": {
     "message": "易用"

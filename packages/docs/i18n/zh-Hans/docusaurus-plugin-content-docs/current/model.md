@@ -29,9 +29,9 @@ enum ggml_type {
 
 ---
 
-## llama-rs
+## llm-rs
 
-以下是llama-rs支持的模型类型，从llama-rs的ggml绑定中可找到：
+以下是llm-rs支持的模型类型，从llm-rs的ggml绑定中可找到：
 
 ```rust
 pub enum Type {
@@ -49,4 +49,4 @@ pub enum Type {
 }
 ```
 
-llama-rs也支持旧版的ggml/ggmf模型
+llm-rs也支持旧版的ggml/ggmf模型

@@ -36,7 +36,7 @@ llama-node: Node.js Library for Large Language Model
 
 This project is in an early stage, the API for nodejs may change in the future, use it with caution.
 
-This is a nodejs library for inferencing llama, rwkv or llama derived models. It was built on top of [llama-rs](https://github.com/rustformers/llama-rs), [llama.cpp](https://github.com/ggerganov/llama.cpp) and [rwkv.cpp](https://github.com/saharNooby/rwkv.cpp). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
+This is a nodejs library for inferencing llama, rwkv or llama derived models. It was built on top of [llm (originally llama-rs)](https://github.com/rustformers/llm), [llama.cpp](https://github.com/ggerganov/llama.cpp) and [rwkv.cpp](https://github.com/saharNooby/rwkv.cpp). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
 
 Currently supported models (All of these should be converted to [GGML](https://github.com/ggerganov/ggml) format):
 
@@ -77,7 +77,7 @@ npm install llama-node
     npm install @llama-node/llama-cpp
     ```
 
-    -   or llama-rs
+    -   or llm
 
     ```bash
     npm install @llama-node/core
@@ -106,7 +106,7 @@ This library was published under MIT/Apache-2.0 license. However, we strongly re
 -   LLaMA models: [facebookresearch/llama](https://github.com/facebookresearch/llama)
 -   RWKV models: [BlinkDL/RWKV-LM](https://github.com/BlinkDL/RWKV-LM)
 -   llama.cpp: [ggreganov/llama.cpp](https://github.com/ggerganov/llama.cpp)
--   llama-rs: [rustformers/llama-rs](https://github.com/rustformers/llama-rs)
+-   llm: [rustformers/llm](https://github.com/rustformers/llm)
 -   rwkv.cpp: [saharNooby/rwkv.cpp](https://github.com/saharNooby/rwkv.cpp)
 
 ### Some source code comes from
