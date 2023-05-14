@@ -1,3 +1,4 @@
+import { ModelType } from "@llama-node/core";
 import { LLM } from "llama-node";
 import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
@@ -9,7 +10,7 @@ const llama = new LLM(LLamaRS);
 const content = "how are you?";
 
 const run = async () => {
-    await llama.load({ path: model });
+    await llama.load({ modelPath: model, modelType: ModelType.Llama });
     await llama.tokenize(content).then(console.log);
 };
 

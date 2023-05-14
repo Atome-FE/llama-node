@@ -8,7 +8,7 @@ const getWordEmbeddings = async (prompt, file) => {
     const data = await llama.getEmbedding({
         prompt,
         numPredict: 128,
-        temp: 0.2,
+        temperature: 0.2,
         topP: 1,
         topK: 40,
         repeatPenalty: 1,
@@ -19,7 +19,7 @@ const getWordEmbeddings = async (prompt, file) => {
     await fs.promises.writeFile(path.resolve(process.cwd(), file), JSON.stringify(data));
 };
 const run = async () => {
-    await llama.load({ path: model });
+    await llama.load({ modelPath: model, modelType: "Llama" /* ModelType.Llama */ });
     const dog1 = `My favourite animal is the dog`;
     await getWordEmbeddings(dog1, "./example/semantic-compare/dog1.json");
     const dog2 = `I have just adopted a cute dog`;

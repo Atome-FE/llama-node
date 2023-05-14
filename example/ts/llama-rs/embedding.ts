@@ -2,6 +2,7 @@ import { LLM } from "llama-node";
 import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
 import fs from "fs";
+import { ModelType } from "@llama-node/core";
 
 const model = path.resolve(process.cwd(), "../ggml-alpaca-7b-q4.bin");
 
@@ -11,7 +12,7 @@ const getWordEmbeddings = async (prompt: string, file: string) => {
     const data = await llama.getEmbedding({
         prompt,
         numPredict: 128,
-        temp: 0.2,
+        temperature: 0.2,
         topP: 1,
         topK: 40,
         repeatPenalty: 1,
@@ -28,7 +29,7 @@ const getWordEmbeddings = async (prompt: string, file: string) => {
 };
 
 const run = async () => {
-    await llama.load({ path: model });
+    await llama.load({ modelPath: model, modelType: ModelType.Llama });
 
     const dog1 = `My favourite animal is the dog`;
     await getWordEmbeddings(dog1, "./example/semantic-compare/dog1.json");

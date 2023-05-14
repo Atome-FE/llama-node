@@ -14,7 +14,7 @@ ${template}
 const params = {
     prompt,
     numPredict: 128,
-    temp: 0.2,
+    temperature: 0.2,
     topP: 1,
     topK: 40,
     repeatPenalty: 1,
@@ -23,7 +23,7 @@ const params = {
     feedPrompt: true,
 };
 const run = async () => {
-    await llama.load({ path: model });
+    await llama.load({ modelPath: model, modelType: "Llama" /* ModelType.Llama */ });
     await llama.createCompletion(params, (response) => {
         process.stdout.write(response.token);
     });

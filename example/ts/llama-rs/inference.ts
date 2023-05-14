@@ -1,4 +1,4 @@
-import type { LLamaInferenceArguments } from "@llama-node/core";
+import { Generate, ModelType } from "@llama-node/core";
 import { LLM } from "llama-node";
 import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
 import path from "path";
@@ -17,10 +17,10 @@ ${template}
 
 ### Response:`;
 
-const params: LLamaInferenceArguments = {
+const params: Partial<Generate> = {
     prompt,
     numPredict: 128,
-    temp: 0.2,
+    temperature: 0.2,
     topP: 1,
     topK: 40,
     repeatPenalty: 1,
@@ -30,7 +30,7 @@ const params: LLamaInferenceArguments = {
 };
 
 const run = async () => {
-    await llama.load({ path: model });
+    await llama.load({ modelPath: model, modelType: ModelType.Llama });
 
     await llama.createCompletion(params, (response) => {
         process.stdout.write(response.token);

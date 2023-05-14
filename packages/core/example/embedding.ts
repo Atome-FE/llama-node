@@ -1,4 +1,4 @@
-import { LLama } from "../index";
+import { LLama, ModelType } from "../index";
 import path from "path";
 import fs from "fs";
 
@@ -14,7 +14,7 @@ const getWordEmbeddings = async (
     const response = await llama.getWordEmbeddings({
         prompt,
         numPredict: 128,
-        temp: 0.2,
+        temperature: 0.2,
         topP: 1,
         topK: 40,
         repeatPenalty: 1,
@@ -30,7 +30,8 @@ const getWordEmbeddings = async (
 
 const run = async () => {
     const llama = await LLama.create({
-        path: model,
+        modelType: ModelType.Llama,
+        modelPath: model,
         numCtxTokens: 128,
     });
 

@@ -5,14 +5,15 @@
 extern crate napi_derive;
 
 mod llama;
+mod load;
 mod types;
 
 use std::{path::Path, sync::Arc};
 
-use llama::{LLamaInternal, UserTerminated};
-use llama_rs::convert::convert_pth_to_ggml;
+use llama::LLamaInternal;
+use llm::{models::llama::convert::convert_pth_to_ggml, InferenceFeedback};
 use tokio::sync::Mutex;
-use types::{InferenceResult, LLamaConfig, LLamaInferenceArguments};
+use types::{Generate, InferenceResult, ModelLoad};
 
 use napi::{
     bindgen_prelude::*,
@@ -37,20 +38,26 @@ pub enum ElementType {
     MostlyQ4_1SomeF16,
     /// All tensors are mostly stored as `Q4_2`, except for the 1D tensors (32-bit).
     MostlyQ4_2,
-    /// All tensors are mostly stored as `Q4_3`, except for the 1D tensors (32-bit).
-    MostlyQ4_3,
+    /// All tensors are mostly stored as `Q8_0`, except for the 1D tensors (32-bit).
+    MostlyQ8_0,
+    /// All tensors are mostly stored as `Q5_0`, except for the 1D tensors (32-bit).
+    MostlyQ5_0,
+    /// All tensors are mostly stored as `Q5_1`, except for the 1D tensors (32-bit).
+    MostlyQ5_1,
 }
 
-impl From<ElementType> for llama_rs::FileType {
+impl From<ElementType> for llm::FileType {
     fn from(element_type: ElementType) -> Self {
         match element_type {
-            ElementType::F32 => llama_rs::FileType::F32,
-            ElementType::MostlyF16 => llama_rs::FileType::MostlyF16,
-            ElementType::MostlyQ4_0 => llama_rs::FileType::MostlyQ4_0,
-            ElementType::MostlyQ4_1 => llama_rs::FileType::MostlyQ4_1,
-            ElementType::MostlyQ4_1SomeF16 => llama_rs::FileType::MostlyQ4_1SomeF16,
-            ElementType::MostlyQ4_2 => llama_rs::FileType::MostlyQ4_2,
-            ElementType::MostlyQ4_3 => llama_rs::FileType::MostlyQ4_3,
+            ElementType::F32 => llm::FileType::F32,
+            ElementType::MostlyF16 => llm::FileType::MostlyF16,
+            ElementType::MostlyQ4_0 => llm::FileType::MostlyQ4_0,
+            ElementType::MostlyQ4_1 => llm::FileType::MostlyQ4_1,
+            ElementType::MostlyQ4_1SomeF16 => llm::FileType::MostlyQ4_1SomeF16,
+            ElementType::MostlyQ4_2 => llm::FileType::MostlyQ4_2,
+            ElementType::MostlyQ8_0 => llm::FileType::MostlyQ8_0,
+            ElementType::MostlyQ5_0 => llm::FileType::MostlyQ5_0,
+            ElementType::MostlyQ5_1 => llm::FileType::MostlyQ5_1,
         }
     }
 }
@@ -92,7 +99,7 @@ impl LLama {
 
     /// Create a new LLama instance.
     #[napi]
-    pub async fn create(config: LLamaConfig) -> Result<LLama> {
+    pub async fn create(config: ModelLoad) -> Result<LLama> {
         let llama = LLamaInternal::load_model(&config).await?;
 
         Ok(LLama {
@@ -108,7 +115,11 @@ impl LLama {
 
     /// Get the embedding result as number array, the result will be returned as Promise of number array.
     #[napi]
-    pub async fn get_word_embeddings(&self, params: LLamaInferenceArguments) -> Result<Vec<f64>> {
+    pub async fn get_word_embeddings(
+        &self,
+        #[napi(ts_arg_type = "Partial<Generate>")] params: serde_json::Value,
+    ) -> Result<Vec<f64>> {
+        let params = serde_json::from_value::<Generate>(params).unwrap();
         self.llama.get_word_embedding(&params).await
     }
 
@@ -117,9 +128,10 @@ impl LLama {
     pub fn inference(
         &self,
         env: Env,
-        params: LLamaInferenceArguments,
+        #[napi(ts_arg_type = "Partial<Generate>")] params: serde_json::Value,
         #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
     ) -> Result<JsFunction> {
+        let params = serde_json::from_value::<Generate>(params).unwrap();
         let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
             .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
                 Ok(vec![ctx.value])
@@ -131,15 +143,19 @@ impl LLama {
         {
             let running = running.clone();
             tokio::task::spawn_blocking(move || {
-                llama.inference(&params, |result| {
-                    let running = running.blocking_lock();
-                    tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                    if *running {
-                        Ok(())
-                    } else {
-                        Err(UserTerminated::Error)
-                    }
-                });
+                llama
+                    .inference(&params, |result| {
+                        let running = running.blocking_lock();
+                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                        if *running {
+                            InferenceFeedback::Continue
+                        } else {
+                            InferenceFeedback::Halt
+                        }
+                    })
+                    .map_err(|e| {
+                        log::error!("Error in inference: {:?}", e);
+                    })
             });
         }
 
