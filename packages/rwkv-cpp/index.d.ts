@@ -8,8 +8,14 @@ export interface RwkvInvocation {
   topP: number
   temp: number
   endToken?: number
+  endString?: string
   seed?: number
   prompt: string
+  isSkipGeneration?: boolean
+  sessionFilePath?: string
+  isOverwriteSessionFile?: boolean
+  presencePenalty?: number
+  frequencyPenalty?: number
 }
 export interface InferenceToken {
   token: string
