@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import {
     convert,
-    LLamaInferenceArguments,
-    LLama,
-    LLamaConfig,
+    Generate,
+    Llm,
+    ModelLoad,
     InferenceResultType,
 } from "@llama-node/core";
 import yargs from "yargs";
@@ -14,7 +14,7 @@ const convertType = ["q4_0", "q4_1", "f16", "f32"] as const;
 
 type ConvertType = (typeof convertType)[number];
 
-interface CLIInferenceArguments extends LLamaInferenceArguments, LLamaConfig {
+interface CLIInferenceArguments extends Partial<Generate>, ModelLoad {
     logger?: boolean;
 }
 
@@ -25,6 +25,10 @@ class InferenceCommand implements yargs.CommandModule {
         return (args as yargs.Argv<CLIInferenceArguments>)
             .help("help")
             .example('llama inference -p "How are you?"', "Inference LLaMA")
+            .options("modelType", {
+                type: "string",
+                demandOption: true,
+            })
             .options("feedPrompt", {
                 type: "boolean",
                 demandOption: false,
@@ -32,8 +36,8 @@ class InferenceCommand implements yargs.CommandModule {
             })
             .options("float16", { type: "boolean", demandOption: false })
             .options("ignoreEos", { type: "boolean", demandOption: false })
-            .options("nBatch", { type: "number", demandOption: false })
-            .options("nThreads", { type: "number", demandOption: false })
+            .options("batchSize", { type: "number", demandOption: false })
+            .options("numThreads", { type: "number", demandOption: false })
             .options("numPredict", { type: "number", demandOption: false })
             .options("prompt", {
                 type: "string",
@@ -43,11 +47,11 @@ class InferenceCommand implements yargs.CommandModule {
             .options("repeatLastN", { type: "number", demandOption: false })
             .options("repeatPenalty", { type: "number", demandOption: false })
             .options("seed", { type: "number", demandOption: false })
-            .options("temp", { type: "number", demandOption: false })
+            .options("temperature", { type: "number", demandOption: false })
             .options("tokenBias", { type: "string", demandOption: false })
             .options("topK", { type: "number", demandOption: false })
             .options("topP", { type: "number", demandOption: false })
-            .options("path", {
+            .options("modelPath", {
                 type: "string",
                 demandOption: true,
                 alias: ["m", "model"],
@@ -61,22 +65,20 @@ class InferenceCommand implements yargs.CommandModule {
             });
     }
     async handler(args: yargs.ArgumentsCamelCase) {
-        const {
-            $0,
-            _,
-            path: model,
-            numCtxTokens,
-            logger,
-            ...rest
-        } = args as yargs.ArgumentsCamelCase<CLIInferenceArguments>;
-        const absolutePath = path.isAbsolute(model)
-            ? model
-            : path.join(process.cwd(), model);
+        const { $0, _, modelPath, modelType, numCtxTokens, logger, ...rest } =
+            args as yargs.ArgumentsCamelCase<CLIInferenceArguments>;
+        const absolutePath = path.isAbsolute(modelPath)
+            ? modelPath
+            : path.join(process.cwd(), modelPath);
         if (logger) {
-            LLama.enableLogger();
+            Llm.enableLogger();
         }
-        const llama = await LLama.create({ path: absolutePath, numCtxTokens });
-        llama.inference(rest, (result) => {
+        const llm = await Llm.create({
+            modelPath: absolutePath,
+            modelType,
+            numCtxTokens,
+        });
+        llm.inference(rest, (result) => {
             switch (result.type) {
                 case InferenceResultType.Data:
                     process.stdout.write(result.data?.token ?? "");

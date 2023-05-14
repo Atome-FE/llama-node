@@ -27,9 +27,9 @@ enum ggml_type {
 };
 ```
 
-## llama-rs
+## llm-rs
 
-For llama-rs, you can check supported model types from llama-rs ggml bindings:
+For llm-rs, you can check supported model types from llm-rs ggml bindings:
 
 ```rust
 pub enum Type {
@@ -47,7 +47,7 @@ pub enum Type {
 }
 ```
 
-llama-rs also supports legacy llama.cpp models
+llm-rs also supports legacy llama.cpp models
 
 ## rwkv.cpp
 

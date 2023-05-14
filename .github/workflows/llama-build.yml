@@ -68,7 +68,7 @@ jobs:
       - run: git submodule update --init --recursive
       - run: pnpm install
       - run: cargo clippy --all-targets
-      - run: pnpm build:llama-rs
+      - run: pnpm build:llm-rs
       - run: pnpm build:llama-cpp
       - run: pnpm build:rwkv-cpp
       - run: pnpm build

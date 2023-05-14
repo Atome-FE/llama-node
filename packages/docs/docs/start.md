@@ -73,7 +73,7 @@ npm install llama-node
   npm install @llama-node/llama-cpp
   ```
 
-  - or llama-rs
+  - or llm-rs
   
   ```bash
   npm install @llama-node/core
@@ -91,7 +91,7 @@ npm install llama-node
 
 - For llama and its derived models:
 
-  The llama-node uses llama-rs/llama.cpp under the hook and uses the model format (GGML/GGMF/GGJT) derived from llama.cpp. Due to the fact that the meta-release model is only used for research purposes, this project does not provide model downloads. If you have obtained the original .pth model, please read the [document](https://github.com/ggerganov/llama.cpp#prepare-data--run) and use the conversion tool provided by llama.cpp for conversion.
+  The llama-node uses llm-rs/llama.cpp under the hook and uses the model format (GGML/GGMF/GGJT) derived from llama.cpp. Due to the fact that the meta-release model is only used for research purposes, this project does not provide model downloads. If you have obtained the original .pth model, please read the [document](https://github.com/ggerganov/llama.cpp#prepare-data--run) and use the conversion tool provided by llama.cpp for conversion.
 
 - For RWKV models:
   
@@ -168,7 +168,7 @@ This library was published under MIT/Apache-2.0 license. However, we stronly rec
 - LLaMA models: [facebookresearch/llama](https://github.com/facebookresearch/llama)
 - RWKV models:  [BlinkDL/RWKV-LM](https://github.com/BlinkDL/RWKV-LM)
 - llama.cpp:    [ggreganov/llama.cpp](https://github.com/ggerganov/llama.cpp)
-- llama-rs:     [rustformers/llama-rs](https://github.com/rustformers/llama-rs)
+- llm-rs:     [rustformers/llm](https://github.com/rustformers/llm)
 - rwkv.cpp:     [saharNooby/rwkv.cpp](https://github.com/saharNooby/rwkv.cpp)
 
 ### Some source code comes from:

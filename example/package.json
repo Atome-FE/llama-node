@@ -1,6 +1,6 @@
 {
   "name": "@llama-node/examples",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -8,7 +8,7 @@
     "build": "tsc -p .",
     "langchain": "node js/langchain/langchain.js",
     "llama-cpp": "node js/llama-cpp/inference.js",
-    "llama-rs": "node js/llama-rs/inference.js",
+    "llm-rs": "node js/llm-rs/inference.js",
     "rwkv-cpp": "node js/rwkv-cpp/inference.js"
   },
   "author": "",
@@ -19,9 +19,9 @@
     "langchain": "^0.0.56"
   },
   "dependencies": {
-    "@llama-node/core": "0.1.3",
-    "@llama-node/llama-cpp": "0.1.3",
-    "@llama-node/rwkv-cpp": "0.1.3",
-    "llama-node": "0.1.3"
+    "@llama-node/core": "0.1.4",
+    "@llama-node/llama-cpp": "0.1.4",
+    "@llama-node/rwkv-cpp": "0.1.4",
+    "llama-node": "0.1.4"
   }
 }

@@ -1,30 +1,23 @@
 import {
     InferenceResultType,
-    LLama,
-    LLamaConfig,
-    LLamaInferenceArguments,
+    Llm,
+    ModelLoad,
+    Generate,
 } from "@llama-node/core";
 
 import { type ILLM, type LLMResult, LLMError, LLMErrorType } from "./type";
 
-export class LLamaRS
-    implements
-        ILLM<
-            LLama,
-            LLamaConfig,
-            LLamaInferenceArguments,
-            LLamaInferenceArguments,
-            string
-        >
+export class LLMRS
+    implements ILLM<Llm, ModelLoad, Generate, Generate, string>
 {
-    instance!: LLama;
+    instance!: Llm;
 
-    async load(config: LLamaConfig) {
-        this.instance = await LLama.create(config);
+    async load(config: ModelLoad) {
+        this.instance = await Llm.create(config);
     }
 
     async createCompletion(
-        params: LLamaInferenceArguments,
+        params: Partial<Generate>,
         callback: (data: { token: string; completed: boolean }) => void,
         abortSignal?: AbortSignal
     ): Promise<LLMResult> {
@@ -90,17 +83,15 @@ export class LLamaRS
         );
     }
 
-    async getEmbedding(params: LLamaInferenceArguments): Promise<number[]> {
+    async getEmbedding(params: Partial<Generate>): Promise<number[]> {
         return await this.instance.getWordEmbeddings(params);
     }
 
     async getDefaultEmbedding(text: string): Promise<number[]> {
         return this.getEmbedding({
-            nThreads: 4,
             numPredict: 1024,
             topK: 40,
             topP: 0.1,
-            temp: 0.1,
             repeatPenalty: 1,
             prompt: text,
         });

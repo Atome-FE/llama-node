@@ -10,6 +10,7 @@ const branch = process.argv[2] ?? "main";
 interface WorkflowRun {
     id: string;
     status: "queued" | "in_progress" | "completed";
+    display_title?: string;
     conclusion:
         | "success"
         | "failure"
@@ -38,6 +39,9 @@ async function getLatestGithubAction() {
 
         console.log(`Branch: ${branch}`);
         console.log(`Last successful workflow run id: ${lastId}`);
+        console.log(
+            `Last successful workflow description: ${firstThatSuccess?.display_title}`
+        );
 
         return lastId;
     } catch (error) {

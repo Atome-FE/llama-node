@@ -106,10 +106,10 @@ rustup target add x86_64-unknown-linux-musl
     pnpm build:llama-cpp
     ```
 
--   Build for llama-rs
+-   Build for llm-rs
 
     ```shell
-    pnpm build:llama-rs
+    pnpm build:llm-rs
     ```
 
 -   Build for rwkv-cpp

@@ -4,15 +4,16 @@
 #[macro_use]
 extern crate napi_derive;
 
-mod llama;
+mod context;
+mod load;
 mod types;
 
 use std::{path::Path, sync::Arc};
 
-use llama::{LLamaInternal, UserTerminated};
-use llama_rs::convert::convert_pth_to_ggml;
+use context::LLMContext;
+use llm::{models::llama::convert::convert_pth_to_ggml, InferenceFeedback};
 use tokio::sync::Mutex;
-use types::{InferenceResult, LLamaConfig, LLamaInferenceArguments};
+use types::{Generate, InferenceResult, ModelLoad};
 
 use napi::{
     bindgen_prelude::*,
@@ -37,20 +38,26 @@ pub enum ElementType {
     MostlyQ4_1SomeF16,
     /// All tensors are mostly stored as `Q4_2`, except for the 1D tensors (32-bit).
     MostlyQ4_2,
-    /// All tensors are mostly stored as `Q4_3`, except for the 1D tensors (32-bit).
-    MostlyQ4_3,
+    /// All tensors are mostly stored as `Q8_0`, except for the 1D tensors (32-bit).
+    MostlyQ8_0,
+    /// All tensors are mostly stored as `Q5_0`, except for the 1D tensors (32-bit).
+    MostlyQ5_0,
+    /// All tensors are mostly stored as `Q5_1`, except for the 1D tensors (32-bit).
+    MostlyQ5_1,
 }
 
-impl From<ElementType> for llama_rs::FileType {
+impl From<ElementType> for llm::FileType {
     fn from(element_type: ElementType) -> Self {
         match element_type {
-            ElementType::F32 => llama_rs::FileType::F32,
-            ElementType::MostlyF16 => llama_rs::FileType::MostlyF16,
-            ElementType::MostlyQ4_0 => llama_rs::FileType::MostlyQ4_0,
-            ElementType::MostlyQ4_1 => llama_rs::FileType::MostlyQ4_1,
-            ElementType::MostlyQ4_1SomeF16 => llama_rs::FileType::MostlyQ4_1SomeF16,
-            ElementType::MostlyQ4_2 => llama_rs::FileType::MostlyQ4_2,
-            ElementType::MostlyQ4_3 => llama_rs::FileType::MostlyQ4_3,
+            ElementType::F32 => llm::FileType::F32,
+            ElementType::MostlyF16 => llm::FileType::MostlyF16,
+            ElementType::MostlyQ4_0 => llm::FileType::MostlyQ4_0,
+            ElementType::MostlyQ4_1 => llm::FileType::MostlyQ4_1,
+            ElementType::MostlyQ4_1SomeF16 => llm::FileType::MostlyQ4_1SomeF16,
+            ElementType::MostlyQ4_2 => llm::FileType::MostlyQ4_2,
+            ElementType::MostlyQ8_0 => llm::FileType::MostlyQ8_0,
+            ElementType::MostlyQ5_0 => llm::FileType::MostlyQ5_0,
+            ElementType::MostlyQ5_1 => llm::FileType::MostlyQ5_1,
         }
     }
 }
@@ -73,14 +80,14 @@ pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
     }
 }
 
-#[napi(js_name = "LLama")]
-pub struct LLama {
-    llama: Arc<llama::LLamaInternal>,
+#[napi]
+pub struct LLM {
+    llm: Arc<context::LLMContext>,
 }
 
-/// LLama class is a Rust wrapper for llama-rs.
+/// LLM class is a Rust wrapper for llm-rs.
 #[napi]
-impl LLama {
+impl LLM {
     /// Enable logger.
     #[napi]
     pub fn enable_logger() {
@@ -90,26 +97,30 @@ impl LLama {
             .init();
     }
 
-    /// Create a new LLama instance.
+    /// Create a new LLM instance.
     #[napi]
-    pub async fn create(config: LLamaConfig) -> Result<LLama> {
-        let llama = LLamaInternal::load_model(&config).await?;
+    pub async fn create(config: ModelLoad) -> Result<LLM> {
+        let llm = LLMContext::load_model(&config).await?;
 
-        Ok(LLama {
-            llama: Arc::new(llama),
+        Ok(LLM {
+            llm: Arc::new(llm),
         })
     }
 
     /// Get the tokenized result as number array, the result will be returned as Promise of number array.
     #[napi]
     pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
-        self.llama.tokenize(&params).await
+        self.llm.tokenize(&params).await
     }
 
     /// Get the embedding result as number array, the result will be returned as Promise of number array.
     #[napi]
-    pub async fn get_word_embeddings(&self, params: LLamaInferenceArguments) -> Result<Vec<f64>> {
-        self.llama.get_word_embedding(&params).await
+    pub async fn get_word_embeddings(
+        &self,
+        #[napi(ts_arg_type = "Partial<Generate>")] params: serde_json::Value,
+    ) -> Result<Vec<f64>> {
+        let params = serde_json::from_value::<Generate>(params).unwrap();
+        self.llm.get_word_embedding(&params).await
     }
 
     /// Streaming the inference result as string, the result will be passed to the callback function. Will return a function to abort the inference.
@@ -117,29 +128,34 @@ impl LLama {
     pub fn inference(
         &self,
         env: Env,
-        params: LLamaInferenceArguments,
+        #[napi(ts_arg_type = "Partial<Generate>")] params: serde_json::Value,
         #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
     ) -> Result<JsFunction> {
+        let params = serde_json::from_value::<Generate>(params).unwrap();
         let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback
             .create_threadsafe_function(0, |ctx: ThreadSafeCallContext<InferenceResult>| {
                 Ok(vec![ctx.value])
             })?;
 
-        let llama = self.llama.clone();
+        let llm = self.llm.clone();
 
         let running = Arc::new(Mutex::new(true));
         {
             let running = running.clone();
             tokio::task::spawn_blocking(move || {
-                llama.inference(&params, |result| {
-                    let running = running.blocking_lock();
-                    tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                    if *running {
-                        Ok(())
-                    } else {
-                        Err(UserTerminated::Error)
-                    }
-                });
+                llm
+                    .inference(&params, |result| {
+                        let running = running.blocking_lock();
+                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                        if *running {
+                            InferenceFeedback::Continue
+                        } else {
+                            InferenceFeedback::Halt
+                        }
+                    })
+                    .map_err(|e| {
+                        log::error!("Error in inference: {:?}", e);
+                    })
             });
         }
 
