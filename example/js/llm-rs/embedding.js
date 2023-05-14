@@ -1,9 +1,9 @@
 import { LLM } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
+import { LLMRS } from "llama-node/dist/llm/llm-rs.js";
 import path from "path";
 import fs from "fs";
 const model = path.resolve(process.cwd(), "../ggml-alpaca-7b-q4.bin");
-const llama = new LLM(LLamaRS);
+const llama = new LLM(LLMRS);
 const getWordEmbeddings = async (prompt, file) => {
     const data = await llama.getEmbedding({
         prompt,

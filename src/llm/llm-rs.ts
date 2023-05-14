@@ -1,19 +1,19 @@
 import {
     InferenceResultType,
-    LLama,
+    Llm,
     ModelLoad,
     Generate,
 } from "@llama-node/core";
 
 import { type ILLM, type LLMResult, LLMError, LLMErrorType } from "./type";
 
-export class LLamaRS
-    implements ILLM<LLama, ModelLoad, Generate, Generate, string>
+export class LLMRS
+    implements ILLM<Llm, ModelLoad, Generate, Generate, string>
 {
-    instance!: LLama;
+    instance!: Llm;
 
     async load(config: ModelLoad) {
-        this.instance = await LLama.create(config);
+        this.instance = await Llm.create(config);
     }
 
     async createCompletion(

@@ -62,7 +62,7 @@ npm install llama-node
   npm install @llama-node/llama-cpp
   ```
 
-  - 或者 llama-rs
+  - 或者 llm-rs
   
   ```bash
   npm install @llama-node/core
@@ -72,7 +72,7 @@ npm install llama-node
 
 ## 获取模型
 
-llama-node底层调用llama-rs或llama.cpp，它使用的模型格式源自llama.cpp。由于meta发布模型仅用于研究机构测试，本项目不提供模型下载。如果你获取到了 .pth 原始模型，请阅读 [该文档](https://github.com/ggerganov/llama.cpp#prepare-data--run) 并使用llama.cpp提供的convert工具进行转化。
+llama-node底层调用llm-rs或llama.cpp，它使用的模型格式源自llama.cpp。由于meta发布模型仅用于研究机构测试，本项目不提供模型下载。如果你获取到了 .pth 原始模型，请阅读 [该文档](https://github.com/ggerganov/llama.cpp#prepare-data--run) 并使用llama.cpp提供的convert工具进行转化。
 
 ---
 

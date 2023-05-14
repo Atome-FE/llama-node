@@ -1,19 +1,19 @@
-import { InferenceResultType, LLama, ModelType } from "../index";
+import { InferenceResultType, Llm, ModelType } from "../index";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
 const loadSession = path.resolve(process.cwd(), "./tmp/session.bin");
 
-LLama.enableLogger();
+Llm.enableLogger();
 
 const run = async () => {
-    const llama = await LLama.create({
+    const llm = await Llm.create({
         modelType: ModelType.Llama,
         modelPath: model,
         numCtxTokens: 128,
     });
 
-    llama.inference(
+    llm.inference(
         {
             prompt: "",
             numPredict: 128,

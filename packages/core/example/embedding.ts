@@ -1,17 +1,17 @@
-import { LLama, ModelType } from "../index";
+import { LLM, Llm, ModelType } from "../index";
 import path from "path";
 import fs from "fs";
 
 const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
 
-LLama.enableLogger();
+Llm.enableLogger();
 
 const getWordEmbeddings = async (
-    llama: LLama,
+    llm: LLM,
     prompt: string,
     file: string
 ) => {
-    const response = await llama.getWordEmbeddings({
+    const response = await llm.getWordEmbeddings({
         prompt,
         numPredict: 128,
         temperature: 0.2,
@@ -29,20 +29,20 @@ const getWordEmbeddings = async (
 };
 
 const run = async () => {
-    const llama = await LLama.create({
+    const llm = await Llm.create({
         modelType: ModelType.Llama,
         modelPath: model,
         numCtxTokens: 128,
     });
 
     const dog1 = `My favourite animal is the dog`;
-    getWordEmbeddings(llama, dog1, "./example/semantic-compare/dog1.json");
+    getWordEmbeddings(llm, dog1, "./example/semantic-compare/dog1.json");
 
     const dog2 = `I have just adopted a cute dog`;
-    getWordEmbeddings(llama, dog2, "./example/semantic-compare/dog2.json");
+    getWordEmbeddings(llm, dog2, "./example/semantic-compare/dog2.json");
 
     const cat1 = `My favourite animal is the cat`;
-    getWordEmbeddings(llama, cat1, "./example/semantic-compare/cat1.json");
+    getWordEmbeddings(llm, cat1, "./example/semantic-compare/cat1.json");
 };
 
 run();

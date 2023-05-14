@@ -2,7 +2,7 @@
 import {
     convert,
     Generate,
-    LLama,
+    Llm,
     ModelLoad,
     InferenceResultType,
 } from "@llama-node/core";
@@ -71,14 +71,14 @@ class InferenceCommand implements yargs.CommandModule {
             ? modelPath
             : path.join(process.cwd(), modelPath);
         if (logger) {
-            LLama.enableLogger();
+            Llm.enableLogger();
         }
-        const llama = await LLama.create({
+        const llm = await Llm.create({
             modelPath: absolutePath,
             modelType,
             numCtxTokens,
         });
-        llama.inference(rest, (result) => {
+        llm.inference(rest, (result) => {
             switch (result.type) {
                 case InferenceResultType.Data:
                     process.stdout.write(result.data?.token ?? "");

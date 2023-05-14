@@ -252,10 +252,10 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { ModelType, InferenceResultType, ElementType, convert, LLama } = nativeBinding
+const { ModelType, InferenceResultType, ElementType, convert, Llm } = nativeBinding
 
 module.exports.ModelType = ModelType
 module.exports.InferenceResultType = InferenceResultType
 module.exports.ElementType = ElementType
 module.exports.convert = convert
-module.exports.LLama = LLama
+module.exports.Llm = Llm

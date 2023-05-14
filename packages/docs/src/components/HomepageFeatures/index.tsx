@@ -29,7 +29,7 @@ const FeatureList = [
         description: (
             <Translate>
                 Supports Windows, Linux, and macOS. Allow full accelerations on
-                CPU inference (SIMD powered by llama.cpp/llama-rs/rwkv.cpp).
+                CPU inference (SIMD powered by llama.cpp/llm-rs/rwkv.cpp).
             </Translate>
         ),
     },

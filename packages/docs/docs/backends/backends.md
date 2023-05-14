@@ -4,9 +4,9 @@ sidebar_position: 3
 
 # Backends
 
-llama-node currently supports llama-rs, llama.cpp and rwkv.cpp backends.
+llama-node currently supports llm-rs, llama.cpp and rwkv.cpp backends.
 
-llama-rs can supported multiple inference at same time.
+llm-rs can supported multiple inference at same time.
 
 llama.cpp and rwkv.cpp will treat async inference (in concurrent) as sequential requests.
 
@@ -18,7 +18,7 @@ llama.cpp and rwkv.cpp will treat async inference (in concurrent) as sequential 
 npm install @llama-node/llama-cpp
 ```
 
-- To use llama-rs backend, run
+- To use llm-rs backend, run
 
 ```bash
 npm install @llama-node/core

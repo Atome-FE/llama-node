@@ -1,2 +1,2 @@
-# LLaMA Node Core (llama-rs)
-The repo is for one of the backend: [llama-rs](https://github.com/rustformers/llama-rs)
+# LLaMA Node Core (llm-rs)
+The repo is for one of the backend: [llm-rs](https://github.com/rustformers/llm)

@@ -4,13 +4,13 @@
 #[macro_use]
 extern crate napi_derive;
 
-mod llama;
+mod context;
 mod load;
 mod types;
 
 use std::{path::Path, sync::Arc};
 
-use llama::LLamaInternal;
+use context::LLMContext;
 use llm::{models::llama::convert::convert_pth_to_ggml, InferenceFeedback};
 use tokio::sync::Mutex;
 use types::{Generate, InferenceResult, ModelLoad};
@@ -80,14 +80,14 @@ pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
     }
 }
 
-#[napi(js_name = "LLama")]
-pub struct LLama {
-    llama: Arc<llama::LLamaInternal>,
+#[napi]
+pub struct LLM {
+    llm: Arc<context::LLMContext>,
 }
 
-/// LLama class is a Rust wrapper for llama-rs.
+/// LLM class is a Rust wrapper for llm-rs.
 #[napi]
-impl LLama {
+impl LLM {
     /// Enable logger.
     #[napi]
     pub fn enable_logger() {
@@ -97,20 +97,20 @@ impl LLama {
             .init();
     }
 
-    /// Create a new LLama instance.
+    /// Create a new LLM instance.
     #[napi]
-    pub async fn create(config: ModelLoad) -> Result<LLama> {
-        let llama = LLamaInternal::load_model(&config).await?;
+    pub async fn create(config: ModelLoad) -> Result<LLM> {
+        let llm = LLMContext::load_model(&config).await?;
 
-        Ok(LLama {
-            llama: Arc::new(llama),
+        Ok(LLM {
+            llm: Arc::new(llm),
         })
     }
 
     /// Get the tokenized result as number array, the result will be returned as Promise of number array.
     #[napi]
     pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
-        self.llama.tokenize(&params).await
+        self.llm.tokenize(&params).await
     }
 
     /// Get the embedding result as number array, the result will be returned as Promise of number array.
@@ -120,7 +120,7 @@ impl LLama {
         #[napi(ts_arg_type = "Partial<Generate>")] params: serde_json::Value,
     ) -> Result<Vec<f64>> {
         let params = serde_json::from_value::<Generate>(params).unwrap();
-        self.llama.get_word_embedding(&params).await
+        self.llm.get_word_embedding(&params).await
     }
 
     /// Streaming the inference result as string, the result will be passed to the callback function. Will return a function to abort the inference.
@@ -137,13 +137,13 @@ impl LLama {
                 Ok(vec![ctx.value])
             })?;
 
-        let llama = self.llama.clone();
+        let llm = self.llm.clone();
 
         let running = Arc::new(Mutex::new(true));
         {
             let running = running.clone();
             tokio::task::spawn_blocking(move || {
-                llama
+                llm
                     .inference(&params, |result| {
                         let running = running.blocking_lock();
                         tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);

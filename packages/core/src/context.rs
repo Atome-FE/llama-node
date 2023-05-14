@@ -19,7 +19,7 @@ use crate::types::{
 
 const CACHE_COMPRESSION_LEVEL: CompressionLevel = 1;
 
-pub struct LLamaInternal {
+pub struct LLMContext {
     pub model: Box<dyn Model>,
 }
 
@@ -27,8 +27,8 @@ pub struct LLamaInternal {
 //     s.parse()
 // }
 
-impl LLamaInternal {
-    pub async fn load_model(params: &ModelLoad) -> Result<LLamaInternal, napi::Error> {
+impl LLMContext {
+    pub async fn load_model(params: &ModelLoad) -> Result<LLMContext, napi::Error> {
         let model = match params.model_type {
             ModelType::Llama => params.load::<llm::models::Llama>(),
             ModelType::Bloom => params.load::<llm::models::Bloom>(),
@@ -37,7 +37,7 @@ impl LLamaInternal {
             ModelType::NeoX => params.load::<llm::models::NeoX>(),
         }?;
 
-        Ok(LLamaInternal { model })
+        Ok(LLMContext { model })
     }
 
     pub async fn tokenize(&self, text: &str) -> Result<Vec<i32>, napi::Error> {

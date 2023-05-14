@@ -1,11 +1,11 @@
 import { Generate, ModelType } from "@llama-node/core";
 import { LLM } from "llama-node";
-import { LLamaRS } from "llama-node/dist/llm/llama-rs.js";
+import { LLMRS } from "llama-node/dist/llm/llm-rs.js";
 import path from "path";
 
 const model = path.resolve(process.cwd(), "../ggml-alpaca-7b-q4.bin");
 
-const llama = new LLM(LLamaRS);
+const llama = new LLM(LLMRS);
 
 const template = `how are you`;
 
@@ -30,25 +30,11 @@ const params: Partial<Generate> = {
 };
 
 const run = async () => {
-    const abortController = new AbortController();
-
     await llama.load({ modelPath: model, modelType: ModelType.Llama });
 
-    setTimeout(() => {
-        abortController.abort();
-    }, 3000);
-
-    try {
-        await llama.createCompletion(
-            params,
-            (response) => {
-                process.stdout.write(response.token);
-            },
-            abortController.signal
-        );
-    } catch (e) {
-        console.log(e);
-    }
+    await llama.createCompletion(params, (response) => {
+        process.stdout.write(response.token);
+    });
 };
 
 run();

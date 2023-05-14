@@ -29,7 +29,7 @@ export interface TokenBias {
   bias: number
 }
 /**
- * LLama model load config
+ * LLM model load config
 */
 export interface ModelLoad {
   modelType: ModelType
@@ -44,7 +44,7 @@ export interface ModelLoad {
    * or use a model that was trained with a larger context size.
    *
    * Alternate methods to extend the context, including
-   * [context clearing](https://github.com/rustformers/llama-rs/issues/77) are
+   * [context clearing](https://github.com/rustformers/llm/issues/77) are
    * being investigated, but are not yet implemented. Additionally, these
    * will likely not perform as well as a model with a larger context size.
    * Default is 2048
@@ -180,11 +180,12 @@ export const enum ElementType {
 }
 /** Not implemented yet. */
 export function convert(path: string, elementType: ElementType): Promise<void>
-export class LLama {
+export type LLM = Llm
+export class Llm {
   /** Enable logger. */
   static enableLogger(): void
-  /** Create a new LLama instance. */
-  static create(config: ModelLoad): Promise<LLama>
+  /** Create a new LLM instance. */
+  static create(config: ModelLoad): Promise<Llm>
   /** Get the tokenized result as number array, the result will be returned as Promise of number array. */
   tokenize(params: string): Promise<Array<number>>
   /** Get the embedding result as number array, the result will be returned as Promise of number array. */
