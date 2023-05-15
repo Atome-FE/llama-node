@@ -8,6 +8,42 @@ use platforms::{Arch, Platform, OS};
 use std::env;
 use std::path::PathBuf;
 
+struct BuildLinkInfo {
+    link_type: String,
+    #[cfg(target_os = "windows")]
+    link_extension_windows: String,
+    link_extension_nix: String,
+    link_out_dir: String,
+    cmake_link_flag: Vec<String>,
+}
+
+#[cfg(not(feature = "dynamic"))]
+fn get_link_info() -> BuildLinkInfo {
+    BuildLinkInfo {
+        link_type: "static".to_owned(),
+        #[cfg(target_os = "windows")]
+        link_extension_windows: "lib".to_owned(),
+        link_extension_nix: "a".to_owned(),
+        link_out_dir: env::var("OUT_DIR").unwrap(),
+        cmake_link_flag: vec!["-DLLAMA_STATIC=ON".to_owned()],
+    }
+}
+
+#[cfg(feature = "dynamic")]
+fn get_link_info() -> BuildLinkInfo {
+    BuildLinkInfo {
+        link_type: "dylib".to_owned(),
+        #[cfg(target_os = "windows")]
+        link_extension_windows: "dll".to_owned(),
+        link_extension_nix: "so".to_owned(),
+        link_out_dir: env::var("OUT_DIR").unwrap(),
+        cmake_link_flag: vec![
+            "-DLLAMA_STATIC=OFF".to_owned(),
+            "-DBUILD_SHARED_LIBS=ON".to_owned(),
+        ],
+    }
+}
+
 fn main() {
     let initial_dir = env::current_dir().unwrap();
 
@@ -23,16 +59,10 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=Accelerate");
     }
 
-    #[allow(unused_mut, unused_assignments)]
-    let mut link_type = "static";
+    let build_link_info = get_link_info();
 
-    #[cfg(feature = "dynamic")]
-    {
-        link_type = "dylib";
-    }
-
-    println!("cargo:rustc-link-search={}", env::var("OUT_DIR").unwrap());
-    println!("cargo:rustc-link-lib={}=llama", link_type);
+    println!("cargo:rustc-link-search={}", build_link_info.link_out_dir);
+    println!("cargo:rustc-link-lib={}=llama", build_link_info.link_type);
     println!("cargo:rerun-if-changed=wrapper.h");
 
     let bindings = bindgen::Builder::default()
@@ -45,7 +75,7 @@ fn main() {
 
     match bindings {
         Ok(b) => {
-            let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+            let out_path = PathBuf::from(build_link_info.link_out_dir.clone());
             b.write_to_file(out_path.join("bindings.rs"))
                 .expect("Couldn't write bindings!");
         }
@@ -81,20 +111,16 @@ fn main() {
         .arg("-DLLAMA_BUILD_TESTS=OFF")
         .arg("-DLLAMA_BUILD_EXAMPLES=OFF");
 
+    for flag in build_link_info.cmake_link_flag {
+        command.arg(&flag);
+    }
+
     #[cfg(feature = "cublas")]
     {
-        command.arg("-DLLAMA_CUBLAS=ON");
+        command
+            .arg("-DLLAMA_CUBLAS=ON")
+            .arg("-DCMAKE_POSITION_INDEPENDENT_CODE=ON");
     }
-
-    #[allow(unused_mut, unused_assignments)]
-    let mut link_type = "-DLLAMA_STATIC=ON";
-    #[cfg(feature = "dynamic")]
-    {
-        command.arg("-DBUILD_SHARED_LIBS=ON");
-        link_type = "-DLLAMA_STATIC=OFF";
-    }
-
-    command.arg(link_type);
 
     if platform.target_os == OS::MacOS {
         if platform.target_arch == Arch::AArch64 {
@@ -129,31 +155,15 @@ fn main() {
         panic!("Failed to build lib");
     }
 
-    #[allow(unused_mut, unused_assignments)]
-    let mut link_ext = ("lib", "a");
-
-    #[allow(unused_mut, unused_assignments)]
-    let mut out_dir = env::var("OUT_DIR").unwrap();
-    #[cfg(feature = "dynamic")]
-    {
-        link_ext = ("dll", "so");
-        let bin_dir = initial_dir.parent().unwrap();
-        let bin_dir = bin_dir.join("./@llama-node");
-        println!("cargo:warning=bin_dir: {:?}", bin_dir.display());
-        if !bin_dir.exists() {
-            std::fs::create_dir(bin_dir.clone()).unwrap();
-        }
-        out_dir = bin_dir.to_str().unwrap().to_string();
-    }
-
-    println!("cargo:warning=out_dir: {:?}", out_dir);
-
     // move libllama.a to where Cargo expects it (OUT_DIR)
     #[cfg(target_os = "windows")]
     {
         std::fs::copy(
-            format!("Release/llama.{}", link_ext.0),
-            format!("{}/llama.{}", out_dir, link_ext.0),
+            format!("Release/llama.{}", build_link_info.link_extension_windows),
+            format!(
+                "{}/llama.{}",
+                build_link_info.link_out_dir, build_link_info.link_extension_windows
+            ),
         )
         .expect("Failed to copy lib");
     }
@@ -161,8 +171,11 @@ fn main() {
     #[cfg(not(target_os = "windows"))]
     {
         std::fs::copy(
-            format!("libllama.{}", link_ext.1),
-            format!("{}/libllama.{}", out_dir, link_ext.1),
+            format!("libllama.{}", build_link_info.link_extension_nix),
+            format!(
+                "{}/libllama.{}",
+                build_link_info.link_out_dir, build_link_info.link_extension_nix
+            ),
         )
         .expect("Failed to copy lib");
     }

@@ -4,7 +4,18 @@ import path from "path";
 const run = async () => {
     const llama = await LLama.load(
         path.resolve(process.cwd(), "../../ggml-vic7b-q5_1.bin"),
-        null,
+        {
+            nGpuLayers: 10,
+            nCtx: 1024,
+            nParts: 1,
+            seed: 0,
+            f16Kv: false,
+            logitsAll: false,
+            vocabOnly: false,
+            useMlock: false,
+            embedding: false,
+            useMmap: true
+        },
         true
     );
 

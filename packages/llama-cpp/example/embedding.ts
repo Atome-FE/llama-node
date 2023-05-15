@@ -7,6 +7,7 @@ const run = async () => {
         {
             nCtx: 512,
             nParts: -1,
+            nGpuLayers: 0,
             seed: 0,
             f16Kv: false,
             logitsAll: false,

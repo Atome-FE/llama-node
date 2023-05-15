@@ -46,6 +46,7 @@ pub struct LlamaInvocation {
 pub struct LlamaContextParams {
     pub n_ctx: i32,
     pub n_parts: i32,
+    pub n_gpu_layers: i32,
     pub seed: i32,
     pub f16_kv: bool,
     pub logits_all: bool,
