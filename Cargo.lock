@@ -1424,6 +1424,7 @@ name = "rwkv-node-cpp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bincode",
  "env_logger",
  "futures",
  "log",
@@ -1435,6 +1436,7 @@ dependencies = [
  "num_cpus",
  "rand",
  "rwkv-sys",
+ "serde",
  "tokenizers",
  "tokio",
 ]

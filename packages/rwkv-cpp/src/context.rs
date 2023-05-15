@@ -1,7 +1,11 @@
 use std::ffi::CStr;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::Path;
 use tokenizers::tokenizer::Tokenizer;
 
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use rwkv_sys::{
     rwkv_context, rwkv_eval, rwkv_free, rwkv_get_logits_buffer_element_count,
     rwkv_get_state_buffer_element_count, rwkv_get_system_info_string, rwkv_init_from_file,
@@ -14,8 +18,14 @@ pub struct RWKVInvocation {
     pub top_p: f64,
     pub temp: f64,
     pub end_token: Option<i32>,
+    pub end_string: Option<String>,
     pub seed: Option<i32>,
     pub prompt: String,
+    pub is_skip_generation: Option<bool>,
+    pub session_file_path: Option<String>,
+    pub is_overwrite_session_file: Option<bool>,
+    pub presence_penalty: Option<f64>,
+    pub frequency_penalty: Option<f64>
 }
 
 // Represents the RWKVContext which wraps FFI calls to the rwkv.cpp library.
@@ -36,7 +46,55 @@ pub struct RWKVSession<'a> {
     is_first: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RWKVSessionData {
+    state_buffer_element_count: usize,
+    logits_buffer_element_count: usize,
+    model_state: Vec<f32>,
+    pub logits: Vec<f32>,
+    is_first: bool,
+}
+
 impl<'a> RWKVSession<'a> {
+    pub fn save_to_file(&mut self, path: &str) {
+        let data = RWKVSessionData {
+            state_buffer_element_count: self.state_buffer_element_count,
+            logits_buffer_element_count: self.logits_buffer_element_count,
+            model_state: self.model_state.to_vec(),
+            logits: self.logits.to_vec(),
+            is_first: self.is_first
+        };
+
+        let mut file = File::create(path).expect("Could not create file");
+        let serialized = bincode::serialize(&data).expect("Could not serialize session data");
+        file.write_all(&serialized).expect("Could not write session data");
+        log::info!("success on save to {}", path);
+    }
+
+    pub fn load_from_file_or_create(path: &str, rwkv_context: &'a RWKVContext) -> RWKVSession<'a> {
+        match File::open(path) {
+            Ok(mut file) => {
+                let mut buffer = Vec::new();
+                file.read_to_end(&mut buffer).expect("Could not read session data");
+                let data: RWKVSessionData = bincode::deserialize(&buffer).expect("Could not deserialize session data");
+                log::info!("success on load {}", path);
+                RWKVSession{
+                    rwkv_context,
+                    state_buffer_element_count: data.state_buffer_element_count,
+                    logits_buffer_element_count: data.logits_buffer_element_count,
+                    model_tokens: Vec::new(),
+                    model_state: data.model_state,
+                    logits: data.logits,
+                    is_first: data.is_first
+                }
+
+            }
+            Err(e) => {
+                rwkv_context.create_new_session()
+            }
+        }
+    }
+
     pub fn process_tokens(&mut self, tokens: &[i32]) {
         self.model_tokens.append(&mut tokens.to_vec());
 
