@@ -4,6 +4,7 @@
 // https://github.com/sobelio/llm-chain/blob/main/llm-chain-llama/sys/build.rs
 extern crate bindgen;
 
+use dirs::home_dir;
 use platforms::{Arch, Platform, OS};
 use std::env;
 use std::path::PathBuf;
@@ -45,9 +46,12 @@ fn get_link_info() -> BuildLinkInfo {
 }
 
 fn main() {
-    let initial_dir = env::current_dir().unwrap();
+    let home_dir = home_dir().unwrap();
+    let llama_node_dir = home_dir.join(".llama-node");
 
-    println!("cargo:warning=working_dir: {}", initial_dir.display());
+    if !llama_node_dir.exists() {
+        std::fs::create_dir(&llama_node_dir).expect("Unable to create .llama-node directory");
+    }
 
     let target = env::var("TARGET").unwrap();
     let platform = Platform::find(&target).unwrap();
@@ -166,6 +170,20 @@ fn main() {
             ),
         )
         .expect("Failed to copy lib");
+
+        #[cfg(feature = "dynamic")]
+        {
+            // move libllama.dll to llama_node_dir
+            std::fs::copy(
+                format!("Release/llama.{}", build_link_info.link_extension_windows),
+                format!(
+                    "{}/llama.{}",
+                    llama_node_dir.display(),
+                    build_link_info.link_extension_windows
+                ),
+            )
+            .expect("Failed to copy lib");
+        }
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -178,6 +196,20 @@ fn main() {
             ),
         )
         .expect("Failed to copy lib");
+
+        #[cfg(feature = "dynamic")]
+        {
+            // move libllama.so to llama_node_dir
+            std::fs::copy(
+                format!("libllama.{}", build_link_info.link_extension_nix),
+                format!(
+                    "{}/libllama.{}",
+                    llama_node_dir.display(),
+                    build_link_info.link_extension_nix
+                ),
+            )
+            .expect("Failed to copy lib");
+        }
     }
     // clean the llama build directory to prevent Cargo from complaining during crate publish
     _ = std::fs::remove_dir_all("build");

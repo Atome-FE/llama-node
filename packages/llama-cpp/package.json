@@ -25,6 +25,7 @@
     "cross-compile": "rimraf @llama-node && tsx scripts/cross-compile.mts",
     "artifacts": "tsx scripts/artifacts.ts",
     "build": "napi build --platform --release",
+    "build:cuda": "tsx scripts/cuda-compile.mts",
     "build:debug": "napi build --platform",
     "test": "vitest",
     "start": "tsx example/inference.ts",
