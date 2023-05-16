@@ -19,7 +19,7 @@ use napi::{
     JsFunction,
 };
 use tokio::sync::Mutex;
-use types::{InferenceResult, LlamaContextParams, LlamaInvocation};
+use types::{InferenceResult, LlamaContextParams, LlamaInvocation, InferenceResultType};
 
 #[napi]
 pub struct LLama {
@@ -42,7 +42,7 @@ impl LLama {
         }
 
         Ok(Self {
-            llama: LLamaInternal::load(path, params, enable_logger).await,
+            llama: LLamaInternal::load(path, params, enable_logger).await?,
         })
     }
 
@@ -78,9 +78,19 @@ impl LLama {
             let running = running.clone();
             tokio::task::spawn_blocking(move || {
                 let llama = llama.blocking_lock();
-                llama.inference(&params, running, |result| {
+                let res = llama.inference(&params, running, |result| {
                     tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
                 });
+                if let Err(e) = res {
+                    tsfn.call(
+                        InferenceResult {
+                            r#type: InferenceResultType::Error,
+                            data: None,
+                            message: Some(format!("Failed to run inference: {:?}", e)),
+                        },
+                        ThreadsafeFunctionCallMode::NonBlocking,
+                    );
+                }
             });
         }
 

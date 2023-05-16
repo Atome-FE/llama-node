@@ -33,10 +33,14 @@ pub(crate) fn tokenize(
     text: &str,
     context_window_size: usize,
     add_bos: bool,
-) -> Result<Vec<llama_token>> {
+) -> Result<Vec<llama_token>, napi::Error> {
     let tokenized_input = llama_tokenize_helper(context, text, add_bos);
     if tokenized_input.len() > context_window_size {
-        anyhow::bail!("Input too long")
+        return Err(napi::Error::from_reason(format!(
+            "Input is too long: {} > {}",
+            tokenized_input.len(),
+            context_window_size
+        )));
     }
     Ok(tokenized_input)
 }
