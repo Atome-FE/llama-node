@@ -1,10 +1,22 @@
+import { InferenceResultType } from "../index";
 import { LLama, LlamaInvocation } from "../index";
 import path from "path";
 
 const run = async () => {
     const llama = await LLama.load(
         path.resolve(process.cwd(), "../../ggml-vic7b-q5_1.bin"),
-        null,
+        {
+            nGpuLayers: 32,
+            nCtx: 1024,
+            nParts: 1,
+            seed: 0,
+            f16Kv: false,
+            logitsAll: false,
+            vocabOnly: false,
+            useMlock: false,
+            embedding: false,
+            useMmap: true
+        },
         true
     );
 
@@ -24,9 +36,20 @@ ASSISTANT:`;
         prompt,
     };
 
+    const start = Date.now();
+
+    let count = 0
     llama.inference(params, (data) => {
+        count+=1;
         process.stdout.write(data.data?.token ?? "");
+        if (data.type === InferenceResultType.End) {
+            const end = Date.now();
+            console.log(`\n\nToken Count: ${count}`);
+            console.log(`\n\nTime: ${end - start}ms`);
+        }
     });
+
+
 };
 
 run();

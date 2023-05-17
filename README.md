@@ -27,6 +27,7 @@ llama-node: Node.js Library for Large Language Model
     - [Supported platforms](#supported-platforms)
   - [Installation](#installation)
   - [Manual compilation](#manual-compilation)
+  - [CUDA support](#cuda-support)
   - [Acknowledgments](#acknowledgments)
     - [Models/Inferencing tools dependencies](#modelsinferencing-tools-dependencies)
     - [Some source code comes from](#some-source-code-comes-from)
@@ -113,6 +114,12 @@ npm install llama-node
 ## Manual compilation
 
 Please see how to start with manual compilation on our [contribution guide](https://llama-node.vercel.app/contribution)
+
+---
+
+## CUDA support
+
+Please read the document on our site to get started with [manual compilation](https://llama-node.vercel.app/docs/cuda) related to CUDA support
 
 ---
 

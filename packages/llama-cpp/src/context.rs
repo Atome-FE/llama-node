@@ -28,6 +28,7 @@ impl From<LlamaContextParams> for llama_context_params {
         llama_context_params {
             n_ctx: params.n_ctx,
             n_parts: params.n_parts,
+            n_gpu_layers: params.n_gpu_layers,
             seed: params.seed,
             f16_kv: params.f16_kv,
             logits_all: params.logits_all,

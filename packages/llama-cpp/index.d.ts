@@ -36,6 +36,7 @@ export interface LlamaInvocation {
 export interface LlamaContextParams {
   nCtx: number
   nParts: number
+  nGpuLayers: number
   seed: number
   f16Kv: boolean
   logitsAll: boolean
@@ -44,6 +45,11 @@ export interface LlamaContextParams {
   embedding: boolean
   useMmap: boolean
   lora?: LlamaLoraAdaptor
+}
+export interface LlamaLoraAdaptor {
+  loraAdapter: string
+  loraBase?: string
+  nThreads: number
 }
 export interface LlamaLoraAdaptor {
   loraAdapter: string

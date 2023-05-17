@@ -18,6 +18,7 @@ const config: LoadConfig = {
     useMlock: false,
     embedding: false,
     useMmap: true,
+    nGpuLayers: 0
 };
 
 const content = "how are you?";
