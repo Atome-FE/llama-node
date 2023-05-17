@@ -10,7 +10,8 @@ members = [
     "packages/hf-tokenizer",
     "packages/core",
     "packages/llama-cpp",
-    "packages/rwkv-cpp"
+    "packages/rwkv-cpp",
+    "packages/common-rs"
 ]
 
 [profile.release]

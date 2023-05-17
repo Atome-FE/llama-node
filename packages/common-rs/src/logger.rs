@@ -5,22 +5,27 @@ pub struct LLamaLogger {
     enabled: bool,
 }
 
-pub static mut LLAMA_LOGGER: LLamaLogger = LLamaLogger { enabled: true };
-pub static LLAMA_LOGGER_LOADED: Lazy<bool> = Lazy::new(|| {
+static mut LLAMA_LOGGER_INNER: LLamaLogger = LLamaLogger { enabled: true };
+pub static mut LLAMA_LOGGER: Lazy<&mut LLamaLogger> = Lazy::new(|| {
     log::set_max_level(LevelFilter::Info);
-    log::set_logger(unsafe { &LLAMA_LOGGER }).unwrap();
-    true
+    log::set_logger(unsafe { &LLAMA_LOGGER_INNER }).unwrap();
+    unsafe { &mut LLAMA_LOGGER_INNER }
 });
 
 impl LLamaLogger {
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
+
+    pub fn get_singleton() -> &'static mut LLamaLogger {
+        unsafe { &mut LLAMA_LOGGER }
+    }
 }
 
 impl Log for LLamaLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         metadata.level() <= log::Level::Info
+        // true
     }
 
     fn log(&self, record: &Record) {

@@ -5,11 +5,12 @@ extern crate napi_derive;
 
 mod context;
 mod llama;
-mod logger;
 mod tokenizer;
 mod types;
 
 use std::sync::Arc;
+
+use common_rs::logger::LLamaLogger;
 
 use llama::LLamaInternal;
 use napi::{
@@ -35,11 +36,9 @@ impl LLama {
         params: Option<LlamaContextParams>,
         enable_logger: bool,
     ) -> Result<LLama> {
-        if *logger::LLAMA_LOGGER_LOADED {
-            unsafe {
-                logger::LLAMA_LOGGER.set_enabled(enable_logger);
-            }
-        }
+        let logger = LLamaLogger::get_singleton();
+
+        logger.set_enabled(enable_logger);
 
         Ok(Self {
             llama: LLamaInternal::load(path, params, enable_logger).await?,

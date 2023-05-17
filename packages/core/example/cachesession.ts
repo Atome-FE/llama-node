@@ -4,14 +4,15 @@ import path from "path";
 const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
 const saveSession = path.resolve(process.cwd(), "./tmp/session.bin");
 
-Llm.enableLogger();
-
 const run = async () => {
-    const llm = await Llm.create({
-        modelType: ModelType.Llama,
-        modelPath: model,
-        numCtxTokens: 128,
-    });
+    const llm = await Llm.create(
+        {
+            modelType: ModelType.Llama,
+            modelPath: model,
+            numCtxTokens: 128,
+        },
+        true
+    );
 
     const template = `how are you`;
 

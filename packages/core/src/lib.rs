@@ -23,6 +23,8 @@ use napi::{
     JsFunction,
 };
 
+use common_rs::logger::LLamaLogger;
+
 #[napi]
 pub enum ElementType {
     /// All tensors are stored as f32.
@@ -88,23 +90,15 @@ pub struct LLM {
 /// LLM class is a Rust wrapper for llm-rs.
 #[napi]
 impl LLM {
-    /// Enable logger.
-    #[napi]
-    pub fn enable_logger() {
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .parse_default_env()
-            .init();
-    }
-
     /// Create a new LLM instance.
     #[napi]
-    pub async fn create(config: ModelLoad) -> Result<LLM> {
+    pub async fn create(config: ModelLoad, enable_logger: bool) -> Result<LLM> {
+        let logger = LLamaLogger::get_singleton();
+        logger.set_enabled(enable_logger);
+
         let llm = LLMContext::load_model(&config).await?;
 
-        Ok(LLM {
-            llm: Arc::new(llm),
-        })
+        Ok(LLM { llm: Arc::new(llm) })
     }
 
     /// Get the tokenized result as number array, the result will be returned as Promise of number array.
@@ -143,19 +137,18 @@ impl LLM {
         {
             let running = running.clone();
             tokio::task::spawn_blocking(move || {
-                llm
-                    .inference(&params, |result| {
-                        let running = running.blocking_lock();
-                        tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
-                        if *running {
-                            InferenceFeedback::Continue
-                        } else {
-                            InferenceFeedback::Halt
-                        }
-                    })
-                    .map_err(|e| {
-                        log::error!("Error in inference: {:?}", e);
-                    })
+                llm.inference(&params, |result| {
+                    let running = running.blocking_lock();
+                    tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
+                    if *running {
+                        InferenceFeedback::Continue
+                    } else {
+                        InferenceFeedback::Halt
+                    }
+                })
+                .map_err(|e| {
+                    log::error!("Error in inference: {:?}", e);
+                })
             });
         }
 

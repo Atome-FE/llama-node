@@ -182,10 +182,8 @@ export const enum ElementType {
 export function convert(path: string, elementType: ElementType): Promise<void>
 export type LLM = Llm
 export class Llm {
-  /** Enable logger. */
-  static enableLogger(): void
   /** Create a new LLM instance. */
-  static create(config: ModelLoad): Promise<Llm>
+  static create(config: ModelLoad, enableLogger: boolean): Promise<Llm>
   /** Get the tokenized result as number array, the result will be returned as Promise of number array. */
   tokenize(params: string): Promise<Array<number>>
   /** Get the embedding result as number array, the result will be returned as Promise of number array. */
