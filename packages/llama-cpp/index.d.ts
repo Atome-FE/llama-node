@@ -51,11 +51,6 @@ export interface LlamaLoraAdaptor {
   loraBase?: string
   nThreads: number
 }
-export interface LlamaLoraAdaptor {
-  loraAdapter: string
-  loraBase?: string
-  nThreads: number
-}
 export class LLama {
   static load(path: string, params: LlamaContextParams | undefined | null, enableLogger: boolean): Promise<LLama>
   getWordEmbedding(params: LlamaInvocation): Promise<Array<number>>

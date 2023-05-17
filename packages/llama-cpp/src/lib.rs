@@ -5,6 +5,7 @@ extern crate napi_derive;
 
 mod context;
 mod llama;
+mod logger;
 mod tokenizer;
 mod types;
 
@@ -19,7 +20,7 @@ use napi::{
     JsFunction,
 };
 use tokio::sync::Mutex;
-use types::{InferenceResult, LlamaContextParams, LlamaInvocation, InferenceResultType};
+use types::{InferenceResult, InferenceResultType, LlamaContextParams, LlamaInvocation};
 
 #[napi]
 pub struct LLama {
@@ -34,11 +35,10 @@ impl LLama {
         params: Option<LlamaContextParams>,
         enable_logger: bool,
     ) -> Result<LLama> {
-        if enable_logger {
-            env_logger::builder()
-                .filter_level(log::LevelFilter::Info)
-                .parse_default_env()
-                .init();
+        if *logger::LLAMA_LOGGER_LOADED {
+            unsafe {
+                logger::LLAMA_LOGGER.set_enabled(enable_logger);
+            }
         }
 
         Ok(Self {
