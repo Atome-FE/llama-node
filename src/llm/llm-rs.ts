@@ -7,13 +7,16 @@ import {
 
 import { type ILLM, type LLMResult, LLMError, LLMErrorType } from "./type";
 
-export class LLMRS
-    implements ILLM<Llm, ModelLoad, Generate, Generate, string>
-{
+export interface LoadConfig extends ModelLoad {
+    enableLogging?: boolean;
+}
+
+export class LLMRS implements ILLM<Llm, ModelLoad, Generate, Generate, string> {
     instance!: Llm;
 
-    async load(config: ModelLoad) {
-        this.instance = await Llm.create(config);
+    async load(config: LoadConfig) {
+        const { enableLogging, ...rest } = config;
+        this.instance = await Llm.create(rest, enableLogging ?? true);
     }
 
     async createCompletion(
