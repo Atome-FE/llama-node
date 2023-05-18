@@ -15,10 +15,11 @@ const config = {
     useMlock: false,
     embedding: false,
     useMmap: true,
+    nGpuLayers: 0,
 };
 const content = "how are you?";
 const run = async () => {
     await llama.load(config);
-    await llama.tokenize({ content, nCtx: 2048 }).then(console.log);
+    await llama.tokenize(content).then(console.log);
 };
 run();

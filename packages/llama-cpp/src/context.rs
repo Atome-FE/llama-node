@@ -11,7 +11,7 @@ use llama_sys::{
     llama_token, llama_token_data, llama_token_data_array, llama_token_nl, llama_token_to_str,
 };
 
-use crate::types::{LlamaContextParams, LlamaInvocation, LlamaLoraAdaptor};
+use crate::types::{LlamaContextParams, LlamaInvocation};
 
 impl LlamaContextParams {
     // Returns the default parameters or the user-specified parameters.
@@ -52,10 +52,18 @@ impl LLamaContext {
     pub async fn from_file_and_params(
         path: &str,
         params: &Option<LlamaContextParams>,
-        lora_params: &Option<LlamaLoraAdaptor>,
-    ) -> Self {
+    ) -> Result<Self, napi::Error> {
+        let lora_params = params.as_ref().and_then(|p| p.lora.clone());
         let params = LlamaContextParams::or_default(params);
         let ctx = unsafe { llama_init_from_file(path.as_ptr() as *const i8, params) };
+
+        if ctx.is_null() {
+            return Err(napi::Error::from_reason(format!(
+                "Failed to initialize LLama context from file: {}",
+                path
+            )));
+        }
+
         if let Some(lora_params) = lora_params {
             let lora_base_path = lora_params
                 .lora_base
@@ -73,19 +81,22 @@ impl LLamaContext {
             };
 
             if err != 0 {
-                panic!("Failed to apply LORA adapter");
+                return Err(napi::Error::from_reason(format!(
+                    "Failed to apply lora adapter: {}",
+                    err
+                )));
             }
         }
-        Self { ctx }
+        Ok(Self { ctx })
     }
 
-    pub fn llama_print_system_info(&self) {
+    pub fn llama_print_system_info(&self) -> Result<()> {
         let sys_info_c_str = unsafe { llama_print_system_info() };
         let sys_info = unsafe { CStr::from_ptr(sys_info_c_str) }
-            .to_str()
-            .unwrap()
+            .to_str()?
             .to_owned();
         log::info!("{}", sys_info);
+        Ok(())
     }
 
     // Executes the LLama sampling process with the specified configuration.
@@ -230,13 +241,13 @@ impl LLamaContext {
         n_tokens: i32,
         n_past: i32,
         input: &LlamaInvocation,
-    ) -> Result<(), ()> {
+    ) -> Result<(), napi::Error> {
         let res =
             unsafe { llama_eval(self.ctx, tokens.as_ptr(), n_tokens, n_past, input.n_threads) };
         if res == 0 {
             Ok(())
         } else {
-            Err(())
+            Err(napi::Error::from_reason("LLama eval failed"))
         }
     }
 }

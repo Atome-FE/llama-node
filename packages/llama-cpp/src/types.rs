@@ -54,6 +54,7 @@ pub struct LlamaContextParams {
     pub use_mlock: bool,
     pub embedding: bool,
     pub use_mmap: bool,
+    pub lora: Option<LlamaLoraAdaptor>,
 }
 
 #[napi(object)]

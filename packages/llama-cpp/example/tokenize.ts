@@ -10,7 +10,7 @@ const run = async () => {
 
     const template = `Who is the president of the United States?`;
 
-    llama.tokenize(template, 2048).then((data) => {
+    llama.tokenize(template).then((data) => {
         console.log(data);
     });
 };

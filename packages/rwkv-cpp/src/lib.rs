@@ -9,6 +9,7 @@ mod sampling;
 mod types;
 
 use std::sync::Arc;
+use common_rs::logger::LLamaLogger;
 
 use context::RWKVInvocation;
 use napi::{
@@ -36,12 +37,9 @@ impl RWKV {
         n_threads: u32,
         enable_logger: bool,
     ) -> Result<RWKV> {
-        if enable_logger {
-            env_logger::builder()
-                .filter_level(log::LevelFilter::Info)
-                .parse_default_env()
-                .init();
-        }
+        let logger = LLamaLogger::get_singleton();
+
+        logger.set_enabled(enable_logger);
 
         Ok(Self {
             rwkv: RWKVInternal::load(model_path, tokenizer_path, n_threads, enable_logger).await,

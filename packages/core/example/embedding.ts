@@ -4,13 +4,7 @@ import fs from "fs";
 
 const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
 
-Llm.enableLogger();
-
-const getWordEmbeddings = async (
-    llm: LLM,
-    prompt: string,
-    file: string
-) => {
+const getWordEmbeddings = async (llm: LLM, prompt: string, file: string) => {
     const response = await llm.getWordEmbeddings({
         prompt,
         numPredict: 128,
@@ -29,11 +23,14 @@ const getWordEmbeddings = async (
 };
 
 const run = async () => {
-    const llm = await Llm.create({
-        modelType: ModelType.Llama,
-        modelPath: model,
-        numCtxTokens: 128,
-    });
+    const llm = await Llm.create(
+        {
+            modelType: ModelType.Llama,
+            modelPath: model,
+            numCtxTokens: 128,
+        },
+        true
+    );
 
     const dog1 = `My favourite animal is the dog`;
     getWordEmbeddings(llm, dog1, "./example/semantic-compare/dog1.json");

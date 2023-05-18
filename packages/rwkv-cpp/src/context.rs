@@ -1,7 +1,6 @@
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
 use tokenizers::tokenizer::Tokenizer;
 
 use anyhow::Result;
@@ -89,7 +88,7 @@ impl<'a> RWKVSession<'a> {
                 }
 
             }
-            Err(e) => {
+            Err(_e) => {
                 rwkv_context.create_new_session()
             }
         }

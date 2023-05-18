@@ -10,6 +10,8 @@ mod types;
 
 use std::sync::Arc;
 
+use common_rs::logger::LLamaLogger;
+
 use llama::LLamaInternal;
 use napi::{
     bindgen_prelude::*,
@@ -19,7 +21,7 @@ use napi::{
     JsFunction,
 };
 use tokio::sync::Mutex;
-use types::{InferenceResult, LlamaContextParams, LlamaInvocation};
+use types::{InferenceResult, InferenceResultType, LlamaContextParams, LlamaInvocation};
 
 #[napi]
 pub struct LLama {
@@ -34,15 +36,12 @@ impl LLama {
         params: Option<LlamaContextParams>,
         enable_logger: bool,
     ) -> Result<LLama> {
-        if enable_logger {
-            env_logger::builder()
-                .filter_level(log::LevelFilter::Info)
-                .parse_default_env()
-                .init();
-        }
+        let logger = LLamaLogger::get_singleton();
+
+        logger.set_enabled(enable_logger);
 
         Ok(Self {
-            llama: LLamaInternal::load(path, params, enable_logger).await,
+            llama: LLamaInternal::load(path, params, enable_logger).await?,
         })
     }
 
@@ -53,9 +52,9 @@ impl LLama {
     }
 
     #[napi]
-    pub async fn tokenize(&self, params: String, n_ctx: i32) -> Result<Vec<i32>> {
+    pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
         let llama = self.llama.lock().await;
-        llama.tokenize(&params, n_ctx as usize).await
+        llama.tokenize(&params).await
     }
 
     #[napi(ts_return_type = "() => void")]
@@ -78,9 +77,19 @@ impl LLama {
             let running = running.clone();
             tokio::task::spawn_blocking(move || {
                 let llama = llama.blocking_lock();
-                llama.inference(&params, running, |result| {
+                let res = llama.inference(&params, running, |result| {
                     tsfn.call(result, ThreadsafeFunctionCallMode::NonBlocking);
                 });
+                if let Err(e) = res {
+                    tsfn.call(
+                        InferenceResult {
+                            r#type: InferenceResultType::Error,
+                            data: None,
+                            message: Some(format!("Failed to run inference: {:?}", e)),
+                        },
+                        ThreadsafeFunctionCallMode::NonBlocking,
+                    );
+                }
             });
         }
 

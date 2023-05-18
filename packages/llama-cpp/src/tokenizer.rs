@@ -1,5 +1,5 @@
 // use crate::output::Output;
-use anyhow::Result;
+// use anyhow::Result;
 use std::ffi::CString;
 use std::os::raw::c_char;
 
@@ -28,17 +28,8 @@ pub fn llama_token_eos() -> i32 {
 /// # Returns
 ///
 /// A Result containing a Vec of llama_tokens on success, or an error if the tokenized input is too long.
-pub(crate) fn tokenize(
-    context: &LLamaContext,
-    text: &str,
-    context_window_size: usize,
-    add_bos: bool,
-) -> Result<Vec<llama_token>> {
-    let tokenized_input = llama_tokenize_helper(context, text, add_bos);
-    if tokenized_input.len() > context_window_size {
-        anyhow::bail!("Input too long")
-    }
-    Ok(tokenized_input)
+pub(crate) fn tokenize(context: &LLamaContext, text: &str, add_bos: bool) -> Vec<llama_token> {
+    llama_tokenize_helper(context, text, add_bos)
 }
 
 /// Helper function to tokenize text using the provided LLamaContext and add_bos option.

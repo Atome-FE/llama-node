@@ -15,7 +15,7 @@ const run = async () => {
             vocabOnly: false,
             useMlock: false,
             embedding: false,
-            useMmap: true
+            useMmap: true,
         },
         true
     );
@@ -38,9 +38,9 @@ ASSISTANT:`;
 
     const start = Date.now();
 
-    let count = 0
+    let count = 0;
     llama.inference(params, (data) => {
-        count+=1;
+        count += 1;
         process.stdout.write(data.data?.token ?? "");
         if (data.type === InferenceResultType.End) {
             const end = Date.now();
@@ -48,8 +48,6 @@ ASSISTANT:`;
             console.log(`\n\nTime: ${end - start}ms`);
         }
     });
-
-
 };
 
 run();
