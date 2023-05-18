@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "serve": "vite serve",
     "test": "cross-env TF_CPP_MIN_LOG_LEVEL=2 tsx example/index.ts"
   },
   "keywords": [],
@@ -11,8 +12,19 @@
   "license": "ISC",
   "dependencies": {
     "@llama-node/hf-tokenizer": "0.0.37",
-    "@tensorflow/tfjs-node": "^4.2.0",
+    "@tensorflow/tfjs": "^4.6.0",
+    "@tensorflow/tfjs-node": "^4.6.0",
     "onnxruntime-node": "^1.14.0",
-    "onnxruntime-web": "^1.14.0"
+    "onnxruntime-web": "^1.14.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.6",
+    "@types/react-dom": "^18.2.4",
+    "@vitejs/plugin-react": "^4.0.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "vite-plugin-top-level-await": "^1.3.0",
+    "vite-plugin-wasm": "^3.2.2"
   }
 }

@@ -1,9 +1,10 @@
-import * as onnx from "onnxruntime-node";
-import * as tfjs from "@tensorflow/tfjs-node";
+import * as onnx from "onnxruntime-web";
+import * as tfjs from "@tensorflow/tfjs";
 import { AutoTokenizer } from "./tokenizer";
+import type { IsomorphicTokenizer } from "../shared/tokenizer";
 
 interface IGPT2OnnxOptions {
-    modelPath: string;
+    modelPath: string | ArrayBufferLike;
     tokenizerUrl: string;
 }
 
@@ -16,14 +17,16 @@ interface IGPT2OnnxInferenceOptions {
 }
 
 export class GPT2Onnx {
-    tokenizer: AutoTokenizer | undefined;
+    tokenizer: IsomorphicTokenizer | undefined;
     session: onnx.InferenceSession | undefined;
 
     static async create(options: IGPT2OnnxOptions) {
+        const tokenizer = new AutoTokenizer();
+        await tokenizer.initFromUrl(options.tokenizerUrl);
         const gpt2Onnx = new GPT2Onnx();
-        gpt2Onnx.tokenizer = await AutoTokenizer.fromUrl(options.tokenizerUrl);
+        gpt2Onnx.tokenizer = tokenizer;
         gpt2Onnx.session = await onnx.InferenceSession.create(
-            options.modelPath
+            options.modelPath as ArrayBufferLike
         );
 
         return gpt2Onnx;

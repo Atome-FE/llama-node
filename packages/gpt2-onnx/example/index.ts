@@ -1,4 +1,4 @@
-import { GPT2Onnx } from "../src";
+import { GPT2Onnx } from "../src/node";
 import path from "path";
 
 const modelPath = path.join(process.cwd(), "../../gpt2.onnx");
