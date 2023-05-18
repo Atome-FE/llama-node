@@ -52,9 +52,9 @@ impl LLama {
     }
 
     #[napi]
-    pub async fn tokenize(&self, params: String, n_ctx: i32) -> Result<Vec<i32>> {
+    pub async fn tokenize(&self, params: String) -> Result<Vec<i32>> {
         let llama = self.llama.lock().await;
-        llama.tokenize(&params, n_ctx as usize).await
+        llama.tokenize(&params).await
     }
 
     #[napi(ts_return_type = "() => void")]

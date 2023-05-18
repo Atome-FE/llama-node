@@ -54,6 +54,6 @@ export interface LlamaLoraAdaptor {
 export class LLama {
   static load(path: string, params: LlamaContextParams | undefined | null, enableLogger: boolean): Promise<LLama>
   getWordEmbedding(params: LlamaInvocation): Promise<Array<number>>
-  tokenize(params: string, nCtx: number): Promise<Array<number>>
+  tokenize(params: string): Promise<Array<number>>
   inference(params: LlamaInvocation, callback: (result: InferenceResult) => void): () => void
 }

@@ -35,21 +35,14 @@ impl LLamaInternal {
 
         Ok(Arc::new(Mutex::new(llama)))
     }
-    pub async fn tokenize(&self, input: &str, n_ctx: usize) -> Result<Vec<i32>, napi::Error> {
+    pub async fn tokenize(&self, input: &str) -> Result<Vec<i32>, napi::Error> {
         let context = &self.context;
-        tokenize(context, input, n_ctx, false)
+        Ok(tokenize(context, input, false))
     }
 
     pub async fn embedding(&self, input: &LlamaInvocation) -> Result<Vec<f64>, napi::Error> {
         let context = &self.context;
-        let context_params_c = LlamaContextParams::or_default(&self.context_params);
-        let embd_inp = tokenize(
-            context,
-            input.prompt.as_str(),
-            context_params_c.n_ctx as usize,
-            true,
-        )
-        .map_err(|e| napi::Error::from_reason(format!("Failed to tokenize input: {:?}", e)))?;
+        let embd_inp = tokenize(context, input.prompt.as_str(), true);
 
         // let end_text = "\n";
         // let end_token =
@@ -77,24 +70,14 @@ impl LLamaInternal {
         let context = &self.context;
         let context_params_c = LlamaContextParams::or_default(&self.context_params);
         // Tokenize the stop sequence and input prompt.
-        let tokenized_stop_prompt = input.stop_sequence.as_ref().map(|stop_sequence| {
-            tokenize(
-                context,
-                stop_sequence,
-                context_params_c.n_ctx as usize,
-                false,
-            )
-            .unwrap_or(vec![])
-        });
+        let tokenized_stop_prompt = input
+            .stop_sequence
+            .as_ref()
+            .map(|stop_sequence| tokenize(context, stop_sequence, false));
 
         log::info!("tokenized_stop_prompt: {:?}", tokenized_stop_prompt);
 
-        let tokenized_input = tokenize(
-            context,
-            input.prompt.as_str(),
-            context_params_c.n_ctx as usize,
-            true,
-        )?;
+        let tokenized_input = tokenize(context, input.prompt.as_str(), true);
 
         // Embd contains the prompt and the completion. The longer the prompt, the shorter the completion.
         let mut embd = tokenized_input.clone();

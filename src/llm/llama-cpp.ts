@@ -12,20 +12,9 @@ export interface LoadConfig extends LlamaContextParams {
     enableLogging: boolean;
 }
 
-export interface TokenizeArguments {
-    content: string;
-    nCtx: number;
-}
-
 export class LLamaCpp
     implements
-        ILLM<
-            LLama,
-            LoadConfig,
-            LlamaInvocation,
-            LlamaInvocation,
-            TokenizeArguments
-        >
+        ILLM<LLama, LoadConfig, LlamaInvocation, LlamaInvocation, string>
 {
     instance!: LLama;
 
@@ -117,7 +106,7 @@ export class LLamaCpp
         });
     }
 
-    async tokenize(params: TokenizeArguments): Promise<number[]> {
-        return await this.instance.tokenize(params.content, params.nCtx);
+    async tokenize(params: string): Promise<number[]> {
+        return await this.instance.tokenize(params);
     }
 }

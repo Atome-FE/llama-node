@@ -15,6 +15,7 @@ const config = {
     useMlock: false,
     embedding: true,
     useMmap: true,
+    nGpuLayers: 0
 };
 const prompt = `Who is the president of the United States?`;
 const params = {
