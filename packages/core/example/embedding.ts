@@ -23,7 +23,7 @@ const getWordEmbeddings = async (llm: LLM, prompt: string, file: string) => {
 };
 
 const run = async () => {
-    const llm = await Llm.create(
+    const llm = await Llm.load(
         {
             modelType: ModelType.Llama,
             modelPath: model,

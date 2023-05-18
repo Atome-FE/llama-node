@@ -92,7 +92,7 @@ pub struct LLM {
 impl LLM {
     /// Create a new LLM instance.
     #[napi]
-    pub async fn create(config: ModelLoad, enable_logger: bool) -> Result<LLM> {
+    pub async fn load(config: ModelLoad, enable_logger: bool) -> Result<LLM> {
         let logger = LLamaLogger::get_singleton();
         logger.set_enabled(enable_logger);
 

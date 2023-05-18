@@ -16,7 +16,7 @@ export class LLMRS implements ILLM<Llm, ModelLoad, Generate, Generate, string> {
 
     async load(config: LoadConfig) {
         const { enableLogging, ...rest } = config;
-        this.instance = await Llm.create(rest, enableLogging ?? true);
+        this.instance = await Llm.load(rest, enableLogging ?? true);
     }
 
     async createCompletion(

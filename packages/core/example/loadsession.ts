@@ -5,7 +5,7 @@ const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
 const loadSession = path.resolve(process.cwd(), "./tmp/session.bin");
 
 const run = async () => {
-    const llm = await Llm.create(
+    const llm = await Llm.load(
         {
             modelType: ModelType.Llama,
             modelPath: model,

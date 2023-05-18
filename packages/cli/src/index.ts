@@ -70,7 +70,7 @@ class InferenceCommand implements yargs.CommandModule {
         const absolutePath = path.isAbsolute(modelPath)
             ? modelPath
             : path.join(process.cwd(), modelPath);
-        const llm = await Llm.create(
+        const llm = await Llm.load(
             {
                 modelPath: absolutePath,
                 modelType,

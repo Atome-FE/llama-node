@@ -55,6 +55,11 @@ export interface ModelLoad {
    * Default is true
    */
   useMmap?: boolean
+  /**
+   * Path to the Lora file to apply to the model
+   * Default is None
+   */
+  loraPath?: string
 }
 export interface Generate {
   /**
@@ -183,7 +188,7 @@ export function convert(path: string, elementType: ElementType): Promise<void>
 export type LLM = Llm
 export class Llm {
   /** Create a new LLM instance. */
-  static create(config: ModelLoad, enableLogger: boolean): Promise<Llm>
+  static load(config: ModelLoad, enableLogger: boolean): Promise<Llm>
   /** Get the tokenized result as number array, the result will be returned as Promise of number array. */
   tokenize(params: string): Promise<Array<number>>
   /** Get the embedding result as number array, the result will be returned as Promise of number array. */

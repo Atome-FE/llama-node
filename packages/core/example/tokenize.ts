@@ -4,7 +4,7 @@ import path from "path";
 const model = path.resolve(process.cwd(), "../../ggml-alpaca-7b-q4.bin");
 
 const run = async () => {
-    const llm = await Llm.create(
+    const llm = await Llm.load(
         {
             modelType: ModelType.Llama,
             modelPath: model,

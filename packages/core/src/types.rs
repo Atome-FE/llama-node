@@ -70,6 +70,10 @@ pub struct ModelLoad {
     /// MMapped files are faster, but may not work on all systems.
     /// Default is true
     pub use_mmap: Option<bool>,
+
+    /// Path to the Lora file to apply to the model
+    /// Default is None
+    pub lora_path: Option<String>,
 }
 
 #[napi(object)]

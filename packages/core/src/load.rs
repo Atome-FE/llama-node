@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::types::ModelLoad;
 use anyhow::Result;
@@ -9,6 +9,7 @@ impl ModelLoad {
         let params = ModelParameters {
             prefer_mmap: self.use_mmap.unwrap_or(true),
             n_context_tokens: self.num_ctx_tokens.unwrap_or(2048) as usize,
+            lora_adapter: self.lora_path.as_ref().map(PathBuf::from),
             ..Default::default()
         };
 
