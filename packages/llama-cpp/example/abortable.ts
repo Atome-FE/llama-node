@@ -1,4 +1,4 @@
-import { LLama, LlamaInvocation } from "../index";
+import { LLama, Generate } from "../index";
 import path from "path";
 
 const run = async () => {
@@ -15,7 +15,7 @@ const run = async () => {
 USER: ${template}
 ASSISTANT:`;
 
-    const params: LlamaInvocation = {
+    const params: Generate = {
         nThreads: 4,
         nTokPredict: 2048,
         topK: 40,

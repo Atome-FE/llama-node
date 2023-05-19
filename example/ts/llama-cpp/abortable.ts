@@ -1,4 +1,4 @@
-import type { LlamaInvocation } from "@llama-node/llama-cpp";
+import type { Generate } from "@llama-node/llama-cpp";
 import { LLM } from "llama-node";
 import { LLamaCpp, type LoadConfig } from "llama-node/dist/llm/llama-cpp.js";
 import path from "path";
@@ -28,7 +28,7 @@ const prompt = `A chat between a user and an assistant.
 USER: ${template}
 ASSISTANT:`;
 
-const params: LlamaInvocation = {
+const params: Generate = {
     nThreads: 4,
     nTokPredict: 2048,
     topK: 40,

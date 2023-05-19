@@ -21,7 +21,7 @@ use napi::{
     JsFunction,
 };
 use tokio::sync::Mutex;
-use types::{InferenceResult, InferenceResultType, LlamaInvocation, ModelLoad};
+use types::{InferenceResult, InferenceResultType, Generate, ModelLoad};
 
 #[napi]
 pub struct LLama {
@@ -46,7 +46,7 @@ impl LLama {
     }
 
     #[napi]
-    pub async fn get_word_embedding(&self, params: LlamaInvocation) -> Result<Vec<f64>> {
+    pub async fn get_word_embedding(&self, params: Generate) -> Result<Vec<f64>> {
         let llama = self.llama.lock().await;
         llama.embedding(&params).await
     }
@@ -61,7 +61,7 @@ impl LLama {
     pub fn inference(
         &self,
         env: Env,
-        params: LlamaInvocation,
+        params: Generate,
         #[napi(ts_arg_type = "(result: InferenceResult) => void")] callback: JsFunction,
     ) -> Result<JsFunction> {
         let tsfn: ThreadsafeFunction<InferenceResult, ErrorStrategy::Fatal> = callback

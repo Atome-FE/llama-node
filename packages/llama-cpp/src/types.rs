@@ -25,20 +25,91 @@ pub struct InferenceResult {
 
 #[napi(object)]
 #[derive(Debug, Clone)]
-pub struct LlamaInvocation {
+pub struct LogitBias {
+    pub token: i32,
+    pub bias: f64,
+}
+
+#[napi(object)]
+#[derive(Debug, Clone)]
+pub struct Generate {
     pub n_threads: i32,
     pub n_tok_predict: i32,
-    pub top_k: i32,                     // 40
-    pub top_p: Option<f64>,             // default 0.95f, 1.0 = disabled
-    pub tfs_z: Option<f64>,             // default 1.00f, 1.0 = disabled
-    pub temp: Option<f64>,              // default 0.80f, 1.0 = disabled
-    pub typical_p: Option<f64>,         // default 1.00f, 1.0 = disabled
-    pub repeat_penalty: Option<f64>,    // default 1.10f, 1.0 = disabled
-    pub repeat_last_n: Option<i32>, // default 64, last n tokens to penalize (0 = disable penalty, -1 = context size)
-    pub frequency_penalty: Option<f64>, // default 0.00f, 1.0 = disabled
-    pub presence_penalty: Option<f64>, // default 0.00f, 1.0 = disabled
+
+    /// logit bias for specific tokens
+    /// Default: None
+    pub logit_bias: Option<Vec<LogitBias>>,
+
+    /// top k tokens to sample from
+    /// Range: <= 0 to use vocab size
+    /// Default: 40
+    pub top_k: Option<i32>,
+
+    /// top p tokens to sample from
+    /// Default: 0.95
+    /// 1.0 = disabled
+    pub top_p: Option<f64>,
+
+    /// tail free sampling
+    /// Default: 1.0
+    /// 1.0 = disabled
+    pub tfs_z: Option<f64>,
+
+    /// temperature
+    /// Default: 0.80
+    /// 1.0 = disabled
+    pub temp: Option<f64>,
+
+    /// locally typical sampling
+    /// Default: 1.0
+    /// 1.0 = disabled
+    pub typical_p: Option<f64>,
+
+    /// repeat penalty
+    /// Default: 1.10
+    /// 1.0 = disabled
+    pub repeat_penalty: Option<f64>,
+
+    /// last n tokens to penalize
+    /// Default: 64
+    /// 0 = disable penalty, -1 = context size
+    pub repeat_last_n: Option<i32>,
+
+    /// frequency penalty
+    /// Default: 0.00
+    /// 1.0 = disabled
+    pub frequency_penalty: Option<f64>,
+
+    /// presence penalty
+    /// Default: 0.00
+    /// 1.0 = disabled
+    pub presence_penalty: Option<f64>,
+
+    /// Mirostat 1.0 algorithm described in the paper https://arxiv.org/abs/2007.14966. Uses tokens instead of words.
+    /// Mirostat: A Neural Text Decoding Algorithm that Directly Controls Perplexity
+    /// Default: 0
+    /// 0 = disabled
+    /// 1 = mirostat 1.0
+    /// 2 = mirostat 2.0
+    pub mirostat: Option<i32>,
+
+    /// The target cross-entropy (or surprise) value you want to achieve for the generated text. A higher value corresponds to more surprising or less predictable text, while a lower value corresponds to less surprising or more predictable text.
+    /// Default: 5.0
+    pub mirostat_tau: Option<f64>,
+
+    /// The learning rate used to update `mu` based on the error between the target and observed surprisal of the sampled word. A larger learning rate will cause `mu` to be updated more quickly, while a smaller learning rate will result in slower updates.
+    /// Default: 0.1
+    pub mirostat_eta: Option<f64>,
+
+    /// stop sequence
+    /// Default: None
     pub stop_sequence: Option<String>,
+
+    /// consider newlines as a repeatable token
+    /// Default: true
     pub penalize_nl: Option<bool>,
+
+    /// prompt
     pub prompt: String,
 }
 

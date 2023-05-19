@@ -6,7 +6,7 @@ use tokio::sync::Mutex;
 use crate::{
     context::LLamaContext,
     tokenizer::{llama_token_eos, tokenize},
-    types::{InferenceResult, InferenceResultType, InferenceToken, LlamaInvocation, ModelLoad},
+    types::{InferenceResult, InferenceResultType, InferenceToken, Generate, ModelLoad},
 };
 
 pub struct LLamaInternal {
@@ -37,7 +37,7 @@ impl LLamaInternal {
         Ok(tokenize(context, input, false))
     }
 
-    pub async fn embedding(&self, input: &LlamaInvocation) -> Result<Vec<f64>, napi::Error> {
+    pub async fn embedding(&self, input: &Generate) -> Result<Vec<f64>, napi::Error> {
         let context = &self.context;
         let embd_inp = tokenize(context, input.prompt.as_str(), true);
 
@@ -60,7 +60,7 @@ impl LLamaInternal {
 
     pub fn inference(
         &self,
-        input: &LlamaInvocation,
+        input: &Generate,
         running: Arc<Mutex<bool>>,
         callback: impl Fn(InferenceResult),
     ) -> Result<(), napi::Error> {

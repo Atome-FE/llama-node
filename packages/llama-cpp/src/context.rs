@@ -6,12 +6,12 @@ use llama_sys::{
     llama_get_embeddings, llama_get_logits, llama_init_from_file, llama_n_embd, llama_n_vocab,
     llama_print_system_info, llama_sample_frequency_and_presence_penalties,
     llama_sample_repetition_penalty, llama_sample_tail_free, llama_sample_temperature,
-    llama_sample_token, llama_sample_token_greedy, llama_sample_top_k, llama_sample_top_p,
-    llama_sample_typical, llama_token, llama_token_data, llama_token_data_array, llama_token_nl,
-    llama_token_to_str,
+    llama_sample_token, llama_sample_token_greedy, llama_sample_token_mirostat,
+    llama_sample_token_mirostat_v2, llama_sample_top_k, llama_sample_top_p, llama_sample_typical,
+    llama_token, llama_token_data, llama_token_data_array, llama_token_nl, llama_token_to_str,
 };
 
-use crate::types::{LlamaInvocation, ModelLoad};
+use crate::types::{Generate, ModelLoad};
 
 // Represents the LLamaContext which wraps FFI calls to the llama.cpp library.
 pub struct LLamaContext {
@@ -73,15 +73,16 @@ impl LLamaContext {
     pub fn llama_sample(
         &self,
         last_n_tokens: &mut [llama_token],
-        input: &LlamaInvocation,
+        input: &Generate,
         context_params: &llama_context_params,
     ) -> i32 {
         let n_ctx = context_params.n_ctx;
         let top_p = input.top_p.unwrap_or(0.95) as f32;
-        let top_k = if input.top_k <= 0 {
+        let top_k = input.top_k.unwrap_or(40);
+        let top_k = if top_k <= 0 {
             unsafe { llama_n_vocab(self.ctx) }
         } else {
-            input.top_k
+            top_k
         };
         let tfs_z = input.tfs_z.unwrap_or(1.0) as f32;
         let temp = input.temp.unwrap_or(0.8) as f32;
@@ -97,11 +98,20 @@ impl LLamaContext {
         let alpha_presence = input.presence_penalty.unwrap_or(0.0) as f32;
         let penalize_nl = input.penalize_nl.unwrap_or(true);
 
+        let empty_logit_bias = Vec::new();
+        let logit_bias = input.logit_bias.as_ref().unwrap_or(&empty_logit_bias);
+
+        let mirostat = input.mirostat.unwrap_or(0);
+        let mirostat_tau = input.mirostat_tau.unwrap_or(5.0) as f32;
+        let mirostat_eta = input.mirostat_eta.unwrap_or(0.1) as f32;
+
         let n_vocab = unsafe { llama_n_vocab(self.ctx) };
         let logits_ptr = unsafe { llama_get_logits(self.ctx) };
         let logits = unsafe { slice::from_raw_parts_mut(logits_ptr, n_vocab as usize) };
 
-        // TODO: apply logit bias
+        for i in logit_bias.iter() {
+            logits[i.token as usize] += i.bias as f32;
+        }
 
         let mut candidates: Vec<llama_token_data> = Vec::with_capacity(n_vocab as usize);
 
@@ -165,8 +175,33 @@ impl LLamaContext {
 
         if temp <= 0.0_f32 {
             id = unsafe { llama_sample_token_greedy(self.ctx, candidates_p) };
+        } else if mirostat == 1 {
+            let mut mirostat_mu = 2.0_f32 * mirostat_tau;
+            let mirostat_m = 100;
+            unsafe { llama_sample_temperature(self.ctx, candidates_p, temp) };
+            id = unsafe {
+                llama_sample_token_mirostat(
+                    self.ctx,
+                    candidates_p,
+                    mirostat_tau,
+                    mirostat_eta,
+                    mirostat_m,
+                    &mut mirostat_mu,
+                )
+            }
+        } else if mirostat == 2 {
+            let mut mirostat_mu = 2.0_f32 * mirostat_tau;
+            unsafe { llama_sample_temperature(self.ctx, candidates_p, temp) };
+            id = unsafe {
+                llama_sample_token_mirostat_v2(
+                    self.ctx,
+                    candidates_p,
+                    mirostat_tau,
+                    mirostat_eta,
+                    &mut mirostat_mu,
+                )
+            }
         } else {
-            // TODO: here we just do temp for first approach, I dont understand microstat very well, will impl later
             id = unsafe {
                 llama_sample_top_k(self.ctx, candidates_p, top_k, 1);
                 llama_sample_tail_free(self.ctx, candidates_p, tfs_z, 1);
@@ -210,7 +245,7 @@ impl LLamaContext {
         tokens: &[llama_token],
         n_tokens: i32,
         n_past: i32,
-        input: &LlamaInvocation,
+        input: &Generate,
     ) -> Result<(), napi::Error> {
         let res =
             unsafe { llama_eval(self.ctx, tokens.as_ptr(), n_tokens, n_past, input.n_threads) };

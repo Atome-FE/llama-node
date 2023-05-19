@@ -2,7 +2,7 @@ import {
     InferenceResultType,
     LLama,
     ModelLoad,
-    LlamaInvocation,
+    Generate,
 } from "@llama-node/llama-cpp";
 
 import { type ILLM, type LLMResult, LLMError, LLMErrorType } from "./type";
@@ -12,8 +12,7 @@ export interface LoadConfig extends ModelLoad {
 }
 
 export class LLamaCpp
-    implements
-        ILLM<LLama, LoadConfig, LlamaInvocation, LlamaInvocation, string>
+    implements ILLM<LLama, LoadConfig, Generate, Generate, string>
 {
     instance!: LLama;
 
@@ -23,7 +22,7 @@ export class LLamaCpp
     }
 
     async createCompletion(
-        params: LlamaInvocation,
+        params: Generate,
         callback: (data: { token: string; completed: boolean }) => void,
         abortSignal?: AbortSignal
     ): Promise<LLMResult> {
@@ -89,7 +88,7 @@ export class LLamaCpp
         );
     }
 
-    async getEmbedding(params: LlamaInvocation): Promise<number[]> {
+    async getEmbedding(params: Generate): Promise<number[]> {
         return await this.instance.getWordEmbedding(params);
     }
 

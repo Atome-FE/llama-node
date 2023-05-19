@@ -1,4 +1,4 @@
-import { LLama, LlamaInvocation } from "../index";
+import { LLama, Generate } from "../index";
 import path from "path";
 
 const run = async () => {
@@ -21,7 +21,7 @@ const run = async () => {
 
     const prompt = `Who is the president of the United States?`;
 
-    const params: LlamaInvocation = {
+    const params: Generate = {
         nThreads: 4,
         nTokPredict: 2048,
         topK: 40,
