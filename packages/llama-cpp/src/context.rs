@@ -2,45 +2,16 @@ use std::{ffi::CStr, ptr::null_mut, slice};
 
 use anyhow::Result;
 use llama_sys::{
-    llama_apply_lora_from_file, llama_context, llama_context_default_params, llama_context_params,
-    llama_eval, llama_free, llama_get_embeddings, llama_get_logits, llama_init_from_file,
-    llama_n_embd, llama_n_vocab, llama_print_system_info,
-    llama_sample_frequency_and_presence_penalties, llama_sample_repetition_penalty,
-    llama_sample_tail_free, llama_sample_temperature, llama_sample_token,
-    llama_sample_token_greedy, llama_sample_top_k, llama_sample_top_p, llama_sample_typical,
-    llama_token, llama_token_data, llama_token_data_array, llama_token_nl, llama_token_to_str,
+    llama_apply_lora_from_file, llama_context, llama_context_params, llama_eval, llama_free,
+    llama_get_embeddings, llama_get_logits, llama_init_from_file, llama_n_embd, llama_n_vocab,
+    llama_print_system_info, llama_sample_frequency_and_presence_penalties,
+    llama_sample_repetition_penalty, llama_sample_tail_free, llama_sample_temperature,
+    llama_sample_token, llama_sample_token_greedy, llama_sample_top_k, llama_sample_top_p,
+    llama_sample_typical, llama_token, llama_token_data, llama_token_data_array, llama_token_nl,
+    llama_token_to_str,
 };
 
-use crate::types::{LlamaContextParams, LlamaInvocation};
-
-impl LlamaContextParams {
-    // Returns the default parameters or the user-specified parameters.
-    pub fn or_default(params: &Option<LlamaContextParams>) -> llama_context_params {
-        match params {
-            Some(params) => params.clone().into(),
-            None => unsafe { llama_context_default_params() },
-        }
-    }
-}
-
-impl From<LlamaContextParams> for llama_context_params {
-    fn from(params: LlamaContextParams) -> Self {
-        llama_context_params {
-            n_ctx: params.n_ctx,
-            n_parts: params.n_parts,
-            n_gpu_layers: params.n_gpu_layers,
-            seed: params.seed,
-            f16_kv: params.f16_kv,
-            logits_all: params.logits_all,
-            vocab_only: params.vocab_only,
-            use_mmap: params.use_mmap,
-            use_mlock: params.use_mlock,
-            embedding: params.embedding,
-            progress_callback: None,
-            progress_callback_user_data: null_mut(),
-        }
-    }
-}
+use crate::types::{LlamaInvocation, ModelLoad};
 
 // Represents the LLamaContext which wraps FFI calls to the llama.cpp library.
 pub struct LLamaContext {
@@ -49,18 +20,17 @@ pub struct LLamaContext {
 
 impl LLamaContext {
     // Creates a new LLamaContext from the specified file and configuration parameters.
-    pub async fn from_file_and_params(
-        path: &str,
-        params: &Option<LlamaContextParams>,
-    ) -> Result<Self, napi::Error> {
-        let lora_params = params.as_ref().and_then(|p| p.lora.clone());
-        let params = LlamaContextParams::or_default(params);
-        let ctx = unsafe { llama_init_from_file(path.as_ptr() as *const i8, params) };
+    pub async fn from_file_and_params(params: &ModelLoad) -> Result<Self, napi::Error> {
+        let lora_params = &params.lora;
+        let context_params = ModelLoad::to_llama_context_params(params);
+        let ctx = unsafe {
+            llama_init_from_file(params.model_path.as_ptr() as *const i8, context_params)
+        };
 
         if ctx.is_null() {
             return Err(napi::Error::from_reason(format!(
                 "Failed to initialize LLama context from file: {}",
-                path
+                params.model_path,
             )));
         }
 

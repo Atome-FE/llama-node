@@ -21,7 +21,7 @@ use napi::{
     JsFunction,
 };
 use tokio::sync::Mutex;
-use types::{InferenceResult, InferenceResultType, LlamaContextParams, LlamaInvocation};
+use types::{InferenceResult, InferenceResultType, LlamaInvocation, ModelLoad};
 
 #[napi]
 pub struct LLama {
@@ -32,16 +32,16 @@ pub struct LLama {
 impl LLama {
     #[napi]
     pub async fn load(
-        path: String,
-        params: Option<LlamaContextParams>,
+        #[napi(ts_arg_type = "Partial<LoadModel>")] params: serde_json::Value,
         enable_logger: bool,
     ) -> Result<LLama> {
-        let logger = LLamaLogger::get_singleton();
+        let params = serde_json::from_value::<ModelLoad>(params).unwrap();
 
+        let logger = LLamaLogger::get_singleton();
         logger.set_enabled(enable_logger);
 
         Ok(Self {
-            llama: LLamaInternal::load(path, params, enable_logger).await?,
+            llama: LLamaInternal::load(params, enable_logger).await?,
         })
     }
 

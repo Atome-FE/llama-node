@@ -846,6 +846,8 @@ dependencies = [
  "napi-derive",
  "num_cpus",
  "rand",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 

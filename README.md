@@ -37,7 +37,7 @@ llama-node: Node.js Library for Large Language Model
 
 ## Introduction
 
-This project is in an early stage, the API for nodejs may change in the future, use it with caution.
+This project is in an early stage and is not production ready, we do not follow the semantic versioning. The API for nodejs may change in the future, use it with caution.
 
 This is a nodejs library for inferencing llama, rwkv or llama derived models. It was built on top of [llm (originally llama-rs)](https://github.com/rustformers/llm), [llama.cpp](https://github.com/ggerganov/llama.cpp) and [rwkv.cpp](https://github.com/saharNooby/rwkv.cpp). It uses [napi-rs](https://github.com/napi-rs/napi-rs) for channel messages between node.js and llama thread.
 

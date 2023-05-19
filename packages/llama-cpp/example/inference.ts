@@ -4,8 +4,8 @@ import path from "path";
 
 const run = async () => {
     const llama = await LLama.load(
-        path.resolve(process.cwd(), "../../ggml-vic7b-q5_1.bin"),
         {
+            modelPath: path.resolve(process.cwd(), "../../ggml-vic7b-q5_1.bin"),
             nGpuLayers: 32,
             nCtx: 1024,
             nParts: 1,

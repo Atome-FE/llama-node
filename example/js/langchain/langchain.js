@@ -6,7 +6,7 @@ import path from "path";
 const model = path.resolve(process.cwd(), "../ggml-vic7b-q5_1.bin");
 const llama = new LLM(LLamaCpp);
 const config = {
-    path: model,
+    modelPath: model,
     enableLogging: true,
     nCtx: 1024,
     nParts: -1,

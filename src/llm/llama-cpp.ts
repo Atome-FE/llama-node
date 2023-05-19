@@ -1,14 +1,13 @@
 import {
     InferenceResultType,
     LLama,
-    LlamaContextParams,
+    ModelLoad,
     LlamaInvocation,
 } from "@llama-node/llama-cpp";
 
 import { type ILLM, type LLMResult, LLMError, LLMErrorType } from "./type";
 
-export interface LoadConfig extends LlamaContextParams {
-    path: string;
+export interface LoadConfig extends ModelLoad {
     enableLogging: boolean;
 }
 
@@ -19,8 +18,8 @@ export class LLamaCpp
     instance!: LLama;
 
     async load(config: LoadConfig) {
-        const { path, enableLogging, ...rest } = config;
-        this.instance = await LLama.load(path, rest, enableLogging);
+        const { enableLogging, ...rest } = config;
+        this.instance = await LLama.load(rest, enableLogging);
     }
 
     async createCompletion(

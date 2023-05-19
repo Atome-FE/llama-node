@@ -9,7 +9,7 @@ const model = path.resolve(process.cwd(), "../ggml-vic7b-q5_1.bin");
 const llama = new LLM(LLamaCpp);
 
 const config: LoadConfig = {
-    path: model,
+    modelPath: model,
     enableLogging: true,
     nCtx: 1024,
     nParts: -1,

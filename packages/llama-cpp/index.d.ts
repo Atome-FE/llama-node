@@ -33,7 +33,8 @@ export interface LlamaInvocation {
   penalizeNl?: boolean
   prompt: string
 }
-export interface LlamaContextParams {
+export interface ModelLoad {
+  modelPath: string
   nCtx: number
   nParts: number
   nGpuLayers: number
@@ -52,7 +53,7 @@ export interface LlamaLoraAdaptor {
   nThreads: number
 }
 export class LLama {
-  static load(path: string, params: LlamaContextParams | undefined | null, enableLogger: boolean): Promise<LLama>
+  static load(params: Partial<LoadModel>, enableLogger: boolean): Promise<LLama>
   getWordEmbedding(params: LlamaInvocation): Promise<Array<number>>
   tokenize(params: string): Promise<Array<number>>
   inference(params: LlamaInvocation, callback: (result: InferenceResult) => void): () => void

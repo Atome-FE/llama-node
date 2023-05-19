@@ -6,24 +6,21 @@ use tokio::sync::Mutex;
 use crate::{
     context::LLamaContext,
     tokenizer::{llama_token_eos, tokenize},
-    types::{
-        InferenceResult, InferenceResultType, InferenceToken, LlamaContextParams, LlamaInvocation,
-    },
+    types::{InferenceResult, InferenceResultType, InferenceToken, LlamaInvocation, ModelLoad},
 };
 
 pub struct LLamaInternal {
     context: LLamaContext,
-    context_params: Option<LlamaContextParams>,
+    context_params: ModelLoad,
 }
 
 impl LLamaInternal {
     pub async fn load(
-        path: String,
-        params: Option<LlamaContextParams>,
+        params: ModelLoad,
         enable_logger: bool,
-    ) -> Result<Arc<Mutex<Self>>, napi::Error> {
+    ) -> Result<Arc<Mutex<LLamaInternal>>, napi::Error> {
         let llama = LLamaInternal {
-            context: LLamaContext::from_file_and_params(&path, &params).await?,
+            context: LLamaContext::from_file_and_params(&params).await?,
             context_params: params,
         };
 
@@ -68,7 +65,7 @@ impl LLamaInternal {
         callback: impl Fn(InferenceResult),
     ) -> Result<(), napi::Error> {
         let context = &self.context;
-        let context_params_c = LlamaContextParams::or_default(&self.context_params);
+        let context_params_c = ModelLoad::to_llama_context_params(&self.context_params);
         // Tokenize the stop sequence and input prompt.
         let tokenized_stop_prompt = input
             .stop_sequence

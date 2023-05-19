@@ -1,4 +1,6 @@
+use llama_sys::llama_context_params;
 use napi::bindgen_prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[napi(object)]
 #[derive(Clone, Debug)]
@@ -42,8 +44,10 @@ pub struct LlamaInvocation {
 
 // Represents the configuration parameters for a LLamaContext.
 #[napi(object)]
-#[derive(Debug, Clone)]
-pub struct LlamaContextParams {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct ModelLoad {
+    pub model_path: String,
     pub n_ctx: i32,
     pub n_parts: i32,
     pub n_gpu_layers: i32,
@@ -57,8 +61,54 @@ pub struct LlamaContextParams {
     pub lora: Option<LlamaLoraAdaptor>,
 }
 
+impl Default for ModelLoad {
+    fn default() -> Self {
+        Self {
+            model_path: "".to_string(),
+            n_ctx: 2048,
+            n_parts: -1,
+            n_gpu_layers: 0,
+            seed: 0,
+            f16_kv: true,
+            logits_all: false,
+            vocab_only: false,
+            use_mlock: false,
+            embedding: false,
+            use_mmap: true,
+            lora: None,
+        }
+    }
+}
+
+impl ModelLoad {
+    // Returns the default parameters or the user-specified parameters.
+    pub fn to_llama_context_params(params: &ModelLoad) -> llama_context_params {
+        params.clone().into()
+    }
+}
+
+impl From<ModelLoad> for llama_context_params {
+    fn from(params: ModelLoad) -> Self {
+        llama_context_params {
+            n_ctx: params.n_ctx,
+            n_parts: params.n_parts,
+            n_gpu_layers: params.n_gpu_layers,
+            seed: params.seed,
+            f16_kv: params.f16_kv,
+            logits_all: params.logits_all,
+            vocab_only: params.vocab_only,
+            use_mmap: params.use_mmap,
+            use_mlock: params.use_mlock,
+            embedding: params.embedding,
+            progress_callback: None,
+            progress_callback_user_data: std::ptr::null_mut(),
+        }
+    }
+}
+
 #[napi(object)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
 pub struct LlamaLoraAdaptor {
     pub lora_adapter: String,
     pub lora_base: Option<String>,
