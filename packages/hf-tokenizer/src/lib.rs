@@ -35,12 +35,12 @@ pub struct Encoding {
 
 #[wasm_bindgen]
 impl Encoding {
-    #[wasm_bindgen(method, getter = ids)]
+    #[wasm_bindgen(getter = ids)]
     pub fn get_ids(&self) -> js_sys::Uint32Array {
         self.encoding.get_ids().into()
     }
 
-    #[wasm_bindgen(method, getter = tokens)]
+    #[wasm_bindgen(getter = tokens)]
     pub fn get_tokens(&self) -> js_sys::Array {
         self.encoding
             .get_tokens()
