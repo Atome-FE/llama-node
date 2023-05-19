@@ -8,7 +8,6 @@ const run = async () => {
             modelPath: path.resolve(process.cwd(), "../../ggml-vic7b-q5_1.bin"),
             nGpuLayers: 32,
             nCtx: 1024,
-            nParts: 1,
             seed: 0,
             f16Kv: false,
             logitsAll: false,

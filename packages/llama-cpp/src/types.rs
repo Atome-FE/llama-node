@@ -120,7 +120,6 @@ pub struct Generate {
 pub struct ModelLoad {
     pub model_path: String,
     pub n_ctx: i32,
-    pub n_parts: i32,
     pub n_gpu_layers: i32,
     pub seed: i32,
     pub f16_kv: bool,
@@ -137,7 +136,6 @@ impl Default for ModelLoad {
         Self {
             model_path: "".to_string(),
             n_ctx: 2048,
-            n_parts: -1,
             n_gpu_layers: 0,
             seed: 0,
             f16_kv: true,
@@ -162,7 +160,6 @@ impl From<ModelLoad> for llama_context_params {
     fn from(params: ModelLoad) -> Self {
         llama_context_params {
             n_ctx: params.n_ctx,
-            n_parts: params.n_parts,
             n_gpu_layers: params.n_gpu_layers,
             seed: params.seed,
             f16_kv: params.f16_kv,

@@ -9,7 +9,6 @@ const config = {
     modelPath: model,
     enableLogging: true,
     nCtx: 1024,
-    nParts: -1,
     seed: 0,
     f16Kv: false,
     logitsAll: false,

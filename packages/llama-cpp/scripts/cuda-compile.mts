@@ -161,7 +161,7 @@ const postCompile = async () => {
 };
 
 const run = async () => {
-    console.log("Checking environment...\n...");
+    console.log("Checking environment...\n");
     checkEnv();
 
     console.log("\n\n");

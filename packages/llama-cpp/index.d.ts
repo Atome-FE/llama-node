@@ -118,7 +118,6 @@ export interface Generate {
 export interface ModelLoad {
   modelPath: string
   nCtx: number
-  nParts: number
   nGpuLayers: number
   seed: number
   f16Kv: boolean
