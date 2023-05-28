@@ -1,5 +1,6 @@
 import { GPT2Onnx } from "../src/node";
 import path from "path";
+import { AutoTokenizer } from "../src/node/tokenizer";
 
 const modelPath = path.join(process.cwd(), "../../gpt2.onnx");
 
@@ -16,6 +17,7 @@ const run = async () => {
     const gpt2 = await GPT2Onnx.create({
         modelPath,
         tokenizerUrl,
+        tokenizer: new AutoTokenizer(),
     });
 
     process.stdout.write(prompt);
