@@ -9,7 +9,8 @@ pub enum ModelType {
     Bloom,
     Gpt2,
     GptJ,
-    NeoX,
+    GptNeoX,
+    Mpt
 }
 
 #[napi(object)]

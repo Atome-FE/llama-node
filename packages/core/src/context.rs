@@ -34,7 +34,8 @@ impl LLMContext {
             ModelType::Bloom => params.load::<llm::models::Bloom>(),
             ModelType::Gpt2 => params.load::<llm::models::Gpt2>(),
             ModelType::GptJ => params.load::<llm::models::GptJ>(),
-            ModelType::NeoX => params.load::<llm::models::NeoX>(),
+            ModelType::GptNeoX => params.load::<llm::models::GptNeoX>(),
+            ModelType::Mpt => params.load::<llm::models::Mpt>(),
         }?;
 
         Ok(LLMContext { model })
@@ -157,7 +158,7 @@ impl LLMContext {
         let model = self.model.as_ref();
         let prompt_for_feed = format!(" {}", params.prompt);
 
-        if let Err(InferenceError::ContextFull) = session.feed_prompt::<Infallible>(
+        if let Err(InferenceError::ContextFull) = session.feed_prompt::<Infallible, &str>(
             model,
             &inference_params,
             prompt_for_feed.as_str(),
@@ -229,8 +230,8 @@ impl LLMContext {
             model,
             &mut rng,
             &llm::InferenceRequest {
-                prompt,
-                parameters: Some(&inference_params),
+                prompt: llm::Prompt::Text(prompt),
+                parameters: &inference_params,
                 play_back_previous_tokens: !feed_prompt,
                 maximum_token_count,
             },
@@ -292,7 +293,7 @@ impl LLMContext {
                     InferenceError::ContextFull => {
                         "Context window full, stopping inference.".to_string()
                     }
-                    InferenceError::TokenizationFailed => "Tokenization failed.".to_string(),
+                    InferenceError::TokenizationFailed(_) => "Tokenization failed.".to_string(),
                     InferenceError::UserCallback(_) => "Inference failed.".to_string(),
                 };
                 callback(InferenceResult {
