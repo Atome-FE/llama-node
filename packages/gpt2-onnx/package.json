@@ -14,6 +14,7 @@
     "@llama-node/hf-tokenizer": "0.0.37",
     "@tensorflow/tfjs": "^4.6.0",
     "@tensorflow/tfjs-node": "^4.6.0",
+    "axios": "*",
     "onnxruntime-node": "^1.14.0",
     "onnxruntime-web": "^1.14.0",
     "react": "^18.2.0",
