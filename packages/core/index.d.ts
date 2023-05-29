@@ -8,7 +8,8 @@ export const enum ModelType {
   Bloom = 'Bloom',
   Gpt2 = 'Gpt2',
   GptJ = 'GptJ',
-  NeoX = 'NeoX'
+  GptNeoX = 'GptNeoX',
+  Mpt = 'Mpt'
 }
 export interface InferenceToken {
   token: string

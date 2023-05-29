@@ -11,7 +11,7 @@ mod types;
 use std::{path::Path, sync::Arc};
 
 use context::LLMContext;
-use llm::{models::llama::convert::convert_pth_to_ggml, InferenceFeedback};
+use llm::InferenceFeedback;
 use tokio::sync::Mutex;
 use types::{Generate, InferenceResult, ModelLoad};
 
@@ -48,29 +48,29 @@ pub enum ElementType {
     MostlyQ5_1,
 }
 
-impl From<ElementType> for llm::FileType {
+impl From<ElementType> for llm::FileTypeFormat {
     fn from(element_type: ElementType) -> Self {
         match element_type {
-            ElementType::F32 => llm::FileType::F32,
-            ElementType::MostlyF16 => llm::FileType::MostlyF16,
-            ElementType::MostlyQ4_0 => llm::FileType::MostlyQ4_0,
-            ElementType::MostlyQ4_1 => llm::FileType::MostlyQ4_1,
-            ElementType::MostlyQ4_1SomeF16 => llm::FileType::MostlyQ4_1SomeF16,
-            ElementType::MostlyQ4_2 => llm::FileType::MostlyQ4_2,
-            ElementType::MostlyQ8_0 => llm::FileType::MostlyQ8_0,
-            ElementType::MostlyQ5_0 => llm::FileType::MostlyQ5_0,
-            ElementType::MostlyQ5_1 => llm::FileType::MostlyQ5_1,
+            ElementType::F32 => llm::FileTypeFormat::F32,
+            ElementType::MostlyF16 => llm::FileTypeFormat::MostlyF16,
+            ElementType::MostlyQ4_0 => llm::FileTypeFormat::MostlyQ4_0,
+            ElementType::MostlyQ4_1 => llm::FileTypeFormat::MostlyQ4_1,
+            ElementType::MostlyQ4_1SomeF16 => llm::FileTypeFormat::MostlyQ4_1SomeF16,
+            ElementType::MostlyQ4_2 => llm::FileTypeFormat::MostlyQ4_2,
+            ElementType::MostlyQ8_0 => llm::FileTypeFormat::MostlyQ8_0,
+            ElementType::MostlyQ5_0 => llm::FileTypeFormat::MostlyQ5_0,
+            ElementType::MostlyQ5_1 => llm::FileTypeFormat::MostlyQ5_1,
         }
     }
 }
 
 /// Not implemented yet.
 #[napi(js_name = "convert")]
-pub async fn convert(path: String, element_type: ElementType) -> Result<()> {
+pub async fn convert(path: String, _element_type: ElementType) -> Result<()> {
     let handle = tokio::task::spawn_blocking(move || {
         let path = Path::new(path.as_str());
         println!("path: {:?}", path);
-        convert_pth_to_ggml(path, element_type.into());
+        // convert_pth_to_ggml(path, element_type.into());
     })
     .await;
     match handle {

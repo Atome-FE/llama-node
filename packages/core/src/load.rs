@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::types::ModelLoad;
 use anyhow::Result;
@@ -8,8 +8,8 @@ impl ModelLoad {
     pub fn load<M: llm::KnownModel + 'static>(&self) -> Result<Box<dyn Model>, napi::Error> {
         let params = ModelParameters {
             prefer_mmap: self.use_mmap.unwrap_or(true),
-            n_context_tokens: self.num_ctx_tokens.unwrap_or(2048) as usize,
-            lora_adapter: self.lora_path.as_ref().map(PathBuf::from),
+            context_size: self.num_ctx_tokens.unwrap_or(2048) as usize,
+            lora_adapters: self.lora_path.as_ref().map(|path| vec![path.into()]),
             ..Default::default()
         };
 
@@ -57,7 +57,7 @@ impl ModelLoad {
                     )
                 );
             }
-            LoadProgress::LoraApplied { name } => {
+            LoadProgress::LoraApplied { name, source: _ } => {
                 log::info!("Applied Lora: {}", name);
             }
         })
