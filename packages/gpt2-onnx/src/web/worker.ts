@@ -1,4 +1,5 @@
 import { GPT2Onnx } from "./index";
+import { AutoTokenizer } from "./tokenizer";
 
 export interface IInferenceCommand {
     type: "inference";
@@ -26,6 +27,7 @@ class Context {
         this.gpt2 = await GPT2Onnx.create({
             modelPath: data.model,
             tokenizerUrl: data.tokenizerUrl,
+            tokenizer: new AutoTokenizer(),
         });
     };
 
