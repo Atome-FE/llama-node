@@ -70,6 +70,7 @@ pub async fn convert(path: String, _element_type: ElementType) -> Result<()> {
     let handle = tokio::task::spawn_blocking(move || {
         let path = Path::new(path.as_str());
         println!("path: {:?}", path);
+        // convert_pth_to_ggml is removed from llm
         // convert_pth_to_ggml(path, element_type.into());
     })
     .await;

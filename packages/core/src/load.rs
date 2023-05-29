@@ -6,11 +6,11 @@ use llm::{load, LoadProgress, Model, ModelParameters};
 
 impl ModelLoad {
     pub fn load<M: llm::KnownModel + 'static>(&self) -> Result<Box<dyn Model>, napi::Error> {
+        let default_params: ModelParameters = Default::default();
         let params = ModelParameters {
-            prefer_mmap: self.use_mmap.unwrap_or(true),
-            context_size: self.num_ctx_tokens.unwrap_or(2048) as usize,
-            lora_adapters: self.lora_path.as_ref().map(|path| vec![path.into()]),
-            ..Default::default()
+            prefer_mmap: self.use_mmap.unwrap_or(default_params.prefer_mmap),
+            context_size: self.num_ctx_tokens.unwrap_or(default_params.context_size as i64) as usize,
+            lora_adapters: self.lora_path.as_ref().map(|path| vec![path.into()]).or(default_params.lora_adapters),
         };
 
         let path = Path::new(&self.model_path);
