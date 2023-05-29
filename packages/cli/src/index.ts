@@ -93,54 +93,9 @@ class InferenceCommand implements yargs.CommandModule {
     }
 }
 
-class ConvertCommand implements yargs.CommandModule<any, any> {
-    command = "convert";
-    describe = "Convert llama pth to ggml, not ready yet";
-    builder(args: yargs.Argv) {
-        return args
-            .help("help")
-            .example(
-                "llama convert --dir ./model --type q4_0",
-                "Convert pth to q4_0 ggml model"
-            )
-            .options({
-                dir: {
-                    describe: "The directory of model and tokenizer directory",
-                    type: "string",
-                    demandOption: true,
-                },
-            })
-            .options({
-                type: {
-                    describe: "The type of model",
-                    type: "string",
-                    choices: convertType,
-                    demandOption: true,
-                },
-            });
-    }
-    async handler(args: yargs.ArgumentsCamelCase) {
-        const dir = args.dir as string;
-        const type = args.type as ConvertType;
-
-        const absolute = path.isAbsolute(dir)
-            ? dir
-            : path.join(process.cwd(), dir);
-        if (!existsSync(absolute)) {
-            console.error(`Directory ${absolute} does not exist`);
-            return;
-        } else {
-            const elementType = convertType.findIndex((t) => t === type);
-            await convert(absolute, elementType);
-            console.log("Convert successfully");
-        }
-    }
-}
-
 (yargs as yargs.Argv<any | CLIInferenceArguments>)
     .scriptName("llama")
     .usage("$0 <cmd> [args]")
-    .command(new ConvertCommand())
     .command(new InferenceCommand())
     .demandCommand(1, "You need at least one command before moving on")
     .strict()
