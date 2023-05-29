@@ -7,6 +7,7 @@ node_modules/
 dist/
 miscellaneous/models/7B
 .vscode/
+.DS_Store
 
 # Added by cargo
 
