@@ -39,7 +39,7 @@ pub struct RWKVSession<'a> {
     rwkv_context: &'a RWKVContext,
     state_buffer_element_count: usize,
     logits_buffer_element_count: usize,
-    model_tokens: Vec<i32>,
+    model_tokens: Vec<u32>,
     model_state: Vec<f32>,
     pub logits: Vec<f32>,
     is_first: bool,
@@ -94,7 +94,7 @@ impl<'a> RWKVSession<'a> {
         }
     }
 
-    pub fn process_tokens(&mut self, tokens: &[i32]) {
+    pub fn process_tokens(&mut self, tokens: &[u32]) {
         self.model_tokens.append(&mut tokens.to_vec());
 
         for token in tokens.iter() {
@@ -103,7 +103,7 @@ impl<'a> RWKVSession<'a> {
     }
 
     // Evaluates the given tokens with the specified configuration.
-    pub fn rwkv_eval(&mut self, token: i32) -> Result<(), ()> {
+    pub fn rwkv_eval(&mut self, token: u32) -> Result<(), ()> {
         let state_in = if self.is_first {
             self.is_first = false;
             std::ptr::null_mut()
@@ -144,8 +144,8 @@ impl<'a> RWKVSession<'a> {
 
 impl RWKVContext {
     // Creates a new RWKVContext from the specified file and configuration parameters.
-    pub fn new(model_path: &str, tokenizer_path: &str, n_threads: u32) -> Self {
-        let ctx = unsafe { rwkv_init_from_file(model_path.as_ptr() as *const i8, n_threads) };
+    pub fn new(model_path: &str, tokenizer_path: &str, n_threads: u32, n_gpu_layers: u32) -> Self {
+        let ctx = unsafe { rwkv_init_from_file(model_path.as_ptr() as *const i8, n_threads, n_gpu_layers) };
         let tokenizer = Tokenizer::from_file(tokenizer_path).unwrap();
 
         Self { ctx, tokenizer }
