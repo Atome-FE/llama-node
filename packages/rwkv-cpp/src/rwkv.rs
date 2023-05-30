@@ -63,9 +63,7 @@ impl RWKVInternal {
         let binding = tokenizer.encode(prompt.as_str(), false).unwrap();
         let tokens = binding
             .get_ids()
-            .iter()
-            .map(|x| *x as u32)
-            .collect::<Vec<u32>>();
+            .to_vec();
 
 
         let session_file_path = &input.session_file_path;
