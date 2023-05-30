@@ -15,6 +15,7 @@ interface IGPT2OnnxInferenceOptions {
     prompt: string;
     topK?: number;
     endToken?: number;
+    seed?: number;
     onProgress: (data: string) => void;
 }
 
@@ -62,7 +63,7 @@ export class IsomorphicContext {
         }
 
         const numPredict = inferArgs.numPredict ?? 128;
-        const topK = inferArgs.topK ?? 1;
+        const topK = inferArgs.topK ?? 40;
 
         let remain = numPredict;
         const tokens = this.tokenizer.tokenize(inferArgs.prompt, true);
@@ -73,18 +74,27 @@ export class IsomorphicContext {
             const inputs = this.tokenizer.toOnnx(tokens);
             const result = await this.session.run(inputs);
 
-            const logits = this.getLogits(
+            let logits = this.getLogits(
                 result["last_hidden_state"] as TypedTensor<"float32">
             );
 
-            let probs = tfjs.softmax(logits, -1);
+            logits = tfjs.softmax(logits, -1);
 
-            // TODO: implement topP
-            probs = probs.topk(topK, true).indices.slice(0, 1).squeeze();
+            // get topK probs
+            const probs = logits.topk(topK, true);
 
-            const token = probs.dataSync();
+            // use seed to get uniform random number
+            const randomToken = tfjs
+                .randomUniformInt([1], 0, probs.values.size - 1, inferArgs.seed)
+                .dataSync()[0];
 
-            // TODO: implement end of sentence
+            // get token from probs
+            const token = probs.indices
+                .slice([randomToken], [1])
+                .squeeze()
+                .dataSync();
+
+            // TODO: implement end of sentence, not sure gpt2 has this
             if (
                 token[0] >= 50256 ||
                 token[0] === 0 ||

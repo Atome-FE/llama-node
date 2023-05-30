@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "serve": "vite serve",
+    "dev": "vite dev",
     "test": "cross-env TF_CPP_MIN_LOG_LEVEL=2 tsx example/index.ts"
   },
   "keywords": [],

@@ -11,7 +11,7 @@ const prompt = `My name is Merve and my favorite`;
 const numPredict = 128;
 
 // TODO: sample topP
-const topK = 1;
+const topK = 10;
 
 const run = async () => {
     const gpt2 = await GPT2Onnx.create({

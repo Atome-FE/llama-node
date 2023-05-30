@@ -30,10 +30,11 @@ const App = () => {
             type: "inference",
             data: {
                 prompt: inputText,
-                topK: 1,
+                topK: 10,
                 numPredict: 128,
             },
         };
+        setInferenceText(inputText);
         worker.postMessage(message);
     }, [inputText]);
 
@@ -49,9 +50,14 @@ const App = () => {
         []
     );
 
+    const handleTextChange = React.useCallback((e: MessageEvent<string>) => {
+        setInferenceText((text) => text + e.data);
+    }, []);
+
     React.useEffect(() => {
-        worker.onmessage = (e) => {
-            setInferenceText((text) => text + e.data);
+        worker.addEventListener("message", handleTextChange);
+        return () => {
+            worker.removeEventListener("message", handleTextChange);
         };
     }, []);
 
