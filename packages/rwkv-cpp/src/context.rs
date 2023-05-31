@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use rwkv_sys::{
     rwkv_context, rwkv_eval, rwkv_free, rwkv_get_logits_buffer_element_count,
     rwkv_get_state_buffer_element_count, rwkv_get_system_info_string, rwkv_init_from_file,
+    rwkv_gpu_offload_layers
 };
 
 #[napi(object)]
@@ -145,7 +146,10 @@ impl<'a> RWKVSession<'a> {
 impl RWKVContext {
     // Creates a new RWKVContext from the specified file and configuration parameters.
     pub fn new(model_path: &str, tokenizer_path: &str, n_threads: u32, n_gpu_layers: u32) -> Self {
-        let ctx = unsafe { rwkv_init_from_file(model_path.as_ptr() as *const i8, n_threads, n_gpu_layers) };
+        let ctx = unsafe { rwkv_init_from_file(model_path.as_ptr() as *const i8, n_threads) };
+        if n_gpu_layers > 0  {
+            unsafe { rwkv_gpu_offload_layers(ctx, n_gpu_layers) };
+        }
         let tokenizer = Tokenizer::from_file(tokenizer_path).unwrap();
 
         Self { ctx, tokenizer }

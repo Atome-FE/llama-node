@@ -102,8 +102,10 @@ extern "C" {
     pub fn rwkv_init_from_file(
         model_file_path: *const ::std::os::raw::c_char,
         n_threads: u32,
-        n_gpu_layers: u32,
     ) -> *mut rwkv_context;
+}
+extern "C" {
+    pub fn rwkv_gpu_offload_layers(ctx: *const rwkv_context, n_gpu_layers: u32) -> bool;
 }
 extern "C" {
     pub fn rwkv_eval(
