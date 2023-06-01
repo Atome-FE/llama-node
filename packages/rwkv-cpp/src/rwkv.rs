@@ -21,10 +21,11 @@ impl RWKVInternal {
         mode_path: String,
         tokenizer_path: String,
         n_threads: u32,
+        n_gpu_layers: u32,
         enable_logger: bool,
     ) -> Arc<Mutex<Self>> {
         let rwkv = RWKVInternal {
-            context: RWKVContext::new(&mode_path, &tokenizer_path, n_threads),
+            context: RWKVContext::new(&mode_path, &tokenizer_path, n_threads, n_gpu_layers),
         };
 
         if enable_logger {
@@ -62,9 +63,7 @@ impl RWKVInternal {
         let binding = tokenizer.encode(prompt.as_str(), false).unwrap();
         let tokens = binding
             .get_ids()
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>();
+            .to_vec();
 
 
         let session_file_path = &input.session_file_path;

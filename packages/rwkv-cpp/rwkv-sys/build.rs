@@ -63,6 +63,7 @@ fn main() {
     let command = command
         .arg("..")
         .arg("-DCMAKE_BUILD_TYPE=Release")
+        .arg("-DRWKV_BUILD_SHARED_LIBRARY=OFF")
         .arg("-DRWKV_ALL_WARNINGS=OFF");
 
     if platform.target_os == OS::MacOS {

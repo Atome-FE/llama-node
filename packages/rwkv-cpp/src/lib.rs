@@ -42,7 +42,7 @@ impl RWKV {
         logger.set_enabled(enable_logger);
 
         Ok(Self {
-            rwkv: RWKVInternal::load(model_path, tokenizer_path, n_threads, enable_logger).await,
+            rwkv: RWKVInternal::load(model_path, tokenizer_path, n_threads, 0, enable_logger).await,
         })
     }
 
