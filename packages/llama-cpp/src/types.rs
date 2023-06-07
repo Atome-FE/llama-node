@@ -129,6 +129,8 @@ pub struct ModelLoad {
     pub embedding: bool,
     pub use_mmap: bool,
     pub lora: Option<LlamaLoraAdaptor>,
+    pub main_gpu: i32,
+    pub tensor_split: Vec<f64>,
 }
 
 impl Default for ModelLoad {
@@ -145,6 +147,8 @@ impl Default for ModelLoad {
             embedding: false,
             use_mmap: true,
             lora: None,
+            main_gpu: 0,
+            tensor_split: vec![0_f64],
         }
     }
 }
@@ -158,6 +162,12 @@ impl ModelLoad {
 
 impl From<ModelLoad> for llama_context_params {
     fn from(params: ModelLoad) -> Self {
+        let tensor_split = params
+            .tensor_split
+            .into_iter()
+            .map(|x| x as f32)
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
         llama_context_params {
             n_ctx: params.n_ctx,
             n_gpu_layers: params.n_gpu_layers,
@@ -170,6 +180,9 @@ impl From<ModelLoad> for llama_context_params {
             embedding: params.embedding,
             progress_callback: None,
             progress_callback_user_data: std::ptr::null_mut(),
+            n_batch: 1, // currently not implemented
+            main_gpu: params.main_gpu,
+            tensor_split: (*tensor_split).try_into().unwrap(),
         }
     }
 }

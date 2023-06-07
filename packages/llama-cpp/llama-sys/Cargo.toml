@@ -13,5 +13,6 @@ dirs = "5.0.1"
 
 [features]
 default = []
+metal = ["dynamic"]
 cublas = ["dynamic"]
 dynamic = []

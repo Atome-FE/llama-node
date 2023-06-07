@@ -36,7 +36,10 @@ fn get_link_info() -> BuildLinkInfo {
         link_type: "dylib".to_owned(),
         #[cfg(target_os = "windows")]
         link_extension_windows: "dll".to_owned(),
+        #[cfg(target_os = "linux")]
         link_extension_nix: "so".to_owned(),
+        #[cfg(target_os = "macos")]
+        link_extension_nix: "dylib".to_owned(),
         link_out_dir: env::var("OUT_DIR").unwrap(),
         cmake_link_flag: vec![
             "-DLLAMA_STATIC=OFF".to_owned(),
@@ -123,6 +126,13 @@ fn main() {
     {
         command
             .arg("-DLLAMA_CUBLAS=ON")
+            .arg("-DCMAKE_POSITION_INDEPENDENT_CODE=ON");
+    }
+
+    #[cfg(feature = "metal")]
+    {
+        command
+            .arg("-DLLAMA_METAL=ON")
             .arg("-DCMAKE_POSITION_INDEPENDENT_CODE=ON");
     }
 

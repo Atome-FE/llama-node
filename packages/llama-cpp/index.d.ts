@@ -127,6 +127,8 @@ export interface ModelLoad {
   embedding: boolean
   useMmap: boolean
   lora?: LlamaLoraAdaptor
+  mainGpu: number
+  tensorSplit: Array<number>
 }
 export interface LlamaLoraAdaptor {
   loraAdapter: string

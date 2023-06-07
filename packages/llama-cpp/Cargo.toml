@@ -31,3 +31,4 @@ napi-build = "2.0.1"
 [features]
 default = []
 cublas = ["llama-sys/cublas"]
+metal = ["llama-sys/metal"]
