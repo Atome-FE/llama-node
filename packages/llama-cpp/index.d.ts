@@ -134,7 +134,7 @@ export interface LlamaLoraAdaptor {
   nThreads: number
 }
 export class LLama {
-  static load(params: Partial<LoadModel>, enableLogger: boolean): Promise<LLama>
+  static load(params: Partial<ModelLoad>, enableLogger: boolean): Promise<LLama>
   getWordEmbedding(params: Generate): Promise<Array<number>>
   tokenize(params: string): Promise<Array<number>>
   inference(params: Generate, callback: (result: InferenceResult) => void): () => void
