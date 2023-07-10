@@ -32,7 +32,7 @@ pub struct LLama {
 impl LLama {
     #[napi]
     pub async fn load(
-        #[napi(ts_arg_type = "Partial<LoadModel>")] params: serde_json::Value,
+        #[napi(ts_arg_type = "Partial<ModelLoad>")] params: serde_json::Value,
         enable_logger: bool,
     ) -> Result<LLama> {
         let params = serde_json::from_value::<ModelLoad>(params).unwrap();
