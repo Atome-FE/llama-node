@@ -121,7 +121,7 @@ pub struct ModelLoad {
     pub model_path: String,
     pub n_ctx: i32,
     pub n_gpu_layers: i32,
-    pub seed: i32,
+    pub seed: u32,
     pub f16_kv: bool,
     pub logits_all: bool,
     pub vocab_only: bool,
@@ -129,6 +129,12 @@ pub struct ModelLoad {
     pub embedding: bool,
     pub use_mmap: bool,
     pub lora: Option<LlamaLoraAdaptor>,
+    pub low_vram: Option<bool>,
+    pub main_gpu: Option<i32>,
+    pub n_batch: Option<i32>,
+    pub rope_freq_base: Option<f64>,
+    pub rope_freq_scale: Option<f64>,
+    pub tensor_split: Option<Vec<f64>>,
 }
 
 impl Default for ModelLoad {
@@ -145,6 +151,12 @@ impl Default for ModelLoad {
             embedding: false,
             use_mmap: true,
             lora: None,
+            low_vram: None,
+            main_gpu: None,
+            n_batch: None,
+            rope_freq_base: None,
+            rope_freq_scale: None,
+            tensor_split: None,
         }
     }
 }
@@ -170,6 +182,13 @@ impl From<ModelLoad> for llama_context_params {
             embedding: params.embedding,
             progress_callback: None,
             progress_callback_user_data: std::ptr::null_mut(),
+
+            low_vram: params.low_vram.unwrap_or(false),
+            main_gpu: params.main_gpu.unwrap_or(0),
+            n_batch: params.n_batch.unwrap_or(512),
+            rope_freq_base: params.rope_freq_base.map_or(10000.0, |x| x as f32),
+            rope_freq_scale: params.rope_freq_scale.map_or(1.0, |x| x as f32),
+            tensor_split: params.tensor_split.map_or([0.0], |x| [x[0] as f32]),
         }
     }
 }
